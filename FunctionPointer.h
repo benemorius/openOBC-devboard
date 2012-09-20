@@ -27,6 +27,7 @@
 #define FUNCTIONPOINTER_H
 
 #include <stdint.h>
+#include <vector>
 
 class FP
 {
@@ -61,11 +62,18 @@ public:
 		}
 	}
 
+	bool operator==(const FPointer& rhs) const
+	{
+		if(rhs.objectP == this->objectP && rhs.methodP == this->methodP)
+			return true;
+		else
+			return false;
+	}
 
 private:
 	Type* objectP;
 	void (Type::*methodP)(void);
-	
+
 };
 
 
@@ -75,56 +83,76 @@ class FunctionPointer
 public:
 	FunctionPointer()
 	{
-		this->fp = 0;
-		this->function = 0;
+		
 	}
 	
 	template<typename T>
 	void attach(T* objectP, void (T::*methodP)(void))
 	{
-		if(this->fp != 0)
+		if(objectP != 0 && methodP != 0)
 		{
-			delete this->fp; //TODO allow multiple attachments and detachments
-			this->fp = 0;
+			FPointer<T>* fp = new FPointer<T>();
+			fp->attach(objectP, methodP);
+			methodPointers.push_back(fp);
 		}
-		
-		FPointer<T>* fp = new FPointer<T>();
-		fp->attach(objectP, methodP);
-		this->fp = fp;
 	}
+	template<typename T>
+	void detach(T* objectP, void (T::*methodP)(void))
+	{
+		for(uint32_t numMethodPointers = methodPointers.size(); numMethodPointers;)
+		{
+			numMethodPointers--;
+			FPointer<T>* fp = new FPointer<T>();
+			fp->attach(objectP, methodP);
+			if(*(FPointer<T>*)(methodPointers[numMethodPointers]) == *fp)
+			{
+				delete methodPointers[numMethodPointers];
+				methodPointers.erase(methodPointers.begin() + numMethodPointers);
+			}
+		}
+	}
+
 	void attach(void (*function)(void))
 	{
-		this->function = function;
-		if(function == 0 && fp != 0)
+		if(function != 0)
+			functionPointers.push_back(function);
+	}
+	void detach(void (*function)(void))
+	{
+		for(uint32_t numFunctionPointers = functionPointers.size(); numFunctionPointers;)
 		{
-			delete fp; //TODO allow multiple attachments and detachments
-			fp = 0;
+			numFunctionPointers--;
+			if(functionPointers[numFunctionPointers] == function)
+				functionPointers.erase(functionPointers.begin() + numFunctionPointers);
 		}
 	}
-	
+
 	void call()
 	{
-		if(function != 0)
+		uint32_t numFunctionPointers = functionPointers.size();
+		while(numFunctionPointers--)
 		{
-			function();
+			functionPointers[numFunctionPointers]();
 		}
-		if(fp != 0)
+		
+		uint32_t numMethodPointers = methodPointers.size();
+		while(numMethodPointers--)
 		{
-			fp->call();
+			methodPointers[numMethodPointers]->call();
 		}
 	}
 
 	bool isValid()
 	{
-		if(function != 0 || fp != 0)
+		if(functionPointers.size() != 0 || methodPointers.size() != 0)
 			return true;
 		else
 			return false;
 	}
 
 private:
-	FP* fp;
-	void (*function)(void);
+	std::vector<FP*> methodPointers;
+	std::vector<void (*)(void)> functionPointers;
 	
 };
 

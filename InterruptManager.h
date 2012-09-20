@@ -83,15 +83,13 @@ typedef enum
 	
 } IRQHandler_Type;
 
+class InterruptManagerOwner;
+
 class InterruptManager
 {
 public:
-    InterruptManager();
+    InterruptManager(InterruptManagerOwner* owner);
 
-
-
-
-	 
 	template<typename T>
 	void attach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(void))
 	{
@@ -102,32 +100,48 @@ public:
 			pointers[irq]->attach(classPointer, methodPointer);
 		}
 	}
+	template<typename T>
+	void detach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(void))
+	{
+		if((methodPointer != 0) && (classPointer != 0))
+		{
+			if(pointers[irq])
+				pointers[irq]->detach(classPointer, methodPointer);
+		}
+	}
+	
 	void attach(IRQHandler_Type irq, void (*functionPointer)(void))
 	{
 		if(!pointers[irq])
 			pointers[irq] = new FunctionPointer;
 		pointers[irq]->attach(functionPointer);
 	}
-
+	void detach(IRQHandler_Type irq, void (*functionPointer)(void))
+	{
+		if(pointers[irq])
+			pointers[irq]->detach(functionPointer);
+	}
+	
 	void call(IRQHandler_Type irq)
 	{
 		GPIO_SetValue(2, (1<<0));
 		
-		if(pointers[irq] != 0) //FIXME
+		if(pointers[irq]) //FIXME enum values do not map completely to a congiguous array
 		{
-			pointers[irq]->call(); //FIXME
+			pointers[irq]->call(); //FIXME enum values do not map completely to a congiguous array
 		}
 		
 		GPIO_ClearValue(2, (1<<0));
 	}
 
 private:
-	FunctionPointer* pointers[IRQHandler_NUM_VALUES]; //FIXME
+	FunctionPointer* pointers[IRQHandler_NUM_VALUES]; //FIXME enum values do not map completely to a congiguous array
 };
 
 class InterruptManagerOwner
 {
 public:
+	InterruptManagerOwner() : interruptManager(this) {};
 	InterruptManager interruptManager;
 };
 

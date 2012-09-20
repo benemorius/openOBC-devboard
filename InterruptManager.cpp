@@ -30,10 +30,11 @@
 #define WEAK __attribute__ ((weak))
 // #define WEAK
 
-extern InterruptManagerOwner* interruptManagerOwner;
+InterruptManagerOwner* interruptManagerOwner;
 
-InterruptManager::InterruptManager()
+InterruptManager::InterruptManager(InterruptManagerOwner* owner)
 {
+	interruptManagerOwner = owner;
 	for(uint32_t i = 0; i < IRQHandler_NUM_VALUES; i++)
 		pointers[i] = 0;
 

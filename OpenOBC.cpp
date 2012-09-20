@@ -47,7 +47,6 @@
 #include <cmath>
 
 volatile uint32_t SysTickCnt;
-InterruptManagerOwner* interruptManagerOwner;
 OpenOBC* obcS;
 Debug* debugS;
 RTC* rtcS;
@@ -81,7 +80,6 @@ bool go = false;
 OpenOBC::OpenOBC()
 {
 	obcS = this;
-	interruptManagerOwner = this;
 	
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
 	debug = new Debug(DEBUG_TX_PORTNUM, DEBUG_TX_PINNUM, DEBUG_RX_PORTNUM, DEBUG_RX_PINNUM, DEBUG_BAUD, &interruptManager); debugS = debug;
