@@ -34,9 +34,12 @@ public:
     Input(uint8_t port, uint8_t pin, bool onIsHigh = true);
 	 bool getState() const;
 	 void setPullup();
-	 void setPullDown();
-	 void setTriState();
-
+	 void setPulldown();
+	 void setTristate();
+	 
+	 uint8_t getPort() const {return port;}
+	 uint8_t getPin() const {return pin;}
+	 
 	 operator bool() const { return getState();}
 
 

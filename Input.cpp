@@ -59,7 +59,7 @@ void Input::setPullup()
 	PINSEL_ConfigPin(&PinCfg);
 }
 
-void Input::setPullDown()
+void Input::setPulldown()
 {
 	PINSEL_CFG_Type PinCfg;
 	PinCfg.Funcnum = PINSEL_FUNC_0;
@@ -70,7 +70,7 @@ void Input::setPullDown()
 	PINSEL_ConfigPin(&PinCfg);
 }
 
-void Input::setTriState()
+void Input::setTristate()
 {
 	PINSEL_CFG_Type PinCfg;
 	PinCfg.Funcnum = PINSEL_FUNC_0;

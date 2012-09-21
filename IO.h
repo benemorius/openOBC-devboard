@@ -38,6 +38,9 @@ public:
 	void setState(bool on);
 	bool getState() const;
 	void setOpenDrain(bool isOpenDrain);
+
+	uint8_t getPort() const {return port;}
+	uint8_t getPin() const {return pin;}
 	
 	IO& operator=(bool state);
 	operator bool() const { return getState();}

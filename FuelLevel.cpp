@@ -29,7 +29,7 @@
 
 FuelLevel::FuelLevel(Input& dataPin) : dataPin(dataPin)
 {
-	dataPin.setTriState();
+	dataPin.setTristate();
 }
 
 uint32_t FuelLevel::getLitres()
