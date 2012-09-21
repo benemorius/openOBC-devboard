@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
+#include "Timer.h"
 
 using namespace std;
 
@@ -49,12 +50,12 @@ RTC* rtcS;
 
 uint32_t rps;
 uint32_t rpm;
-uint32_t speedTime;
 uint32_t out0Bits;
 uint32_t out1Bits;
 bool doSleep = false;
 bool go = false;
-
+uint32_t speedPeriod;
+uint32_t lastSpeedUpdateTime;
 
 void callback()
 {
@@ -297,6 +298,7 @@ void OpenOBC::mainloop()
 		float voltage;
 		float resistance;
 		float temperature;
+		float speed;
 		switch(displayMode)
 		{
 			case DISPLAY_VOLTAGE:
@@ -308,9 +310,13 @@ void OpenOBC::mainloop()
 				voltage = voltage / (2.2/(2.2+10.0));
 				lcd->printf("%.2fV", voltage);
 				break;
-				
+
 			case DISPLAY_SPEED:
-				lcd->printf("%3.0f mph", ((float)1 / (((float)speedTime / 5) / 1000)) / 1.3 * .621);
+				if(SysTickCnt - lastSpeedUpdateTime > 2000)
+					speed = 0;
+				else
+					speed = (float)1000000 / speedPeriod / 4712 * 3600 * .621;
+				lcd->printf("%3.1f mph", speed);
 				break;
 				
 			case DISPLAY_TEMP:
@@ -494,18 +500,13 @@ void runHandler()
 
 void speedHandler()
 {
+	static Timer periodTimer;
 	if(GPIO_GetIntStatus(SPEED_PORT, SPEED_PIN, 1))
 	{
+		speedPeriod = periodTimer.read_us();
+		periodTimer.start();
 		GPIO_ClearInt(SPEED_PORT, (1<<SPEED_PIN));
-		static uint32_t lastSpeedTime;
-		static uint32_t count;
-		count++;
-		if(count >= 5)
-		{
-			speedTime = (SysTickCnt - lastSpeedTime);
-			lastSpeedTime = SysTickCnt;
-			count = 0;
-		}
+		lastSpeedUpdateTime = SysTickCnt;
 	}
 }
 
