@@ -149,7 +149,7 @@ OpenOBC::OpenOBC()
 	speed = new Input(SPEED_PORT, SPEED_PIN);
 	speed->setPullup();
 	interruptManager.attach(IRQ_EINT3, &speedHandler);
-	GPIO_IntCmd(SPEED_PORT, (1<<SPEED_PIN), 1);
+	GPIO_IntEnable(SPEED_PORT, (1<<SPEED_PIN), 1);
 	NVIC_EnableIRQ(EINT3_IRQn);
 
 	//sd card configuration

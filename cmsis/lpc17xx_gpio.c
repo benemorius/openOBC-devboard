@@ -250,7 +250,7 @@ uint32_t GPIO_ReadValue(uint8_t portNum)
 }
 
 /*********************************************************************//**
- * @brief		Enable GPIO interrupt (just used for P0.0-P0.30, P2.0-P2.13)
+ * @brief		Enable/Disable GPIO interrupt (just used for P0.0-P0.30, P2.0-P2.13)
  * @param[in]	portNum		Port number to read value, should be: 0 or 2
  * @param[in]	bitValue	Value that contains all bits on GPIO to enable,
  * 							in range from 0 to 0xFFFFFFFF.
@@ -269,6 +269,55 @@ void GPIO_IntCmd(uint8_t portNum, uint32_t bitValue, uint8_t edgeState)
 		LPC_GPIOINT->IO0IntEnF = bitValue;
 	else if ((portNum == 2)&&(edgeState == 1))
 		LPC_GPIOINT->IO2IntEnF = bitValue;
+	else
+		//Error
+		while(1);
+}
+
+/*********************************************************************//**
+* @brief		Enable GPIO interrupt (just used for P0.0-P0.30, P2.0-P2.13)
+* @param[in]	portNum		Port number to read value, should be: 0 or 2
+* @param[in]	bitValue	Value that contains all bits on GPIO to enable,
+* 							in range from 0 to 0xFFFFFFFF.
+* @param[in]	edgeState	state of edge, should be:
+* 							- 0: Rising edge
+* 							- 1: Falling edge
+* @return		None
+**********************************************************************/
+void GPIO_IntEnable(uint8_t portNum, uint32_t bitValue, uint8_t edgeState)
+{
+	if((portNum == 0)&&(edgeState == 0))
+		LPC_GPIOINT->IO0IntEnR |= bitValue;
+	else if ((portNum == 2)&&(edgeState == 0))
+		LPC_GPIOINT->IO2IntEnR |= bitValue;
+	else if ((portNum == 0)&&(edgeState == 1))
+		LPC_GPIOINT->IO0IntEnF |= bitValue;
+	else if ((portNum == 2)&&(edgeState == 1))
+		LPC_GPIOINT->IO2IntEnF |= bitValue;
+	else
+		//Error
+		while(1);
+}
+/*********************************************************************//**
+* @brief		Disable GPIO interrupt (just used for P0.0-P0.30, P2.0-P2.13)
+* @param[in]	portNum		Port number to read value, should be: 0 or 2
+* @param[in]	bitValue	Value that contains all bits on GPIO to enable,
+* 							in range from 0 to 0xFFFFFFFF.
+* @param[in]	edgeState	state of edge, should be:
+* 							- 0: Rising edge
+* 							- 1: Falling edge
+* @return		None
+**********************************************************************/
+void GPIO_IntDisable(uint8_t portNum, uint32_t bitValue, uint8_t edgeState)
+{
+	if((portNum == 0)&&(edgeState == 0))
+		LPC_GPIOINT->IO0IntEnR &= ~bitValue;
+	else if ((portNum == 2)&&(edgeState == 0))
+		LPC_GPIOINT->IO2IntEnR &= ~bitValue;
+	else if ((portNum == 0)&&(edgeState == 1))
+		LPC_GPIOINT->IO0IntEnF &= ~bitValue;
+	else if ((portNum == 2)&&(edgeState == 1))
+		LPC_GPIOINT->IO2IntEnF &= ~bitValue;
 	else
 		//Error
 		while(1);
