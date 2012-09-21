@@ -26,12 +26,6 @@
 #include "OpenOBC.h"
 #include "board.h"
 #include "delay.h"
-#include "SPI.h"
-#include "IO.h"
-#include "ObcLcd.h"
-#include "Input.h"
-#include "ObcKeypad.h"
-#include "Capture.h"
 
 #include <lpc17xx_gpio.h>
 #include <lpc17xx_pinsel.h>
@@ -46,36 +40,31 @@
 #include <map>
 #include <cmath>
 
+using namespace std;
+
 volatile uint32_t SysTickCnt;
 OpenOBC* obcS;
 Debug* debugS;
 RTC* rtcS;
 
-using namespace std;
-
-Capture* fuelCons;
-bool get;
 uint32_t rps;
 uint32_t rpm;
 uint32_t speedTime;
+uint32_t out0Bits;
+uint32_t out1Bits;
 bool doSleep = false;
-
-uint32_t out0Bits = 0;
-uint32_t out1Bits = 0;
+bool go = false;
 
 
 void callback()
 {
-// 	get = true;
 	rps++;
 }
 
 extern "C" void Reset_Handler(void);
+void speedHandler();
+void runHandler();
 
-IO out0Cs(0, 20, true);
-IO out1Cs(2, 3, true);
-
-bool go = false;
 
 OpenOBC::OpenOBC()
 {
@@ -88,24 +77,11 @@ OpenOBC::OpenOBC()
 	printf("clock speed: %i MHz\r\n", SystemCoreClock / 1000000);
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 
-	lcdReset = new IO(LCD_RESET_PORT, LCD_RESET_PIN, false);
-	
-	rtc = new RTC(); rtcS = rtc;
-
-	RTC_TIME_Type settime;
-	settime.YEAR = 2012;
-	settime.MONTH = 9;
-	settime.DOM = 10;
-
-	settime.HOUR = 9;
-	settime.MIN = 1;
-	settime.SEC = 40;
-// 	rtc->setTime(&settime);
-
-	displayMode = DISPLAY_OPENOBC;
-
+	//spi coniguration
 	spi1 = new SPI(SPI1_MOSI_PORT, SPI1_MOSI_PIN, SPI1_MISO_PORT, SPI1_MISO_PIN, SPI1_SCK_PORT, SPI1_SCK_PIN, SPI1_CLOCKRATE);
 
+	//lcd configuration
+	lcdReset = new IO(LCD_RESET_PORT, LCD_RESET_PIN, false);
 // 	IO lcdBias(LCD_BIASCLOCK_PORT, LCD_BIASCLOCK_PIN, true);
 	lcdBiasClock = new PWM(LCD_BIASCLOCK_PORT, LCD_BIASCLOCK_PIN, .99);
 	*lcdReset = true;
@@ -114,33 +90,73 @@ OpenOBC::OpenOBC()
 	IO* lcdUnk0 = new IO(LCD_UNK0_PORT, LCD_UNK0_PIN, true);
 	IO* lcdUnk1 = new IO(LCD_UNK1_PORT, LCD_UNK1_PIN, false);
 	lcd = new ObcLcd(*spi1, *lcdSel, *lcdRefresh, *lcdUnk0, *lcdUnk1);
+	displayMode = DISPLAY_OPENOBC;
 
+	//rtc configuration
+	rtc = new RTC(); rtcS = rtc;
+	RTC_TIME_Type settime;
+	settime.YEAR = 2012;
+	settime.MONTH = 9;
+	settime.DOM = 20;
+	settime.HOUR = 20;
+	settime.MIN = 29;
+	settime.SEC = 0;
+// 	rtc->setTime(&settime);
+
+	//ccm configuration
 	Input* ccmData = new Input(CCM_DATA_PORT, CCM_DATA_PIN);
 	IO* ccmClock = new IO(CCM_CLOCK_PORT, CCM_CLOCK_PIN);
 	IO* ccmLatch = new IO(CCM_LATCH_PORT, CCM_LATCH_PIN);
 	ccm = new CheckControlModule(*ccmData, *ccmClock, *ccmLatch);
 
+	//fuel level configuration
 	Input* fuelLevelInput = new Input(FUEL_LEVEL_PORT, FUEL_LEVEL_PIN);
 	fuelLevel = new FuelLevel(*fuelLevelInput);
 
+	//stalk button configuration
 	stalkButton = new Input(STALK_BUTTON_PORT, STALK_BUTTON_PIN);
 
+	//diagnostics interface configuration
 	kline = new Uart(KLINE_TX_PORTNUM, KLINE_TX_PINNUM, KLINE_RX_PORTNUM, KLINE_RX_PINNUM, KLINE_BAUD, UART_PARITY_EVEN, &interruptManager);
 	lline = new Uart(LLINE_TX_PORTNUM, LLINE_TX_PINNUM, LLINE_RX_PORTNUM, LLINE_RX_PINNUM, LLINE_BAUD, UART_PARITY_EVEN, &interruptManager);
 
+	//ignition/run/on input configuration
 	run = new Input(RUN_PORT, RUN_PIN);
+	PINSEL_CFG_Type pincfg;
+	pincfg.Funcnum = PINSEL_FUNC_1;
+	pincfg.OpenDrain = PINSEL_PINMODE_NORMAL;
+	pincfg.Pinmode = PINSEL_PINMODE_TRISTATE;
+	pincfg.Portnum = RUN_PORT;
+	pincfg.Pinnum = RUN_PIN;
+	interruptManager.attach(IRQ_EINT1, &runHandler); //do this first...
+	PINSEL_ConfigPin(&pincfg); //because this immediately triggers an unwanted interrupt
+	EXTI_Init();
+	EXTI_InitTypeDef EXTICfg;
+	EXTICfg.EXTI_Line = EXTI_EINT1;
+	EXTICfg.EXTI_Mode = EXTI_MODE_EDGE_SENSITIVE;
+	EXTICfg.EXTI_polarity = EXTI_POLARITY_HIGH_ACTIVE_OR_RISING_EDGE;
+	EXTI_ClearEXTIFlag(EXTI_EINT1);
+	EXTI_Config(&EXTICfg);
+	NVIC_SetPriorityGrouping(4);
+	NVIC_SetPriority(EINT1_IRQn, 0);
+	NVIC_EnableIRQ(EINT1_IRQn);
 
+	//fuel consumption configuration
 	fuelCons = new Capture(SPEED_PORT, SPEED_PIN, FUEL_CONS_PORT, FUEL_CONS_PIN, &interruptManager);
 	fuelCons->attach(&callback);
 
+	//speed configuration
 	speed = new Input(SPEED_PORT, SPEED_PIN);
 	speed->setPullup();
+	interruptManager.attach(IRQ_EINT3, &speedHandler);
 	GPIO_IntCmd(SPEED_PORT, (1<<SPEED_PIN), 1);
 	NVIC_EnableIRQ(EINT3_IRQn);
 
+	//sd card configuration
 	sdcardDetect = new Input(SDCARD_DETECT_PORT, SDCARD_DETECT_PIN);
 	sdcardDetect->setPullup();
-	
+
+	//keypad configuration
 	IO* x0 = new IO(1, 20);
 	IO* x1 = new IO(1, 21);
 	IO* x2 = new IO(1, 22);
@@ -162,20 +178,20 @@ OpenOBC::OpenOBC()
 	keypad->attach(BUTTON_DIST, this, &OpenOBC::buttonDist);
 	keypad->attach(BUTTON_1000, this, &OpenOBC:: button1000);
 	keypad->attach(BUTTON_100, this, &OpenOBC:: button100);
-	
+
+	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
 	keypadLight = new IO(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, true);
-
 // 	lcdBacklight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, .2);
 // 	clockBacklight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN);
 
-
+	//output driver configuration
 	IO outRst(OUT_RESET_PORT, OUT_RESET_PIN, true);
+	out0Cs = new IO(OUT0_CS_PORT, OUT0_CS_PIN, true);
+	out1Cs = new IO(OUT1_CS_PORT, OUT1_CS_PIN, true);
 	
-	
-	//ADC
-	PINSEL_CFG_Type pincfg;
+	//adc configuration
 	pincfg.Funcnum = 1;
 	pincfg.OpenDrain = 0;
 	pincfg.Pinmode = 0;
@@ -195,48 +211,14 @@ OpenOBC::OpenOBC()
 	ADC_IntConfig(LPC_ADC, ADC_ADINTEN2, DISABLE);
 // 	ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, ENABLE);
 
-
-
-
-	pincfg.Funcnum = 1;
-	pincfg.OpenDrain = PINSEL_PINMODE_NORMAL;
-	pincfg.Pinmode = PINSEL_PINMODE_TRISTATE;
-	pincfg.Portnum = RUN_PORT;
-	pincfg.Pinnum = RUN_PIN;
-	PINSEL_ConfigPin(&pincfg);
-
-	EXTI_Init();
-	EXTI_InitTypeDef EXTICfg;
-	EXTICfg.EXTI_Line = EXTI_EINT1;
-	/* edge sensitive */
-	EXTICfg.EXTI_Mode = EXTI_MODE_EDGE_SENSITIVE;
-	EXTICfg.EXTI_polarity = EXTI_POLARITY_HIGH_ACTIVE_OR_RISING_EDGE;
-	EXTI_ClearEXTIFlag(EXTI_EINT1);
-	EXTI_Config(&EXTICfg);
-
-	NVIC_SetPriorityGrouping(4);
-	NVIC_SetPriority(EINT1_IRQn, 0);
-	NVIC_EnableIRQ(EINT1_IRQn);
-
-
-// 	CLKPWR_DeepPowerDown();
-// 	CLKPWR_PowerDown();
-// 	CLKPWR_DeepSleep();
-// 	CLKPWR_Sleep();
-
-// 	SystemInit();
-
-// 	*clockLight = true;
-	
 	go = true;
-// 	while(1);
 }
 
 
 void OpenOBC::mainloop()
 {
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
-	printf("starting tasks...\r\n");
+	printf("starting mainloop...\r\n");
 
 
 
@@ -252,7 +234,7 @@ void OpenOBC::mainloop()
 
 	
 
-	while(0)
+	if(0)
 	{
 		//send zke4 inquiry
 		lline->putc(0x00);
@@ -264,24 +246,24 @@ void OpenOBC::mainloop()
 		
 		delay(1000);
 
-		//verify response from zke4
+		//verify transmission successfully reached data bus
 		if(lline->readable())
 		{
 			if(lline->getc() == 0x00 && lline->getc() == 0x04 && lline->getc() == 0x00 && lline->getc() == 0x04)
 			{
-				lcd->printf("lline data ok");
+				lcd->printf("lline data ok"); //echo was received
 				while(lline->readable())
-					lline->getc();
+					lline->getc(); //receive and discard the echo
 			}
 		}
 		else
 		{
-			lcd->printf("no lline data");
+			lcd->printf("no lline data"); //echo not received - interface failure
 		}
 		
 		delay(1000);
 
-		//print the rest of the zke4 reply to lcd
+		//print the zke4 reply to lcd
 		if(kline->readable())
 		{
 			while(kline->readable())
@@ -292,12 +274,10 @@ void OpenOBC::mainloop()
 			lcd->printf("end of data");
 		}
 		else
-			lcd->printf("no kline data");
+			lcd->printf("no kline data"); //zke4 did not respond
 		
 		delay(2000);
 	}
-
-
 
 	while(1)
 	{
@@ -376,43 +356,53 @@ void OpenOBC::mainloop()
 				
 		}
 
-
 		delay(50);
 
-
-		while(doSleep)
+		if(doSleep)
 		{
-			*obcS->lcdLight = false;
-			*obcS->clockLight = false;
-			*obcS->keypadLight = false;
-			/*---------- Disable and disconnect the main PLL0 before enter into Deep-Sleep
-			 * or Power-Down mode <according to errata.lpc1768-16.March.2010> ------------
-			 */
-			LPC_SC->PLL0CON &= ~(1<<1); /* Disconnect the main PLL (PLL0) */
-			LPC_SC->PLL0FEED = 0xAA; /* Feed */
-			LPC_SC->PLL0FEED = 0x55; /* Feed */
-			while ((LPC_SC->PLL0STAT & (1<<25)) != 0x00); /* Wait for main PLL (PLL0) to disconnect */
-			LPC_SC->PLL0CON &= ~(1<<0); /* Turn off the main PLL (PLL0) */
-			LPC_SC->PLL0FEED = 0xAA; /* Feed */
-			LPC_SC->PLL0FEED = 0x55; /* Feed */
-			while ((LPC_SC->PLL0STAT & (1<<24)) != 0x00); /* Wait for main PLL (PLL0) to shut down */
-			/*------------Then enter into PowerDown mode ----------------------------------*/
-			CLKPWR_PowerDown();
-// 			CLKPWR_DeepSleep();
-
-			if(doSleep)
-				continue;
-			
-// 			SystemInit();
-			Reset_Handler();
-// 			doSleep = false;
-			*obcS->lcdLight = true;
-			*obcS->clockLight = true;
-			*obcS->keypadLight = true;
+			while(doSleep)
+				sleep();
+			wake();
 		}
-
 	}
 
+}
+
+void OpenOBC::sleep()
+{
+	*obcS->lcdLight = false;
+	*obcS->clockLight = false;
+	*obcS->keypadLight = false;
+
+	NVIC_DisableIRQ(EINT3_IRQn);
+
+	/*---------- Disable and disconnect the main PLL0 before enter into Deep-Sleep
+	 * or Power-Down mode <according to errata.lpc1768-16.March.2010> ------------
+	 */
+	LPC_SC->PLL0CON &= ~(1<<1); /* Disconnect the main PLL (PLL0) */
+	LPC_SC->PLL0FEED = 0xAA; /* Feed */
+	LPC_SC->PLL0FEED = 0x55; /* Feed */
+	while ((LPC_SC->PLL0STAT & (1<<25)) != 0x00); /* Wait for main PLL (PLL0) to disconnect */
+	LPC_SC->PLL0CON &= ~(1<<0); /* Turn off the main PLL (PLL0) */
+	LPC_SC->PLL0FEED = 0xAA; /* Feed */
+	LPC_SC->PLL0FEED = 0x55; /* Feed */
+	while ((LPC_SC->PLL0STAT & (1<<24)) != 0x00); /* Wait for main PLL (PLL0) to shut down */
+	
+	/*------------Then enter into PowerDown mode ----------------------------------*/
+// 	CLKPWR_Sleep();
+// 	CLKPWR_DeepSleep();
+	CLKPWR_PowerDown();
+// 	CLKPWR_DeepPowerDown();
+
+}
+
+void OpenOBC::wake()
+{
+// 	SystemInit();
+	Reset_Handler();
+	*obcS->lcdLight = true;
+	*obcS->clockLight = true;
+	*obcS->keypadLight = true;
 }
 
 void OpenOBC::setConsum()
@@ -468,9 +458,9 @@ void OpenOBC::button1000()
 	if(out0Bits > (1<<7))
 		out0Bits = 0;
 	
-	out0Cs = false;
+	*out0Cs = false;
 	obcS->spi1->putc(out0Bits);
-	out0Cs = true;
+	*out0Cs = true;
 }
 
 void OpenOBC::button100()
@@ -486,9 +476,9 @@ void OpenOBC::button100()
 	if(out1Bits > (1<<7))
 		out1Bits = 0;
 	
-	out1Cs = false;
+	*out1Cs = false;
 	obcS->spi1->putc(out1Bits);
-	out1Cs = true;
+	*out1Cs = true;
 }
 
 void OpenOBC::buttonMemo()
@@ -496,42 +486,14 @@ void OpenOBC::buttonMemo()
 	displayMode = DISPLAY_FREEMEM;
 }
 
-extern "C" void allocate_failed()
-{
-	while (1)
-	{
-
-	}
-}
-
-extern "C" void check_failed(uint8_t* file, uint32_t line)
-{
-	printf("CHECK FAILED (%s:%i)\r\n", file, line);
-	
-	while (1)
-	{
-
-	}
-}
-
-extern "C" void HardFault_Handler()
-{
-	while(1)
-	{
-
-	}
-}
-
-extern "C" void EINT1_IRQHandler()
+void runHandler()
 {
 	EXTI_ClearEXTIFlag(EXTI_EINT1);
 	doSleep = false;
 }
 
-extern "C" void EINT3_IRQHandler()
+void speedHandler()
 {
-// 	EXTI_ClearEXTIFlag(EXTI_EINT3);
-
 	if(GPIO_GetIntStatus(SPEED_PORT, SPEED_PIN, 1))
 	{
 		GPIO_ClearInt(SPEED_PORT, (1<<SPEED_PIN));
@@ -545,6 +507,22 @@ extern "C" void EINT3_IRQHandler()
 			count = 0;
 		}
 	}
+}
+
+extern "C" void allocate_failed()
+{
+	while (1);
+}
+
+extern "C" void check_failed(uint8_t* file, uint32_t line)
+{
+	printf("CHECK FAILED (%s:%i)\r\n", file, line);
+	while (1);
+}
+
+extern "C" void HardFault_Handler()
+{
+	while(1);
 }
 
 extern "C" void SysTick_Handler()
@@ -577,12 +555,8 @@ extern "C" void SysTick_Handler()
 		}
 
 		if(*obcS->run)
-		{
 			doSleep = false;
-		}
 		else
-		{
 			doSleep = true;
-		}
 	}
 }

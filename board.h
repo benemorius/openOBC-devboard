@@ -94,6 +94,10 @@ extern "C" char* get_heap_end(void);
 
 #define OUT_RESET_PORT (0)
 #define OUT_RESET_PIN (19)
+#define OUT0_CS_PORT (0)
+#define OUT0_CS_PIN (20)
+#define OUT1_CS_PORT (2)
+#define OUT1_CS_PIN (3)
 
 #define RUN_PORT (2)
 #define RUN_PIN (11)

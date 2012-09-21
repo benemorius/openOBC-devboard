@@ -37,6 +37,7 @@
 #include "ObcKeypad.h"
 #include "CheckControlModule.h"
 #include "FuelLevel.h"
+#include "Capture.h"
 
 typedef enum
 {
@@ -57,7 +58,6 @@ class OpenOBC : public InterruptManagerOwner
 public:
 	OpenOBC();
 	void mainloop();
-
 	void setConsum();
 	void setTemp();
 	void setSpeed();
@@ -82,6 +82,9 @@ public:
 	
 
 private:
+	void sleep();
+	void wake();
+	
 	Debug* debug;
 	RTC* rtc;
 	Uart* kline;
@@ -94,8 +97,11 @@ private:
 	CheckControlModule* ccm;
 	Input* speed;
 	IO* lcdReset;
-
+	IO* out0Cs;
+	IO* out1Cs;
 	DisplayMode_Type displayMode;
+	Capture* fuelCons;
+
 };
 
 
