@@ -69,6 +69,11 @@ void runHandler();
 
 OpenOBC::OpenOBC()
 {
+	GPIO_IntDisable(0, 0xffffffff, 0);
+	GPIO_IntDisable(0, 0xffffffff, 1);
+	GPIO_IntDisable(2, 0xffffffff, 0);
+	GPIO_IntDisable(2, 0xffffffff, 1);
+
 	obcS = this;
 	
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
@@ -381,6 +386,10 @@ void OpenOBC::sleep()
 	*obcS->keypadLight = false;
 
 	NVIC_DisableIRQ(EINT3_IRQn);
+	GPIO_IntDisable(0, 0xffffffff, 0);
+	GPIO_IntDisable(0, 0xffffffff, 1);
+	GPIO_IntDisable(2, 0xffffffff, 0);
+	GPIO_IntDisable(2, 0xffffffff, 1);
 
 	/*---------- Disable and disconnect the main PLL0 before enter into Deep-Sleep
 	 * or Power-Down mode <according to errata.lpc1768-16.March.2010> ------------
