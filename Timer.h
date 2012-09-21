@@ -27,34 +27,29 @@
 #define TIMER_H
 
 #include <stdint.h>
+#include "InterruptManager.h"
 
-extern "C" volatile uint32_t SysTickCnt;
+#define TIMER_PERIPHERAL (LPC_TIM0)
+#define TIMER_INTERRUPT (TIMER0_IRQn)
+#define TIMER_MANAGED_INTERRUPT (IRQ_TIMER0)
 
 class Timer
 {
 public:
-	Timer()
-	{
-		start();
-	}
-	
-	void start()
-	{
-		time = SysTickCnt;
-	}
-
-	uint32_t read()
-	{
-		return (SysTickCnt - time) / 1000;
-	}
-
-	uint32_t read_ms()
-	{
-		return (SysTickCnt - time);
-	}
+	Timer();
+	Timer(InterruptManager& interruptManager);
+	~Timer();
+	void start();
+	uint32_t read();
+	uint32_t read_ms();
+	uint32_t read_us();
+	void overflowHandler();
 
 private:
-	uint32_t time;
+	static bool timerInitialized;
+	uint32_t startCount;
+	uint32_t overflows;
+	InterruptManager* interruptManager;
 };
 
 #endif // TIMER_H

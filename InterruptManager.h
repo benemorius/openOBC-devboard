@@ -134,6 +134,11 @@ public:
 		GPIO_ClearValue(2, (1<<0));
 	}
 
+	bool isAttached(IRQHandler_Type irq)
+	{
+		return pointers[irq]->isValid();
+	}
+
 private:
 	FunctionPointer* pointers[IRQHandler_NUM_VALUES]; //FIXME enum values do not map completely to a congiguous array
 };
