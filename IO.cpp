@@ -39,7 +39,7 @@ IO::IO(uint8_t port, uint8_t pin, bool isOn, bool onIsHigh)
 	PINSEL_CFG_Type PinCfg;
 	PinCfg.Funcnum = PINSEL_FUNC_0;
 	PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
-	PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE; //TODO make this configurable
+	PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE;
 	PinCfg.Portnum = this->port;
 	PinCfg.Pinnum = this->pin;
 	PINSEL_ConfigPin(&PinCfg);
@@ -51,6 +51,8 @@ IO::IO(uint8_t port, uint8_t pin, bool isOn, bool onIsHigh)
 
 void IO::setOpenDrain(bool isOpenDrain)
 {
+	this->isOpenDrain = isOpenDrain;
+	
 	PINSEL_CFG_Type PinCfg;
 	PinCfg.Funcnum = PINSEL_FUNC_0;
 	if(isOpenDrain)
@@ -108,4 +110,56 @@ IO& IO::operator=(bool state)
 {
 	setState(state);
 	return *this;
+}
+
+void IO::setInput()
+{
+	GPIO_SetDir(port, (1<<pin), 0);
+}
+
+void IO::setOutput()
+{
+	GPIO_SetDir(port, (1<<pin), 1);
+}
+
+void IO::setPullup()
+{
+	PINSEL_CFG_Type PinCfg;
+	PinCfg.Funcnum = PINSEL_FUNC_0;
+	if(isOpenDrain)
+		PinCfg.OpenDrain = PINSEL_PINMODE_OPENDRAIN;
+	else
+		PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
+	PinCfg.Pinmode = PINSEL_PINMODE_PULLUP;
+	PinCfg.Portnum = this->port;
+	PinCfg.Pinnum = this->pin;
+	PINSEL_ConfigPin(&PinCfg);
+}
+
+void IO::setPulldown()
+{
+	PINSEL_CFG_Type PinCfg;
+	PinCfg.Funcnum = PINSEL_FUNC_0;
+	if(isOpenDrain)
+		PinCfg.OpenDrain = PINSEL_PINMODE_OPENDRAIN;
+	else
+		PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
+	PinCfg.Pinmode = PINSEL_PINMODE_PULLDOWN;
+	PinCfg.Portnum = this->port;
+	PinCfg.Pinnum = this->pin;
+	PINSEL_ConfigPin(&PinCfg);
+}
+
+void IO::setTristate()
+{
+	PINSEL_CFG_Type PinCfg;
+	PinCfg.Funcnum = PINSEL_FUNC_0;
+	if(isOpenDrain)
+		PinCfg.OpenDrain = PINSEL_PINMODE_OPENDRAIN;
+	else
+		PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
+	PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE;
+	PinCfg.Portnum = this->port;
+	PinCfg.Pinnum = this->pin;
+	PINSEL_ConfigPin(&PinCfg);
 }

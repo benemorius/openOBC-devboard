@@ -38,6 +38,11 @@ public:
 	void setState(bool on);
 	bool getState() const;
 	void setOpenDrain(bool isOpenDrain);
+	void setInput();
+	void setOutput();
+	void setPullup();
+	void setPulldown();
+	void setTristate();
 
 	uint8_t getPort() const {return port;}
 	uint8_t getPin() const {return pin;}
@@ -50,6 +55,7 @@ private:
 	uint8_t pin;
 	bool onIsHigh;
 	bool isOn;
+	bool isOpenDrain;
 
 };
 
