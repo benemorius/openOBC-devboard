@@ -560,7 +560,7 @@ extern "C" void SysTick_Handler()
 	{
 		if(SysTickCnt % 1000 == 0)
 		{
-			rpm = rps * 30;
+			rpm = rps * 60;
 			rps = 0;
 		}
 

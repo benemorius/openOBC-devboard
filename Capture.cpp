@@ -66,8 +66,8 @@ Capture::Capture(uint8_t speedPort, uint8_t speedPin, uint8_t fuelConsPort, uint
 // 	TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
 // 	TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
 	TIM_CaptureConfigStruct.CaptureChannel = 1;
-	TIM_CaptureConfigStruct.RisingEdge = ENABLE;
-	TIM_CaptureConfigStruct.FallingEdge = DISABLE;
+	TIM_CaptureConfigStruct.RisingEdge = DISABLE;
+	TIM_CaptureConfigStruct.FallingEdge = ENABLE;
 	TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
 	TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
 
@@ -86,87 +86,40 @@ Capture::Capture(uint8_t speedPort, uint8_t speedPin, uint8_t fuelConsPort, uint
 
 void Capture::interruptHandler()
 {
-	static bool ch0High;
-
-	static bool ch1High;
+	static bool ch1High = true;
 	static uint32_t ch1RisingEdge;
 	static uint32_t ch1FallingEdge;
-	static uint32_t ch1LastFallingEdge;
 	
-	if(TIM_GetIntCaptureStatus(this->peripheral,TIM_MR0_INT)) //FIXME
-	{
-		TIM_ClearIntCapturePending(this->peripheral,TIM_MR0_INT); //FIXME
-		if(!ch0High)
-		{
-			ch0High = true;
-			risingEdge = TIM_GetCaptureValue(this->peripheral,TIM_COUNTER_INCAP0); //FIXME
-			TIM_CAPTURECFG_Type TIM_CaptureConfigStruct;
-			TIM_CaptureConfigStruct.CaptureChannel = 0;
-			TIM_CaptureConfigStruct.RisingEdge = DISABLE;
-			TIM_CaptureConfigStruct.FallingEdge = ENABLE;
-			TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
-			TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
-		}
-		else
-		{
-			if(lastFallingEdge != 0)
-				TIM_ResetCounter(this->peripheral);
-			ch0High = false;
-			fallingEdge = TIM_GetCaptureValue(this->peripheral,TIM_COUNTER_INCAP0); //FIXME
-			TIM_CAPTURECFG_Type TIM_CaptureConfigStruct;
-			TIM_CaptureConfigStruct.CaptureChannel = 0;
-			TIM_CaptureConfigStruct.RisingEdge = ENABLE;
-			TIM_CaptureConfigStruct.FallingEdge = DISABLE;
-			TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
-			TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
-			if(lastFallingEdge != 0)
-			{
-				period = (float)(fallingEdge - lastFallingEdge) / CLKPWR_GetPCLK(CLKPWR_PCLKSEL_TIMER2); //FIXME
-				dutyCycle = (float)(fallingEdge - risingEdge) / (fallingEdge - lastFallingEdge);
-				lastFallingEdge = 0;
-			}
-			else
-				lastFallingEdge = fallingEdge;
-		}
-		
-// 		callback.call();
-	}
-
 	if(TIM_GetIntCaptureStatus(this->peripheral,TIM_MR1_INT)) //FIXME
 	{
 		TIM_ClearIntCapturePending(this->peripheral,TIM_MR1_INT); //FIXME
-		if(!ch1High)
+		if(ch1High)
 		{
-			ch1High = true;
-			ch1RisingEdge = TIM_GetCaptureValue(this->peripheral,TIM_COUNTER_INCAP1); //FIXME
-			TIM_CAPTURECFG_Type TIM_CaptureConfigStruct;
-			TIM_CaptureConfigStruct.CaptureChannel = 1;
-			TIM_CaptureConfigStruct.RisingEdge = DISABLE;
-			TIM_CaptureConfigStruct.FallingEdge = ENABLE;
-			TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
-			TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
-		}
-		else
-		{
-			TIM_ResetCounter(this->peripheral);
-			
-			ch1High = false;
 			ch1FallingEdge = TIM_GetCaptureValue(this->peripheral,TIM_COUNTER_INCAP1); //FIXME
+			ch1High = false;
 			TIM_CAPTURECFG_Type TIM_CaptureConfigStruct;
 			TIM_CaptureConfigStruct.CaptureChannel = 1;
 			TIM_CaptureConfigStruct.RisingEdge = ENABLE;
 			TIM_CaptureConfigStruct.FallingEdge = DISABLE;
 			TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
 			TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
-
-			uint32_t onClocks = ch1FallingEdge - ch1RisingEdge;
-			onTime = (float)onClocks / CLKPWR_GetPCLK(CLKPWR_PCLKSEL_TIMER2);
-// 			if(onTime > 10000)
-// 				onTime = 0;
-			
 		}
-		
-		callback.call();
+		else
+		{
+			ch1RisingEdge = TIM_GetCaptureValue(this->peripheral,TIM_COUNTER_INCAP1); //FIXME
+			TIM_ResetCounter(this->peripheral);
+			ch1High = true;
+			TIM_CAPTURECFG_Type TIM_CaptureConfigStruct;
+			TIM_CaptureConfigStruct.CaptureChannel = 1;
+			TIM_CaptureConfigStruct.RisingEdge = DISABLE;
+			TIM_CaptureConfigStruct.FallingEdge = ENABLE;
+			TIM_CaptureConfigStruct.IntOnCaption = ENABLE;
+			TIM_ConfigCapture(this->peripheral, &TIM_CaptureConfigStruct);
+
+			uint32_t onClocks = ch1RisingEdge - ch1FallingEdge;
+			onTime = (float)onClocks / CLKPWR_GetPCLK(CLKPWR_PCLKSEL_TIMER2);
+			callback.call();
+		}
 	}
 }
 
