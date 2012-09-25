@@ -172,7 +172,7 @@ OpenOBC::OpenOBC()
 	Input* y1 = new Input(0, 1);
 	Input* y2 = new Input(0, 10);
 	Input* y3 = new Input(0, 11);
-	keypad = new ObcKeypad(*x0, *x1, *x2, *x3, *x4, *y0, *y1, *y2, *y3);
+	keypad = new ObcKeypad(*x0, *x1, *x2, *x3, *x4, *y0, *y1, *y2, *y3, interruptManager);
 	keypad->attach(BUTTON_KMMLS, this, &OpenOBC::setVoltage);
 	keypad->attach(BUTTON_CONSUM, this, &OpenOBC::setConsum);
 	keypad->attach(BUTTON_CODE, this, &OpenOBC::setTemp);
@@ -292,13 +292,6 @@ void OpenOBC::mainloop()
 			lcd->printfClock("  :D");
 		else
 			lcd->printfClock("%02i%02i", rtc->getHours(), rtc->getMinutes());
-
-		uint32_t keys = keypad->getKeys();
-		if(keys)
-			printf("%05x\r\n", keys);
-		
-		keypad->scan();
-
 
 		float voltage;
 		float resistance;

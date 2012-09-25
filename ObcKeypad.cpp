@@ -25,18 +25,18 @@
 
 #include "ObcKeypad.h"
 
-ObcKeypad::ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y1, Input& y2, Input& y3) : x0(x0), x1(x1), x2(x2), x3(x3), x4(x4), y0(y0), y1(y1), y2(y2), y3(y3)
+ObcKeypad::ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y1, Input& y2, Input& y3, InterruptManager& interruptManager) : x0(x0), x1(x1), x2(x2), x3(x3), x4(x4), y0(y0), y1(y1), y2(y2), y3(y3), interruptManager(interruptManager)
 {
 	x0.setOpenDrain(true);
 	x1.setOpenDrain(true);
 	x2.setOpenDrain(true);
 	x3.setOpenDrain(true);
 	x4.setOpenDrain(true);
-	x0 = true;
-	x1 = true;
-	x2 = true;
-	x3 = true;
-	x4 = true;
+	x0 = false;
+	x1 = false;
+	x2 = false;
+	x3 = false;
+	x4 = false;
 	y0.setPullup();
 	y1.setPullup();
 	y2.setPullup();
@@ -44,6 +44,17 @@ ObcKeypad::ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y
 
 	for(uint32_t i = 0; i < BUTTON_NUM_VALUES; i++)
 		callbacks[i] = 0;
+
+	interruptManager.attach(IRQ_EINT3, this, &ObcKeypad::interruptHandler);
+	GPIO_IntEnable(y0.getPort(), (1<<y0.getPin()), 1);
+	GPIO_IntEnable(y1.getPort(), (1<<y1.getPin()), 1);
+	GPIO_IntEnable(y2.getPort(), (1<<y2.getPin()), 1);
+	GPIO_IntEnable(y3.getPort(), (1<<y3.getPin()), 1);
+	GPIO_IntEnable(y0.getPort(), (1<<y0.getPin()), 0);
+	GPIO_IntEnable(y1.getPort(), (1<<y1.getPin()), 0);
+	GPIO_IntEnable(y2.getPort(), (1<<y2.getPin()), 0);
+	GPIO_IntEnable(y3.getPort(), (1<<y3.getPin()), 0);
+	NVIC_EnableIRQ(EINT3_IRQn);
 }
 
 uint32_t ObcKeypad::getKeys()
@@ -53,6 +64,12 @@ uint32_t ObcKeypad::getKeys()
 
 	uint32_t keys = 0;
 	uint32_t bit = 0;
+
+	//disable all column outputs
+	for(uint8_t ix = 0; ix < 5; ix++)
+		*x[ix] = true;
+
+	//enable column outputs one at a time and read row inputs
 	for(uint8_t ix = 0; ix < 5; ix++)
 	{
 		*x[ix] = false;
@@ -67,24 +84,16 @@ uint32_t ObcKeypad::getKeys()
 // 		while(!*x[ix]);
 	}
 
+	//enable all column outputs again so next keypress can trigger an interrupt
+	for(uint8_t ix = 0; ix < 5; ix++)
+		*x[ix] = false;
+
 	return keys;
 }
 
 void ObcKeypad::scan()
 {
-	static bool released = true;
 	uint32_t key = getKeys(); //TODO support multiple keys
-
-	if(!key)
-	{
-		released = true;
-		return;
-	}
-
-	if(!released)
-		return;
-
-	released = false;
 
 	switch(key)
 	{
@@ -143,5 +152,27 @@ void ObcKeypad::scan()
 			call(BUTTON_SET);
 			break;
 			
+	}
+}
+
+void ObcKeypad::interruptHandler()
+{
+	if((GPIO_GetIntStatus(y0.getPort(), y0.getPin(), 1)) || (GPIO_GetIntStatus(y1.getPort(), y1.getPin(), 1)) || (GPIO_GetIntStatus(y2.getPort(), y2.getPin(), 1)) || (GPIO_GetIntStatus(y3.getPort(), y3.getPin(), 1)))
+	{
+		if(debounce.read_ms() >= 100)
+			scan();
+		debounce.start();
+		GPIO_ClearInt(y0.getPort(), (1<<y0.getPin()));
+		GPIO_ClearInt(y1.getPort(), (1<<y1.getPin()));
+		GPIO_ClearInt(y2.getPort(), (1<<y2.getPin()));
+		GPIO_ClearInt(y3.getPort(), (1<<y3.getPin()));
+	}
+	if((GPIO_GetIntStatus(y0.getPort(), y0.getPin(), 0)) || (GPIO_GetIntStatus(y1.getPort(), y1.getPin(), 0)) || (GPIO_GetIntStatus(y2.getPort(), y2.getPin(), 0)) || (GPIO_GetIntStatus(y3.getPort(), y3.getPin(), 0)))
+	{
+		debounce.start();
+		GPIO_ClearInt(y0.getPort(), (1<<y0.getPin()));
+		GPIO_ClearInt(y1.getPort(), (1<<y1.getPin()));
+		GPIO_ClearInt(y2.getPort(), (1<<y2.getPin()));
+		GPIO_ClearInt(y3.getPort(), (1<<y3.getPin()));
 	}
 }

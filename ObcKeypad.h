@@ -28,13 +28,15 @@
 #include "IO.h"
 #include "Input.h"
 #include "FunctionPointer.h"
+#include "InterruptManager.h"
+#include "Timer.h"
 
 #define BUTTON_1000_MASK (1<<4)
 #define BUTTON_100_MASK (1<<0)
 #define BUTTON_10_MASK (1<<12)
 #define BUTTON_1_MASK (1<<16)
 #define BUTTON_CONSUM_MASK (1<<5)
-#define BUTTON_TEMP_MASK (1<<00000000000000000000000000000111)
+#define BUTTON_TEMP_MASK (1<<00000000000000000000000000000111) //value not yet known... need to fix my TEMP button :|
 #define BUTTON_SPEED_MASK (1<<11)
 #define BUTTON_DIST_MASK (1<<2)
 #define BUTTON_CHECK_MASK (1<<6)
@@ -75,7 +77,7 @@ typedef enum
 class ObcKeypad
 {
 public:
-	ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y1, Input& y2, Input& y3);
+	ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y1, Input& y2, Input& y3, InterruptManager& interruptManager);
 
 	 uint32_t getKeys();
 	 void scan();
@@ -110,9 +112,12 @@ private:
 	Input& y1;
 	Input& y2;
 	Input& y3;
-
+	InterruptManager& interruptManager;
+	Timer debounce;
+	
 	FunctionPointer* callbacks[BUTTON_NUM_VALUES];
 
+	void interruptHandler();
 	
 	void call(ObcKeypadButton_Type button)
 	{
