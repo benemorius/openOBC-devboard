@@ -1,0 +1,12 @@
+sudo apt-get install git flex bison libgmp3-dev libmpfr-dev libncurses5-dev libmpc-dev autoconf texinfo zlib1g-dev build-essential libftdi-dev
+cd
+git clone https://github.com/esden/summon-arm-toolchain.git
+cd summon-arm-toolchain
+sed -i 's/--no-passive-ftp //' summon-arm-toolchain
+./summon-arm-toolchain LIBOPENCM3_EN=0
+PATH=$PATH:~/sat/bin
+cd
+git clone https://github.com/benemorius/openOBC-devboard.git
+cd openOBC-devboard
+make
+
