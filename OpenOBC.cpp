@@ -26,6 +26,7 @@
 #include "OpenOBC.h"
 #include "board.h"
 #include "delay.h"
+#include "Timer.h"
 
 #include <lpc17xx_gpio.h>
 #include <lpc17xx_pinsel.h>
@@ -39,9 +40,6 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
-#include "Timer.h"
-
-using namespace std;
 
 volatile uint32_t SysTickCnt;
 OpenOBC* obcS;
@@ -210,12 +208,9 @@ OpenOBC::OpenOBC()
 	pincfg.Portnum = 0;
 	pincfg.Pinnum = 25;
 	PINSEL_ConfigPin(&pincfg);
-	
 	ADC_Init(LPC_ADC, 200000);
 	ADC_IntConfig(LPC_ADC,ADC_ADINTEN0,DISABLE);
-// 	ADC_ChannelCmd(LPC_ADC,ADC_CHANNEL_0,ENABLE);
 	ADC_IntConfig(LPC_ADC, ADC_ADINTEN2, DISABLE);
-// 	ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, ENABLE);
 
 	go = true;
 }
@@ -225,20 +220,6 @@ void OpenOBC::mainloop()
 {
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 	printf("starting mainloop...\r\n");
-
-
-
-// 	delay(1000);
-// 	while(1)
-// 	{
-// 		if(get)
-// 		{
-// 			get = false;
-// 			printf("frequency: %.0f duty cycle: %.2f speed: %.0f mph\r\n", speed->getFrequency(), speed->getDutyCycle(), speed->getFrequency() / 1.3 * .621);
-// 		}
-// 	}
-
-	
 
 	if(0)
 	{
@@ -293,74 +274,87 @@ void OpenOBC::mainloop()
 		else
 			lcd->printfClock("%02i%02i", rtc->getHours(), rtc->getMinutes());
 
-		float voltage;
-		float resistance;
-		float temperature;
-		float speed;
 		switch(displayMode)
 		{
 			case DISPLAY_VOLTAGE:
+			{
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, ENABLE);
 				ADC_StartCmd(LPC_ADC, ADC_START_NOW);
-				while (!(ADC_ChannelGetStatus(LPC_ADC, ADC_CHANNEL_2, ADC_DATA_DONE)));
-				voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_2) / 4095 * (2.990);
+				while(!(ADC_ChannelGetStatus(LPC_ADC, ADC_CHANNEL_2, ADC_DATA_DONE)));
+				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_2) / 4095 * (2.990);
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, DISABLE);
 				voltage = voltage / (2.2/(2.2+10.0));
 				lcd->printf("%.2fV", voltage);
 				break;
-
+			}
 			case DISPLAY_SPEED:
+			{
+				float speed;
 				if(SysTickCnt - lastSpeedUpdateTime > 2000)
 					speed = 0;
 				else
 					speed = (float)1000000 / speedPeriod / 4712 * 3600 * .621;
 				lcd->printf("%3.1f mph", speed);
 				break;
-				
+			}
 			case DISPLAY_TEMP:
+			{
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_0, ENABLE);
 				ADC_StartCmd(LPC_ADC,ADC_START_NOW);
 				while(!(ADC_ChannelGetStatus(LPC_ADC,ADC_CHANNEL_0, ADC_DATA_DONE)));
-				voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_0) / 4095 * (2.990);
+				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_0) / 4095 * (2.990);
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_0, DISABLE);
-				resistance = (10000 * voltage) / (3.3 - voltage);
-				temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15;
+				float resistance = (10000 * voltage) / (3.3 - voltage);
+				float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15;
 				lcd->printf("%.1fC  %.1fF", temperature, temperature * 1.78 + 32);
-				printf("V: %.3f R: %.0f T: %.2f\r\n", voltage, resistance, temperature);
 				break;
-				
+			}	
 			case DISPLAY_CONSUM:
+			{
 				lcd->printf("%.6f rpm: %4i", fuelCons->getOnTime(), rpm);
 				break;
-				
+			}	
 			case DISPLAY_OPENOBC:
+			{
 				lcd->printf("openOBC");
 				break;
-				
+			}	
 			case DISPLAY_CHECK:
+			{
 				lcd->printf("CCM byte: %02x", ccm->getStatus());
 				break;
-
+			}
 			case DISPLAY_FREEMEM:
+			{
 				lcd->printf("free memory: %i", get_stack_top() - get_heap_end());
 				break;
-
+			}
 			case DISPLAY_FUEL_LEVEL:
+			{
 // 				lcd->printf("%.1f litres", (float)fuelLevel->getLitres() / 10);
 				lcd->printf("%.1f gallons", (float)fuelLevel->getLitres() / 10 * 0.264172);
 				break;
-
+			}
 			case DISPLAY_OUTPUTS:
+			{
 				lcd->printf("outputs: 0x%02x 0x%02x", out0Bits, out1Bits);
 				break;
-
+			}
 			default:
+			{
 				lcd->printf("invalid displayMode");
 				break;
-				
+			}	
 		}
+		
+		*out0Cs = false;
+		obcS->spi1->putc(out0Bits);
+		*out0Cs = true;
+		*out1Cs = false;
+		obcS->spi1->putc(out1Bits);
+		*out1Cs = true;
 
-		delay(50);
+		delay(200);
 
 		if(doSleep)
 		{
@@ -465,10 +459,6 @@ void OpenOBC::button1000()
 		out0Bits = (1<<0);
 	if(out0Bits > (1<<7))
 		out0Bits = 0;
-	
-	*out0Cs = false;
-	obcS->spi1->putc(out0Bits);
-	*out0Cs = true;
 }
 
 void OpenOBC::button100()
@@ -483,10 +473,6 @@ void OpenOBC::button100()
 		out1Bits = (1<<0);
 	if(out1Bits > (1<<7))
 		out1Bits = 0;
-	
-	*out1Cs = false;
-	obcS->spi1->putc(out1Bits);
-	*out1Cs = true;
 }
 
 void OpenOBC::buttonMemo()
