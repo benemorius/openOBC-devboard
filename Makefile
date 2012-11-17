@@ -11,6 +11,8 @@ AS      = $(ARCH)-as
 CP      = $(ARCH)-objcopy
 OD	= $(ARCH)-objdump
 SIZE	= $(ARCH)-size
+GDB	= $(ARCH)-gdb
+GDBTUI	= $(ARCH)-gdbtui
 RM	= rm
 
 INCDIRS = ./
@@ -96,5 +98,5 @@ flash: $(PROJECT).elf
 
 install: flash
 
-omg:
-	echo $$PATH
+debug: $(PROJECT).elf
+	$(GDBTUI) -x openocd.gdb
