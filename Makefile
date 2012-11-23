@@ -15,6 +15,8 @@ GDB	= $(ARCH)-gdb
 GDBTUI	= $(ARCH)-gdbtui
 RM	= rm
 
+LPCCHECKSUM	= lpcchecksum
+
 INCDIRS = ./
 INCDIRS += cmsis/
 INCSTRING = $(patsubst %,-I%,$(INCDIRS)) -I.
@@ -55,7 +57,7 @@ CMSISOBJS = $(CMSISCSRCS:.c=.o)
 
 .PHONY: all size clean install flash
 
-all: $(PROJECT).bin $(PROJECT).hex
+all: $(PROJECT).elf $(PROJECT).hex
 
 size: $(PROJECT).elf
 	@$(SIZE) *.o $<
@@ -65,6 +67,7 @@ size: $(PROJECT).elf
 
 %.bin: %.elf
 	@$(CP) $(CPFLAGS) -O binary $< $*.bin
+	@$(LPCCHECKSUM) $*.bin #write checksum to .bin file; can be commented out
 
 $(PROJECT).elf: $(LINKER_SCRIPT) $(OBJS) cmsis.a
 	$(CC) -o $@ $(OBJS) -Xlinker -Map -Xlinker $(PROJECT).map -Xlinker -T $(LINKER_SCRIPT) $(CFLAGS) -l:cmsis.a -lstdc++
@@ -93,8 +96,8 @@ for D in "." "**"; do \
   rm -f $$D/*.o $$D/*.d $$D/*.lst $$D/*.dump $$D/*.map $$D/*.a; \
 done
 
-flash: $(PROJECT).elf
-	flash $(PROJECT).elf
+flash: $(PROJECT).bin
+	flash $(PROJECT).bin
 
 install: flash
 
