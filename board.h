@@ -40,6 +40,13 @@ extern "C" char* get_stack_top(void);
 extern "C" char* get_heap_end(void);
 
 
+#define SPI0_MOSI_PORT (0)
+#define SPI0_MOSI_PIN (18)
+#define SPI0_MISO_PORT (0)
+#define SPI0_MISO_PIN (17)
+#define SPI0_SCK_PORT (0)
+#define SPI0_SCK_PIN (15)
+#define SPI0_CLOCKRATE (100000)
 
 #define SPI1_MOSI_PORT (0)
 #define SPI1_MOSI_PIN (9)
