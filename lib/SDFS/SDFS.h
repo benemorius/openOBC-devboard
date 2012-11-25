@@ -23,33 +23,57 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef SPI_H
-#define SPI_H
+#ifndef SDCARD_H
+#define SDCARD_H
 
-#include <stdint.h>
+#include "SPI.h"
+#include "IO.h"
+#include "ff.h"
+#include "FatFS.h"
 
-#include <lpc17xx_ssp.h>
+#include <string>
 
-class SPI
+class SDFS : public FatFSDisk
 {
-
 public:
-    SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, uint8_t sckPort, uint8_t sckPin, uint32_t clockRate);
+	SDFS(SPI& spi, IO& cs);
+	~SDFS();
 
-	 uint8_t readWrite(uint8_t writeByte);
-	 void setClockRate(uint32_t hz);
-	 void setPullup(bool isEnabled);
+	int32_t mount(const char* mountpath);
+	int32_t unmount();
+	std::string getMountpath() {return this->mountpath;}
+
+	virtual int32_t disk_initialise();
+	virtual int32_t disk_status();
+	virtual int32_t disk_read(uint8_t* buffer, uint32_t startSector, uint32_t count);
+	virtual int32_t disk_write(const uint8_t* data, uint32_t startSector, uint32_t count);
+	virtual int32_t disk_ioctl(uint8_t ctrl, void* buffer);
+	
+	int disk_sync();
+	int disk_sectors();
+	
 
 private:
-	uint8_t mosiPort;
-	uint8_t mosiPin;
-	uint8_t misoPort;
-	uint8_t misoPin;
-	uint8_t sckPort;
-	uint8_t sckPin;
-	LPC_SSP_TypeDef* peripheral;
-	uint32_t clockRate;
+	int _cmd(int cmd, int arg);
+	int _cmdx(int cmd, int arg);
+	int _cmd8();
+	int _cmd58();
+	int initialise_card();
+	int initialise_card_v1();
+	int initialise_card_v2();
+
+	int _read(char *buffer, int length);
+	int _write(const char *buffer, int length);
+	int _sd_sectors();
+	int _sectors;
+
 	
+	SPI& spi;
+	IO& cs;
+	std::string mountpath;
+	int cdv;
+	bool isMounted;
 };
 
-#endif // SPI_H
+
+#endif // SDCARD_H

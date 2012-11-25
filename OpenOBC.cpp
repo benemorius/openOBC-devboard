@@ -35,11 +35,8 @@
 #include <lpc17xx_exti.h>
 
 #include <cstdio>
-#include <ctime>
-#include <stdlib.h>
-#include <algorithm>
-#include <map>
 #include <cmath>
+#include <stdlib.h>
 
 volatile uint32_t SysTickCnt;
 OpenOBC* obcS;
@@ -83,6 +80,25 @@ OpenOBC::OpenOBC()
 
 	//spi coniguration
 	spi1 = new SPI(SPI1_MOSI_PORT, SPI1_MOSI_PIN, SPI1_MISO_PORT, SPI1_MISO_PIN, SPI1_SCK_PORT, SPI1_SCK_PIN, SPI1_CLOCKRATE);
+	
+	//config file configuration
+	IO* sdcardCs = new IO(SDCARD_CS_PORT, SDCARD_CS_PIN);
+	sd = new SDFS(*spi1, *sdcardCs);
+	sd->mount("sd");
+	config = new ConfigFile("/sd/openobc.cfg");
+	//parse the config file; create one with default parameters if it doesn't exist
+	if(config->readConfig() < 0)
+	{
+		//default config file parameters
+		config->setValueByName("DefaultDisplayMode", "DISPLAY_OPENOBC");
+		config->setValueByName("VoltageReferenceCalibration", "0.00");
+		
+		int32_t result = config->writeConfig();
+		if(result > 0)
+		{
+			fprintf(stderr, "wrote default config file to %s\r\n", config->getFilename().c_str());
+		}
+	}
 
 	//lcd configuration
 	lcdReset = new IO(LCD_RESET_PORT, LCD_RESET_PIN, false);
@@ -94,7 +110,29 @@ OpenOBC::OpenOBC()
 	IO* lcdUnk0 = new IO(LCD_UNK0_PORT, LCD_UNK0_PIN, true);
 	IO* lcdUnk1 = new IO(LCD_UNK1_PORT, LCD_UNK1_PIN, false);
 	lcd = new ObcLcd(*spi1, *lcdSel, *lcdRefresh, *lcdUnk0, *lcdUnk1);
-	displayMode = DISPLAY_OPENOBC;
+
+	//default display mode configuration
+	std::string defaultDisplayModeString = config->getValueByName("DefaultDisplayMode");
+	if(defaultDisplayModeString == "DISPLAY_CHECK")
+		displayMode = DISPLAY_CHECK;
+	else if(defaultDisplayModeString == "DISPLAY_CONSUM")
+		displayMode = DISPLAY_CONSUM;
+	else if(defaultDisplayModeString == "DISPLAY_FREEMEM")
+		displayMode = DISPLAY_FREEMEM;
+	else if(defaultDisplayModeString == "DISPLAY_FUEL_LEVEL")
+		displayMode = DISPLAY_FUEL_LEVEL;
+	else if(defaultDisplayModeString == "DISPLAY_OPENOBC")
+		displayMode = DISPLAY_OPENOBC;
+	else if(defaultDisplayModeString == "DISPLAY_OUTPUTS")
+		displayMode = DISPLAY_OUTPUTS;
+	else if(defaultDisplayModeString == "DISPLAY_SPEED")
+		displayMode = DISPLAY_SPEED;
+	else if(defaultDisplayModeString == "DISPLAY_TEMP")
+		displayMode = DISPLAY_TEMP;
+	else if(defaultDisplayModeString == "DISPLAY_VOLTAGE")
+		displayMode = DISPLAY_VOLTAGE;
+	else
+		displayMode = DISPLAY_OPENOBC;
 
 	//rtc configuration
 	rtc = new RTC(); rtcS = rtc;
@@ -281,7 +319,8 @@ void OpenOBC::mainloop()
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, ENABLE);
 				ADC_StartCmd(LPC_ADC, ADC_START_NOW);
 				while(!(ADC_ChannelGetStatus(LPC_ADC, ADC_CHANNEL_2, ADC_DATA_DONE)));
-				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_2) / 4095 * (2.990);
+				float referenceVoltage = 3.0f + atof(config->getValueByName("VoltageReferenceCalibration").c_str());
+				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_2) / 4095 * referenceVoltage;
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, DISABLE);
 				voltage = voltage / (2.2/(2.2+10.0));
 				lcd->printf("%.2fV", voltage);
@@ -302,7 +341,8 @@ void OpenOBC::mainloop()
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_0, ENABLE);
 				ADC_StartCmd(LPC_ADC,ADC_START_NOW);
 				while(!(ADC_ChannelGetStatus(LPC_ADC,ADC_CHANNEL_0, ADC_DATA_DONE)));
-				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_0) / 4095 * (2.990);
+				float referenceVoltage = 3.0f + atof(config->getValueByName("VoltageReferenceCalibration").c_str());
+				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_0) / 4095 * referenceVoltage;
 				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_0, DISABLE);
 				float resistance = (10000 * voltage) / (3.3 - voltage);
 				float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15;
@@ -348,10 +388,10 @@ void OpenOBC::mainloop()
 		}
 		
 		*out0Cs = false;
-		obcS->spi1->putc(out0Bits);
+		spi1->readWrite(out0Bits);
 		*out0Cs = true;
 		*out1Cs = false;
-		obcS->spi1->putc(out1Bits);
+		spi1->readWrite(out1Bits);
 		*out1Cs = true;
 
 		delay(200);

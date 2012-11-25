@@ -38,6 +38,8 @@
 #include "CheckControlModule.h"
 #include "FuelLevel.h"
 #include "Capture.h"
+#include "SDFS.h"
+#include "ConfigFile.h"
 
 typedef enum
 {
@@ -79,6 +81,8 @@ public:
 	Input* sdcardDetect;
 	FuelLevel* fuelLevel;
 	Input* stalkButton;
+	SDFS* sd;
+	ConfigFile* config;
 	
 
 private:

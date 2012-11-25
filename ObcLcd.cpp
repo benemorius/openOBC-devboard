@@ -68,7 +68,7 @@ void ObcLcd::update()
 	if(length % 2) //if an odd length makes it uncenterable, shifting to the right looks better
 		++spaces;
 	for(uint8_t i = spaces; i; i--)
-		spi.putc(' ');
+		spi.readWrite(' ');
 
 	//send the lcd buffer; fill to LCD_MAX_CHARACTERS characters with spaces
 	uint8_t i;
@@ -76,26 +76,26 @@ void ObcLcd::update()
 	{
 		if(lcdBuffer[i] == '\0')
 			break;
-		spi.putc((uint8_t)lcdBuffer[i]);
+		spi.readWrite((uint8_t)lcdBuffer[i]);
 	}
 	while(i++ < (LCD_MAX_CHARACTERS - spaces))
-		spi.putc(' ');
+		spi.readWrite(' ');
 
 	//send the clock buffer; fill to CLOCK_MAX_CHARACTERS characters with spaces
 	for(i = 0; i < CLOCK_MAX_CHARACTERS; i++)
 	{
 		if(clockBuffer[i] == '\0')
 			break;
-		spi.putc((uint8_t)clockBuffer[i]);
+		spi.readWrite((uint8_t)clockBuffer[i]);
 	}
 	while(i++ < CLOCK_MAX_CHARACTERS)
-		spi.putc(' ');
+		spi.readWrite(' ');
 
 	//I forget what or why this is
-	spi.putc(0x00);
-	spi.putc(' ');
-	spi.putc(' ');
-	spi.putc(' ');
+	spi.readWrite(0x00);
+	spi.readWrite(' ');
+	spi.readWrite(' ');
+	spi.readWrite(' ');
 
 	refresh = true;
 	delay(1);

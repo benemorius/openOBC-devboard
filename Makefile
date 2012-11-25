@@ -19,6 +19,7 @@ LPCCHECKSUM	= lpcchecksum
 
 INCDIRS = ./
 INCDIRS += cmsis/
+INCDIRS += lib/fatfs lib/SDFS
 INCSTRING = $(patsubst %,-I%,$(INCDIRS)) -I.
 
 # Flags
@@ -47,8 +48,8 @@ CPFLAGS  =
 # LINKER_SCRIPT = LPC1768-flash.ld
 LINKER_SCRIPT = lpc17xx.ld
 # ASRCS  = startup_LPC17xx.s
-CSRCS = $(wildcard *.c)
-CPPSRCS = $(wildcard *.cpp)
+CSRCS = $(wildcard *.c) $(wildcard lib/fatfs/*.c) $(wildcard lib/fatfs/option/*.c)
+CPPSRCS = $(wildcard *.cpp) $(wildcard lib/SDFS/*.cpp) $(wildcard lib/fatfs/*.cpp)
 CMSISCSRCS = $(wildcard cmsis/*.c)
 
 
@@ -90,9 +91,9 @@ cmsis.a: $(CMSISOBJS)
 
 clean:
 	@rm -f *.hex *.bin
-	@-rm -f *.elf quiet.log
+	@-rm -f *.elf
 	@-\
-for D in "." "**"; do \
+for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option"; do \
   rm -f $$D/*.o $$D/*.d $$D/*.lst $$D/*.dump $$D/*.map $$D/*.a; \
 done
 

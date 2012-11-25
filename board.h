@@ -111,6 +111,8 @@ extern "C" char* get_heap_end(void);
 
 #define SDCARD_DETECT_PORT (1)
 #define SDCARD_DETECT_PIN (17)
+#define SDCARD_CS_PORT (1)
+#define SDCARD_CS_PIN (16)
 
 #define CCM_DATA_PORT (1)
 #define CCM_DATA_PIN (9)

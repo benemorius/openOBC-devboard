@@ -59,7 +59,7 @@ SPI::SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, u
 	}
 
 	PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
-	PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE;
+	PinCfg.Pinmode = PINSEL_PINMODE_PULLUP;
 	
 	PinCfg.Portnum = mosiPort;
 	PinCfg.Pinnum = mosiPin;
@@ -71,7 +71,6 @@ SPI::SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, u
 	PinCfg.Pinnum = sckPin;
 	PINSEL_ConfigPin(&PinCfg);
 
-
 	// SSP Configuration structure variable
 	SSP_CFG_Type SSP_ConfigStruct;
 	// initialize SSP configuration structure to default
@@ -80,6 +79,7 @@ SPI::SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, u
 	SSP_ConfigStruct.CPHA = SSP_CPHA_FIRST; //TODO make these configurable
 // 	SSP_ConfigStruct.CPHA = SSP_CPHA_SECOND;
 	SSP_ConfigStruct.CPOL = SSP_CPOL_HI;
+// 	SSP_ConfigStruct.CPOL = SSP_CPOL_LO;
 	SSP_ConfigStruct.ClockRate = this->clockRate;
 	// 	SSP_ConfigStruct.DataOrder = SPI_DATA_MSB_FIRST;
 	SSP_ConfigStruct.Databit = SSP_DATABIT_8;
@@ -92,17 +92,49 @@ SPI::SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, u
 	SSP_Cmd(this->peripheral, ENABLE);
 }
 
-uint8_t SPI::putc(uint8_t c)
+void SPI::setClockRate(uint32_t hz)
 {
-	SSP_DATA_SETUP_Type xferConfig;
+	this->clockRate = hz;
 	
-	uint8_t data;
+	SSP_CFG_Type SSP_ConfigStruct;
+	SSP_ConfigStructInit(&SSP_ConfigStruct);
+	SSP_ConfigStruct.CPHA = SSP_CPHA_FIRST; //TODO make these configurable
+	SSP_ConfigStruct.CPOL = SSP_CPOL_HI;
+	SSP_ConfigStruct.ClockRate = this->clockRate;
+	SSP_ConfigStruct.Databit = SSP_DATABIT_8;
+	SSP_ConfigStruct.Mode = SSP_MASTER_MODE;
 	
-	xferConfig.tx_data = &c;
-	xferConfig.rx_data = &data;
-	xferConfig.length = 1;
-	
-	SSP_ReadWrite(LPC_SSP1, &xferConfig, SSP_TRANSFER_POLLING);
+	SSP_Init(this->peripheral, &SSP_ConfigStruct);
+	SSP_Cmd(this->peripheral, ENABLE);
+}
 
-	return data;
+void SPI::setPullup(bool isEnabled)
+{
+	PINSEL_CFG_Type PinCfg;
+	
+	if(mosiPort == 0 && mosiPin == 9)
+		PinCfg.Funcnum = 2;
+	else if(mosiPort == 0 && mosiPin == 18)
+		PinCfg.Funcnum = 2;
+	else if(mosiPort == 1 && mosiPin == 24)
+		PinCfg.Funcnum = 3;
+	else //invalid port/pin specified
+		while(1);
+
+	PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
+	PinCfg.Pinmode = isEnabled ? PINSEL_PINMODE_PULLUP : PINSEL_PINMODE_TRISTATE;
+	PinCfg.Portnum = misoPort;
+	PinCfg.Pinnum = misoPin;
+	PINSEL_ConfigPin(&PinCfg);
+}
+
+uint8_t SPI::readWrite(uint8_t writeByte)
+{
+	uint8_t readByte;
+	SSP_DATA_SETUP_Type xferConfig;
+	xferConfig.tx_data = &writeByte;
+	xferConfig.rx_data = &readByte;
+	xferConfig.length = 1;
+	SSP_ReadWrite(this->peripheral, &xferConfig, SSP_TRANSFER_POLLING);
+	return readByte;
 }
