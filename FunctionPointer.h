@@ -109,6 +109,7 @@ public:
 				delete methodPointers[numMethodPointers];
 				methodPointers.erase(methodPointers.begin() + numMethodPointers);
 			}
+			delete fp;
 		}
 	}
 
