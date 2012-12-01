@@ -23,22 +23,18 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#define SD_PRESENT_PORTNUM (0)
-#define SD_PRESENT_PINNUM (5)
-
-
-
-
 #define DELAY50MS() for(uint32_t i = 0; i < 416635; i++)
 #define DELAY250MS() for(uint32_t i = 0; i < 2083175; i++)
 
 #define DEBOUNCE_DELAY (20)
 
-
+#define REFERENCE_VOLTAGE (3.0f)
 
 extern "C" char* get_stack_top(void);
 extern "C" char* get_heap_end(void);
 
+#define SD_PRESENT_PORTNUM (0)
+#define SD_PRESENT_PINNUM (5)
 
 #define SPI0_MOSI_PORT (0)
 #define SPI0_MOSI_PIN (18)
@@ -132,3 +128,9 @@ extern "C" char* get_heap_end(void);
 
 #define FUEL_CONS_PORT (0)
 #define FUEL_CONS_PIN (5)
+
+#define BATTERY_VOLTAGE_PORT (0)
+#define BATTERY_VOLTAGE_PIN (25)
+
+#define EXT_TEMP_PORT (0)
+#define EXT_TEMP_PIN (23)

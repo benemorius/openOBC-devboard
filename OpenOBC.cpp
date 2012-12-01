@@ -30,7 +30,6 @@
 
 #include <lpc17xx_gpio.h>
 #include <lpc17xx_pinsel.h>
-#include <lpc17xx_adc.h>
 #include <lpc17xx_clkpwr.h>
 #include <lpc17xx_exti.h>
 
@@ -233,22 +232,9 @@ OpenOBC::OpenOBC()
 	out0Cs = new IO(OUT0_CS_PORT, OUT0_CS_PIN, true);
 	out1Cs = new IO(OUT1_CS_PORT, OUT1_CS_PIN, true);
 	
-	//adc configuration
-	pincfg.Funcnum = 1;
-	pincfg.OpenDrain = 0;
-	pincfg.Pinmode = 0;
-	pincfg.Portnum = 0;
-	pincfg.Pinnum = 23;
-	PINSEL_ConfigPin(&pincfg);
-	pincfg.Portnum = 0;
-	pincfg.Pinnum = 24;
-	PINSEL_ConfigPin(&pincfg);
-	pincfg.Portnum = 0;
-	pincfg.Pinnum = 25;
-	PINSEL_ConfigPin(&pincfg);
-	ADC_Init(LPC_ADC, 200000);
-	ADC_IntConfig(LPC_ADC,ADC_ADINTEN0,DISABLE);
-	ADC_IntConfig(LPC_ADC, ADC_ADINTEN2, DISABLE);
+	//analog input configuration
+	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 2.2) / 2.2 * REFERENCE_VOLTAGE);
+	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
 
 	go = true;
 }
@@ -316,14 +302,7 @@ void OpenOBC::mainloop()
 		{
 			case DISPLAY_VOLTAGE:
 			{
-				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, ENABLE);
-				ADC_StartCmd(LPC_ADC, ADC_START_NOW);
-				while(!(ADC_ChannelGetStatus(LPC_ADC, ADC_CHANNEL_2, ADC_DATA_DONE)));
-				float referenceVoltage = 3.0f + atof(config->getValueByName("VoltageReferenceCalibration").c_str());
-				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_2) / 4095 * referenceVoltage;
-				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_2, DISABLE);
-				voltage = voltage / (2.2/(2.2+10.0));
-				lcd->printf("%.2fV", voltage);
+				lcd->printf("%.2fV", batteryVoltage->read());
 				break;
 			}
 			case DISPLAY_SPEED:
@@ -338,14 +317,9 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_TEMP:
 			{
-				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_0, ENABLE);
-				ADC_StartCmd(LPC_ADC,ADC_START_NOW);
-				while(!(ADC_ChannelGetStatus(LPC_ADC,ADC_CHANNEL_0, ADC_DATA_DONE)));
-				float referenceVoltage = 3.0f + atof(config->getValueByName("VoltageReferenceCalibration").c_str());
-				float voltage = (float)ADC_ChannelGetData(LPC_ADC, ADC_CHANNEL_0) / 4095 * referenceVoltage;
-				ADC_ChannelCmd(LPC_ADC, ADC_CHANNEL_0, DISABLE);
+				float voltage = temperature->read();
 				float resistance = (10000 * voltage) / (3.3 - voltage);
-				float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15;
+				float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15f;
 				lcd->printf("%.1fC  %.1fF", temperature, temperature * 1.78 + 32);
 				break;
 			}	

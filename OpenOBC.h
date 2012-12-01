@@ -40,6 +40,7 @@
 #include "Capture.h"
 #include "SDFS.h"
 #include "ConfigFile.h"
+#include <AnalogIn.h>
 
 typedef enum
 {
@@ -105,6 +106,8 @@ private:
 	IO* out1Cs;
 	DisplayMode_Type displayMode;
 	Capture* fuelCons;
+	AnalogIn* batteryVoltage;
+	AnalogIn* temperature;
 
 };
 
