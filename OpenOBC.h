@@ -37,11 +37,11 @@
 #include "ObcKeypad.h"
 #include "CheckControlModule.h"
 #include "FuelLevel.h"
-#include "Capture.h"
 #include "SDFS.h"
 #include "ConfigFile.h"
 #include <AnalogIn.h>
 #include "SpeedInput.h"
+#include "FuelConsumption.h"
 
 typedef enum
 {
@@ -105,10 +105,11 @@ private:
 	IO* out0Cs;
 	IO* out1Cs;
 	DisplayMode_Type displayMode;
-	Capture* fuelCons;
 	AnalogIn* batteryVoltage;
 	AnalogIn* temperature;
 	SpeedInput* speed;
+	FuelConsumption* fuelCons;
+	
 };
 
 

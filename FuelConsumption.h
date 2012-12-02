@@ -23,61 +23,34 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef CAPTURE_H
-#define CAPTURE_H
+#ifndef FUELCONSUMPTION_H
+#define FUELCONSUMPTION_H
 
+#include "Input.h"
 #include "InterruptManager.h"
-#include "FunctionPointer.h"
+#include "Timer.h"
 
-#include <LPC17xx.h>
-#include <stdint.h>
-#include <lpc17xx_clkpwr.h>
-
-class Capture
+class FuelConsumption
 {
 public:
-	Capture(uint8_t speedPort, uint8_t speedPin, uint8_t fuelConsPort, uint8_t fuelConsPin, InterruptManager* interruptManager);
+	FuelConsumption(Input& input, InterruptManager& interruptManager);
+	~FuelConsumption();
 
-	void interruptHandler();
-	float getPeriod() {return period;}
-	float getFrequency() {return (float)1 / period;}
-	float getDutyCycle() {return dutyCycle;}
+	float getRpm();
+	float getDutyCycle();
+	
+	uint32_t getOntime_us();
+	uint32_t getPeriod_us();
 
-	float getOnTime() {return onTime;}
-
-	template<typename T>
-	void attach(T* classPointer, void (T::*methodPointer)(void))
-	{
-		if((methodPointer != 0) && (classPointer != 0))
-		{
-			callback.attach(classPointer, methodPointer);
-		}
-	}
-	void attach(void (*functionPointer)(void))
-	{
-		callback.attach(functionPointer);
-	}
-
+	
 private:
-	uint8_t speedPort;
-	uint8_t speedPin;
-	uint8_t fuelConsPort;
-	uint8_t fuelConsPin;
-	LPC_TIM_TypeDef* peripheral;
-	uint8_t channel;
-	IRQn_Type irqn;
-	FunctionPointer callback;
-	uint32_t highCount;
-	uint32_t risingEdge;
-	uint32_t fallingEdge;
-	uint32_t lastFallingEdge;
-	bool high;
-	float frequency;
-	float dutyCycle;
-	float period;
-	float onTime;
+	void interruptHandler();
 	
-	
+	Input& input;
+	InterruptManager& interruptManager;
+	Timer timeSinceLastFallingEdge;
+	uint32_t period_us;
+	uint32_t ontime_us;
 };
 
-#endif // CAPTURE_H
+#endif // FUELCONSUMPTION_H

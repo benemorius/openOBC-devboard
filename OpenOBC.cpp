@@ -27,6 +27,7 @@
 #include "board.h"
 #include "delay.h"
 #include "Timer.h"
+#include "debugpretty.h"
 
 #include <lpc17xx_gpio.h>
 #include <lpc17xx_pinsel.h>
@@ -42,17 +43,10 @@ OpenOBC* obcS;
 Debug* debugS;
 RTC* rtcS;
 
-uint32_t rps;
-uint32_t rpm;
 uint32_t out0Bits;
 uint32_t out1Bits;
 bool doSleep = false;
 bool go = false;
-
-void callback()
-{
-	rps++;
-}
 
 extern "C" void Reset_Handler(void);
 void speedHandler();
@@ -66,6 +60,9 @@ OpenOBC::OpenOBC()
 	GPIO_IntDisable(2, 0xffffffff, 0);
 	GPIO_IntDisable(2, 0xffffffff, 1);
 
+	//enable bus, usage, and memmanage faults
+	SCB->SHCSR |= (1<<18) | (1<<17) | (1<<16);
+	
 	obcS = this;
 	
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
@@ -181,8 +178,9 @@ OpenOBC::OpenOBC()
 	NVIC_EnableIRQ(EINT1_IRQn);
 
 	//fuel consumption configuration
-	fuelCons = new Capture(SPEED_PORT, SPEED_PIN, FUEL_CONS_PORT, FUEL_CONS_PIN, &interruptManager);
-	fuelCons->attach(&callback);
+	Input* fuelConsInput = new Input(FUEL_CONS_PORT, FUEL_CONS_PIN);
+	fuelConsInput->setPullup();
+	fuelCons = new FuelConsumption(*fuelConsInput, interruptManager);
 
 	//speed configuration
 	Input* speedPin = new Input(SPEED_PORT, SPEED_PIN);
@@ -305,7 +303,7 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_SPEED:
 			{
-				lcd->printf("%3.3f mph", speed->getSpeed());
+				lcd->printf("%3.1f mph", speed->getSpeed());
 				break;
 			}
 			case DISPLAY_TEMP:
@@ -318,7 +316,7 @@ void OpenOBC::mainloop()
 			}	
 			case DISPLAY_CONSUM:
 			{
-				lcd->printf("%.6f rpm: %4i", fuelCons->getOnTime(), rpm);
+				lcd->printf("%2.1f%% rpm: %4.0f", fuelCons->getDutyCycle() * 100, fuelCons->getRpm());
 				break;
 			}	
 			case DISPLAY_OPENOBC:
@@ -495,18 +493,97 @@ void runHandler()
 
 extern "C" void allocate_failed()
 {
-	while (1);
+	fprintf(stderr, "%cALLOCATE FAILED\r\n", 0x7);
+	throw;
 }
 
 extern "C" void check_failed(uint8_t* file, uint32_t line)
 {
 	printf("CHECK FAILED (%s:%i)\r\n", file, line);
-	while (1);
+	throw;
+}
+
+extern "C" void MemManage_Handler()
+{
+	fprintf(stderr, "%cMEMMANAGE FAULT\r\n", 0x7);
+	__asm("TST LR, #4\n"
+	"ITE EQ\n"
+	"MRSEQ R0, MSP\n"
+	"MRSNE R0, PSP\n"
+	"B hard_fault_handler_c\n");
+}
+
+extern "C" void BusFault_Handler()
+{
+// 	printf("%cBUS FAULT\r\n", 0x7);
+	__asm("TST LR, #4\n"
+	"ITE EQ\n"
+	"MRSEQ R0, MSP\n"
+	"MRSNE R0, PSP\n"
+	"B hard_fault_handler_c\n");
+}
+
+extern "C" void UsageFault_Handler()
+{
+	printf("%cUSAGE FAULT\r\n", 0x7);
+	__asm("TST LR, #4\n"
+	"ITE EQ\n"
+	"MRSEQ R0, MSP\n"
+	"MRSNE R0, PSP\n"
+	"B hard_fault_handler_c\n");
 }
 
 extern "C" void HardFault_Handler()
 {
-	while(1);
+	__asm("TST LR, #4\n"
+	"ITE EQ\n"
+	"MRSEQ R0, MSP\n"
+	"MRSNE R0, PSP\n"
+	"B hard_fault_handler_c\n");
+}
+
+extern "C" void hard_fault_handler_c(unsigned int * hardfault_args)
+{
+	printf("%cHARD FAULT\r\n", 0x7);
+	
+	unsigned int stacked_r0;
+	unsigned int stacked_r1;
+	unsigned int stacked_r2;
+	unsigned int stacked_r3;
+	unsigned int stacked_r12;
+	unsigned int stacked_lr;
+	unsigned int stacked_pc;
+	unsigned int stacked_psr;
+	
+	stacked_r0 = ((unsigned long) hardfault_args[0]);
+	stacked_r1 = ((unsigned long) hardfault_args[1]);
+	stacked_r2 = ((unsigned long) hardfault_args[2]);
+	stacked_r3 = ((unsigned long) hardfault_args[3]);
+	
+	stacked_r12 = ((unsigned long) hardfault_args[4]);
+	stacked_lr = ((unsigned long) hardfault_args[5]);
+	stacked_pc = ((unsigned long) hardfault_args[6]);
+	stacked_psr = ((unsigned long) hardfault_args[7]);
+
+	
+	printf ("\r\n[Hard fault handler - all numbers in hex]\r\n");
+	printf ("R0 = %x\r\n", stacked_r0);
+	printf ("R1 = %x\r\n", stacked_r1);
+	printf ("R2 = %x\r\n", stacked_r2);
+	printf ("R3 = %x\r\n", stacked_r3);
+	printf ("R12 = %x\r\n", stacked_r12);
+	printf ("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
+	printf ("PC [R15] = %x  program counter\r\n", stacked_pc);
+	printf ("PSR = %x\r\n", stacked_psr);
+	printf ("BFAR = %x\r\n", (*((volatile unsigned long *)(0xE000ED38))));
+	printf ("CFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED28))));
+	printf ("HFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED2C))));
+	printf ("DFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED30))));
+	printf ("AFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED3C))));
+	printf ("SCB_SHCSR = %x\r\n", SCB->SHCSR);
+
+	
+	throw;
 }
 
 extern "C" void SysTick_Handler()
@@ -532,12 +609,6 @@ extern "C" void SysTick_Handler()
 
 	if(go)
 	{
-		if(SysTickCnt % 1000 == 0)
-		{
-			rpm = rps * 60;
-			rps = 0;
-		}
-
 		if(*obcS->run)
 			doSleep = false;
 		else

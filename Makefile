@@ -19,7 +19,8 @@ LPCCHECKSUM	= lpcchecksum
 
 INCDIRS = ./
 INCDIRS += cmsis/
-INCDIRS += lib/fatfs lib/SDFS lib/AnalogIn
+INCDIRS += lib/fatfs lib/SDFS
+INCDIRS += lib/AnalogIn
 INCSTRING = $(patsubst %,-I%,$(INCDIRS)) -I.
 
 # Flags
@@ -49,7 +50,8 @@ CPFLAGS  =
 LINKER_SCRIPT = lpc17xx.ld
 # ASRCS  = startup_LPC17xx.s
 CSRCS = $(wildcard *.c) $(wildcard lib/fatfs/*.c) $(wildcard lib/fatfs/option/*.c)
-CPPSRCS = $(wildcard *.cpp) $(wildcard lib/SDFS/*.cpp) $(wildcard lib/fatfs/*.cpp) $(wildcard lib/AnalogIn/*.cpp)
+CPPSRCS = $(wildcard *.cpp) $(wildcard lib/SDFS/*.cpp) $(wildcard lib/fatfs/*.cpp)
+CPPSRCS += $(wildcard lib/AnalogIn/*.cpp)
 CMSISCSRCS = $(wildcard cmsis/*.c)
 
 
