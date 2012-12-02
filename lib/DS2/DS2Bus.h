@@ -23,43 +23,23 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef UART_H
-#define UART_H
+#ifndef DS2BUS_H
+#define DS2BUS_H
 
-#include "FunctionPointer.h"
+#define RECEIVE_BUFFER_SIZE (0x100)
+#include <Timer.h>
 
-#include <lpc_types.h>
-#include <lpc17xx_uart.h>
-#include <stddef.h>
-#include "InterruptManager.h"
-
-
-#define RB_SIZE (256)
-#define RB_MASK (RB_SIZE - 1)
-
-class Uart
+class DS2Bus
 {
+
 public:
-	Uart(int8_t txPort, int8_t txPin, int8_t rxPort, int8_t rxPin, uint32_t baud, UART_PARITY_Type parity, InterruptManager* interruptManager);
-
-	bool available();
-	bool readable();
-	bool writable();
-	void begin(int32_t baud);
-	void listen();
-	void flush();
-	void setBaud(uint32_t baud);
-
-	size_t getdata(uint8_t* rxbuf, uint32_t buflen);
-	char getc();
-	size_t putc(char c);
-	size_t puts(const char* string);
-	size_t puts(const void* txbuf, uint32_t buflen);
-	size_t printf(const char* format, ...);
+	DS2Bus();
 	
+	int read(uint8_t* buffer, int maxLength);
+	int write( const uint8_t* data, int dataLength);
+	bool readable() {return bufferReadP != bufferWriteP;}
 
 	void receiveHandler();
-
 
 	template<typename T>
 	void attach(T* classPointer, void (T::*methodPointer)(void))
@@ -87,19 +67,14 @@ public:
 	}
 
 private:
-	LPC_UART_TypeDef* uartPeripheral;
-	int8_t txPort;
-	int8_t txPin;
-	int8_t rxPort;
-	int8_t rxPin;
+	virtual int _bus_read(uint8_t* buffer, int maxLength) = 0;
+	virtual int _bus_write( const uint8_t* data, int dataLength) = 0;
+	virtual bool _bus_readable() = 0;
+	
 	volatile uint32_t bufferWriteP;
 	volatile uint32_t bufferReadP;
-	char ringBuffer[RB_SIZE];
-	uint32_t baud;
+	volatile uint8_t receiveBuffer[RECEIVE_BUFFER_SIZE];
 	FunctionPointer callback;
-	
-
 };
 
-
-#endif // UART_H
+#endif // DS2BUS_H

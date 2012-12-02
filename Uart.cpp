@@ -327,7 +327,7 @@ void Uart::receiveHandler()
 				}
 				else //buffer full
 				{
-					std::printf("buffer overflow\r\n");
+					std::printf("Uart::receiveHandler(): buffer overflow\r\n");
 				}
 			}
 			// no more data

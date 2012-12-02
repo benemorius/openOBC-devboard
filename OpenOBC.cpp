@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <cmath>
 #include <stdlib.h>
+#include <Bus.h>
 
 volatile uint32_t SysTickCnt;
 OpenOBC* obcS;
@@ -49,11 +50,39 @@ bool doSleep = false;
 bool go = false;
 IO* idle;
 IO* isr;
+bool doQuery = false;
+bool doUnlock = false;
+bool doLock = false;
+bool doSnoop = false;
 
 extern "C" void Reset_Handler(void);
+
 void speedHandler();
 void runHandler();
 
+void OpenOBC::printDS2Packet()
+{
+	DS2Packet* packet;
+	while(1)
+	{
+		if((packet = diag->read(DS2_K)) != NULL)
+		{
+			fprintf(stderr, "received packet on K: ");
+			packet->printPacket(stderr);
+			fprintf(stderr, "\r");
+			delete packet;
+		}
+		else if((packet = diag->read(DS2_L)) != NULL)
+		{
+			fprintf(stderr, "received packet on L: ");
+			packet->printPacket(stderr);
+			fprintf(stderr, "\r");
+			delete packet;
+		}
+		else
+			break;
+	}
+}
 
 OpenOBC::OpenOBC()
 {
@@ -159,7 +188,30 @@ OpenOBC::OpenOBC()
 	//diagnostics interface configuration
 	kline = new Uart(KLINE_TX_PORTNUM, KLINE_TX_PINNUM, KLINE_RX_PORTNUM, KLINE_RX_PINNUM, KLINE_BAUD, UART_PARITY_EVEN, &interruptManager);
 	lline = new Uart(LLINE_TX_PORTNUM, LLINE_TX_PINNUM, LLINE_RX_PORTNUM, LLINE_RX_PINNUM, LLINE_BAUD, UART_PARITY_EVEN, &interruptManager);
+	DS2Bus* k = new Bus(*kline);
+	DS2Bus* l = new Bus(*lline);
+	diag = new DS2(*k, *l);
 
+// 	while(1)
+// 	{
+// 		int length = (rand() % 15) + 1;
+// 		uint8_t* data = new uint8_t[length];
+// 		uint32_t r = rand();
+// 		for(int i = 0; i < length; i++)
+// 			data[i] = r >> (i*2);
+// 		DS2Packet packet(0x55, data, length, DS2_16BIT);
+// 		delete[] data;
+// 		k->write(packet.getRawPacket(), packet.getPacketLength());
+// // 		diag->query(packet, DS2_K);
+// 		delay(200);
+// 	}
+
+	zke = new E36ZKE4(*diag);
+	srs = new E36SRS(*diag);
+	ihkr = new E36IHKR(*diag);
+	kombi = new E36Kombi(*diag);
+	mk4 = new E36MK4(*diag);
+	
 	//ignition/run/on input configuration
 	run = new Input(RUN_PORT, RUN_PIN);
 	PINSEL_CFG_Type pincfg;
@@ -215,9 +267,12 @@ OpenOBC::OpenOBC()
 	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonMemo);
 	keypad->attach(BUTTON_DIST, this, &OpenOBC::buttonDist);
-	keypad->attach(BUTTON_1000, this, &OpenOBC:: button1000);
-	keypad->attach(BUTTON_100, this, &OpenOBC:: button100);
-
+	keypad->attach(BUTTON_1000, this, &OpenOBC::button1000);
+	keypad->attach(BUTTON_100, this, &OpenOBC::button100);
+	keypad->attach(BUTTON_CLOCK, this, &OpenOBC::buttonClock);
+	keypad->attach(BUTTON_DATE, this, &OpenOBC::buttonDate);
+	keypad->attach(BUTTON_TIMER, this, &OpenOBC::buttonTimer);
+	
 	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
@@ -243,60 +298,18 @@ void OpenOBC::mainloop()
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 	printf("starting mainloop...\r\n");
 
-	if(0)
-	{
-		//send zke4 inquiry
-		lline->putc(0x00);
-		lline->putc(0x04);
-		lline->putc(0x00);
-		lline->putc(0x04);
-		
-		lcd->printf("sent lline data");
-		
-		delay(1000);
-
-		//verify transmission successfully reached data bus
-		if(lline->readable())
-		{
-			if(lline->getc() == 0x00 && lline->getc() == 0x04 && lline->getc() == 0x00 && lline->getc() == 0x04)
-			{
-				lcd->printf("lline data ok"); //echo was received
-				while(lline->readable())
-					lline->getc(); //receive and discard the echo
-			}
-		}
-		else
-		{
-			lcd->printf("no lline data"); //echo not received - interface failure
-		}
-		
-		delay(1000);
-
-		//print the zke4 reply to lcd
-		if(kline->readable())
-		{
-			while(kline->readable())
-			{
-				lcd->printf("%x %x %x %x", kline->getc(), kline->getc(), kline->getc(), kline->getc());
-				delay(1000);
-			}
-			lcd->printf("end of data");
-		}
-		else
-			lcd->printf("no kline data"); //zke4 did not respond
-		
-		delay(2000);
-	}
-
+// 	doSnoop = true;
+// 	diag->attach(this, &OpenOBC::printDS2Packet);
+	
 	while(1)
 	{
-		
 		if(!*stalkButton)
 			lcd->printfClock("  :D");
 		else
 			lcd->printfClock("%02i%02i", rtc->getHours(), rtc->getMinutes());
 
 		ccm->task();
+		diag->task();
 
 		switch(displayMode)
 		{
@@ -362,6 +375,32 @@ void OpenOBC::mainloop()
 		*out1Cs = false;
 		spi1->readWrite(out1Bits);
 		*out1Cs = true;
+
+		if(doQuery)
+		{
+			printf("querying...\r\n");
+			zke->query();
+			srs->query();
+			ihkr->query();
+			kombi->query();
+			mk4->query();
+			printf("finished querying\r\n");
+			doQuery = false;
+		}
+		if(doUnlock)
+		{
+			printf("doing unlock\r\n");
+			zke->unlock();
+			printf("done\r\n");
+			doUnlock = false;
+		}
+		if(doLock)
+		{
+			printf("doing lock\r\n");
+			zke->lock();
+			printf("done\r\n");
+			doLock = false;
+		}
 
 		delay(200);
 
@@ -453,7 +492,18 @@ void OpenOBC::buttonDist()
 
 void OpenOBC::buttonSet()
 {
-	
+	if(doSnoop)
+	{
+		printf("not snooping\r\n");
+		diag->detach(this, &OpenOBC::printDS2Packet);
+		doSnoop = false;
+	}
+	else
+	{
+		printf("snooping...\r\n");
+		diag->attach(this, &OpenOBC::printDS2Packet);
+		doSnoop = true;
+	}
 }
 
 void OpenOBC::button1000()
@@ -487,6 +537,21 @@ void OpenOBC::button100()
 void OpenOBC::buttonMemo()
 {
 	displayMode = DISPLAY_FREEMEM;
+}
+
+void OpenOBC::buttonClock()
+{
+	doUnlock = true;
+}
+
+void OpenOBC::buttonDate()
+{
+	doLock = true;
+}
+
+void OpenOBC::buttonTimer()
+{
+	doQuery = true;
 }
 
 void runHandler()

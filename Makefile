@@ -21,6 +21,7 @@ INCDIRS = ./
 INCDIRS += cmsis/
 INCDIRS += lib/fatfs lib/SDFS
 INCDIRS += lib/AnalogIn
+INCDIRS += lib/E36Diag lib/DS2
 INCSTRING = $(patsubst %,-I%,$(INCDIRS)) -I.
 
 # Flags
@@ -52,6 +53,7 @@ LINKER_SCRIPT = lpc17xx.ld
 CSRCS = $(wildcard *.c) $(wildcard lib/fatfs/*.c) $(wildcard lib/fatfs/option/*.c)
 CPPSRCS = $(wildcard *.cpp) $(wildcard lib/SDFS/*.cpp) $(wildcard lib/fatfs/*.cpp)
 CPPSRCS += $(wildcard lib/AnalogIn/*.cpp)
+CPPSRCS += $(wildcard lib/E36Diag/*.cpp) $(wildcard lib/DS2/*.cpp)
 CMSISCSRCS = $(wildcard cmsis/*.c)
 
 
@@ -95,7 +97,7 @@ clean:
 	@rm -f *.hex *.bin
 	@-rm -f *.elf
 	@-\
-for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn"; do \
+for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2"; do \
   rm -f $$D/*.o $$D/*.d $$D/*.lst $$D/*.dump $$D/*.map $$D/*.a; \
 done
 

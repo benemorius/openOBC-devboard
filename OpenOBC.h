@@ -41,6 +41,11 @@
 #include "ConfigFile.h"
 #include <AnalogIn.h>
 #include "SpeedInput.h"
+#include "E36ZKE4.h"
+#include "E36SRS.h"
+#include "E36IHKR.h"
+#include "E36Kombi.h"
+#include "E36MK4.h"
 #include "FuelConsumption.h"
 
 typedef enum
@@ -73,6 +78,9 @@ public:
 	void buttonDist();
 	void button1000();
 	void button100();
+	void buttonClock();
+	void buttonDate();
+	void buttonTimer();
 	
 	SPI* spi1;
 	IO* lcdLight;
@@ -85,11 +93,18 @@ public:
 	Input* stalkButton;
 	SDFS* sd;
 	ConfigFile* config;
+	DS2* diag;
+	E36ZKE4* zke;
+	E36SRS* srs;
+	E36IHKR* ihkr;
+	E36Kombi* kombi;
+	E36MK4* mk4;
 	
 
 private:
 	void sleep();
 	void wake();
+	void printDS2Packet();
 	
 	Debug* debug;
 	RTC* rtc;
