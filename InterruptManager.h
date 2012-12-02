@@ -28,7 +28,9 @@
 
 #include "FunctionPointer.h"
 #include <cstdio>
-#include <lpc17xx_gpio.h>
+#include <IO.h> //FIXME remove
+extern IO* isr; //FIXME remove
+extern IO* idle; //FIXME remove
 
 typedef enum
 {
@@ -124,14 +126,18 @@ public:
 	
 	void call(IRQHandler_Type irq)
 	{
-		GPIO_SetValue(2, (1<<0));
+		isr->on(); //FIXME remove
+// 		idle->on(); //FIXME remove
+		if(irq < 0)
+			throw(0); //FIXME remove
 		
 		if(pointers[irq]) //FIXME enum values do not map completely to a congiguous array
 		{
 			pointers[irq]->call(); //FIXME enum values do not map completely to a congiguous array
 		}
-		
-		GPIO_ClearValue(2, (1<<0));
+
+// 		idle->off(); //FIXME remove
+		isr->off(); //FIXME remove
 	}
 
 	bool isAttached(IRQHandler_Type irq)

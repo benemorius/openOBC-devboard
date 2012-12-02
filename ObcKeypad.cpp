@@ -24,6 +24,7 @@
 */
 
 #include "ObcKeypad.h"
+#include <lpc17xx_gpio.h>
 
 ObcKeypad::ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y1, Input& y2, Input& y3, InterruptManager& interruptManager) : x0(x0), x1(x1), x2(x2), x3(x3), x4(x4), y0(y0), y1(y1), y2(y2), y3(y3), interruptManager(interruptManager)
 {

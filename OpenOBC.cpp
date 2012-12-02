@@ -47,6 +47,8 @@ uint32_t out0Bits;
 uint32_t out1Bits;
 bool doSleep = false;
 bool go = false;
+IO* idle;
+IO* isr;
 
 extern "C" void Reset_Handler(void);
 void speedHandler();
@@ -63,6 +65,8 @@ OpenOBC::OpenOBC()
 	//enable bus, usage, and memmanage faults
 	SCB->SHCSR |= (1<<18) | (1<<17) | (1<<16);
 	
+	idle = new IO(2, 0, true);
+	isr = new IO(2, 1, true);
 	obcS = this;
 	
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
