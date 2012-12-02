@@ -41,6 +41,7 @@
 #include "SDFS.h"
 #include "ConfigFile.h"
 #include <AnalogIn.h>
+#include "SpeedInput.h"
 
 typedef enum
 {
@@ -100,7 +101,6 @@ private:
 	PWM* lcdBiasClock;
 	ObcLcd* lcd;
 	CheckControlModule* ccm;
-	Input* speed;
 	IO* lcdReset;
 	IO* out0Cs;
 	IO* out1Cs;
@@ -108,7 +108,7 @@ private:
 	Capture* fuelCons;
 	AnalogIn* batteryVoltage;
 	AnalogIn* temperature;
-
+	SpeedInput* speed;
 };
 
 

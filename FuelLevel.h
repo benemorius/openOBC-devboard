@@ -25,19 +25,29 @@
 
 #ifndef FUELLEVEL_H
 #define FUELLEVEL_H
+
 #include "Input.h"
+#include "InterruptManager.h"
+#include "Timer.h"
 
 class FuelLevel
 {
-
 public:
-    FuelLevel(Input& dataPin);
-
-	 uint32_t getLitres();
-
+	FuelLevel(Input& dataPin, InterruptManager& interruptManager);
+	~FuelLevel();
+	
+	uint16_t getDeciLitres() {return decilitres;}
+	float getLitres() {return (float)decilitres / 10;}
+	float getGallons() {return getLitres() / 3.78541f;}
 
 private:
+	void interruptHandler();
+	
 	Input& dataPin;
+	InterruptManager& interruptManager;
+	Timer timeout;
+	Timer periodTimer;
+	uint16_t decilitres;
 };
 
 #endif // FUELLEVEL_H

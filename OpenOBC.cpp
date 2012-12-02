@@ -48,8 +48,6 @@ uint32_t out0Bits;
 uint32_t out1Bits;
 bool doSleep = false;
 bool go = false;
-uint32_t speedPeriod;
-uint32_t lastSpeedUpdateTime;
 
 void callback()
 {
@@ -152,7 +150,7 @@ OpenOBC::OpenOBC()
 
 	//fuel level configuration
 	Input* fuelLevelInput = new Input(FUEL_LEVEL_PORT, FUEL_LEVEL_PIN);
-	fuelLevel = new FuelLevel(*fuelLevelInput);
+	fuelLevel = new FuelLevel(*fuelLevelInput, interruptManager);
 
 	//stalk button configuration
 	stalkButton = new Input(STALK_BUTTON_PORT, STALK_BUTTON_PIN);
@@ -187,11 +185,9 @@ OpenOBC::OpenOBC()
 	fuelCons->attach(&callback);
 
 	//speed configuration
-	speed = new Input(SPEED_PORT, SPEED_PIN);
-	speed->setPullup();
-	interruptManager.attach(IRQ_EINT3, &speedHandler);
-	GPIO_IntEnable(SPEED_PORT, (1<<SPEED_PIN), 1);
-	NVIC_EnableIRQ(EINT3_IRQn);
+	Input* speedPin = new Input(SPEED_PORT, SPEED_PIN);
+	speedPin->setPullup();
+	speed = new SpeedInput(*speedPin, interruptManager);
 
 	//sd card configuration
 	sdcardDetect = new Input(SDCARD_DETECT_PORT, SDCARD_DETECT_PIN);
@@ -298,6 +294,8 @@ void OpenOBC::mainloop()
 		else
 			lcd->printfClock("%02i%02i", rtc->getHours(), rtc->getMinutes());
 
+		ccm->task();
+
 		switch(displayMode)
 		{
 			case DISPLAY_VOLTAGE:
@@ -307,12 +305,7 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_SPEED:
 			{
-				float speed;
-				if(SysTickCnt - lastSpeedUpdateTime > 2000)
-					speed = 0;
-				else
-					speed = (float)1000000 / speedPeriod / 4712 * 3600 * .621;
-				lcd->printf("%3.1f mph", speed);
+				lcd->printf("%3.3f mph", speed->getSpeed());
 				break;
 			}
 			case DISPLAY_TEMP:
@@ -335,7 +328,7 @@ void OpenOBC::mainloop()
 			}	
 			case DISPLAY_CHECK:
 			{
-				lcd->printf("CCM byte: %02x", ccm->getStatus());
+				lcd->printf("CCM byte: %02x", ccm->getRawByte());
 				break;
 			}
 			case DISPLAY_FREEMEM:
@@ -345,8 +338,8 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_FUEL_LEVEL:
 			{
-// 				lcd->printf("%.1f litres", (float)fuelLevel->getLitres() / 10);
-				lcd->printf("%.1f gallons", (float)fuelLevel->getLitres() / 10 * 0.264172);
+// 				lcd->printf("%.1f litres", fuelLevel->getLitres());
+				lcd->printf("%.2f gallons", fuelLevel->getGallons());
 				break;
 			}
 			case DISPLAY_OUTPUTS:
@@ -498,18 +491,6 @@ void runHandler()
 {
 	EXTI_ClearEXTIFlag(EXTI_EINT1);
 	doSleep = false;
-}
-
-void speedHandler()
-{
-	static Timer periodTimer;
-	if(GPIO_GetIntStatus(SPEED_PORT, SPEED_PIN, 1))
-	{
-		speedPeriod = periodTimer.read_us();
-		periodTimer.start();
-		GPIO_ClearInt(SPEED_PORT, (1<<SPEED_PIN));
-		lastSpeedUpdateTime = SysTickCnt;
-	}
 }
 
 extern "C" void allocate_failed()

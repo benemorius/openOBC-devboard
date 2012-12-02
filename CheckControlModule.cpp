@@ -30,13 +30,17 @@ CheckControlModule::CheckControlModule(Input& data, IO& clock, IO& latch) : data
 {
 	clock = false;
 	latch = false;
-
+	updateStatus();
 }
 
-uint8_t CheckControlModule::getStatus()
+void CheckControlModule::task()
+{
+	updateStatus();
+}
+
+void CheckControlModule::updateStatus()
 {
 	uint8_t status = 0;
-
 	clock = true;
 	latch = true;
 	for(uint8_t bit = 8; bit; bit--)
@@ -51,5 +55,5 @@ uint8_t CheckControlModule::getStatus()
 	}
 	latch = false;
 	clock = false;
-	return status;
+	rawByte = status;
 }

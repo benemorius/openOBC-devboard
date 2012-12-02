@@ -23,40 +23,29 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef CHECKCONTROLMODULE_H
-#define CHECKCONTROLMODULE_H
-#include <stdint.h>
+#ifndef SPEEDINPUT_H
+#define SPEEDINPUT_H
+
 #include "Input.h"
-#include "IO.h"
+#include "InterruptManager.h"
+#include "Timer.h"
 
-/* thanks veskobx
-bit 7 L 1 Brake Light Fail
-bit 6 L 1 Brake Light Fail
-bit 5 H Tail Light Failure
-bit 4 H Lic Plate Light Fail
-bit 3 H Low Beam
-bit 2 L Coolant level
-bit 1 L Washer Fluid
-bit 0 H Pulldown
-*/
-
-class CheckControlModule
+class SpeedInput
 {
-
 public:
-    CheckControlModule(Input& data, IO& clock, IO& latch);
-
-	 void task();
-
-	 uint8_t getRawByte() {return rawByte;}
-
-private:
-	void updateStatus();
+	SpeedInput(Input& input, InterruptManager& interruptManager);
+	~SpeedInput();
 	
-	Input& data;
-	IO& clock;
-	IO& latch;
-	uint8_t rawByte;
+	float getSpeed();
+	
+private:
+	void interruptHandler();
+	
+	Input& input;
+	InterruptManager& interruptManager;
+	Timer periodTimer;
+	uint32_t lastPeriod_us;
+	float currentSpeed;
 };
 
-#endif // CHECKCONTROLMODULE_H
+#endif // SPEEDINPUT_H

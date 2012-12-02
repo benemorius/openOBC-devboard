@@ -23,40 +23,47 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef CHECKCONTROLMODULE_H
-#define CHECKCONTROLMODULE_H
-#include <stdint.h>
-#include "Input.h"
-#include "IO.h"
+#include "SpeedInput.h"
+#include <lpc17xx_gpio.h>
 
-/* thanks veskobx
-bit 7 L 1 Brake Light Fail
-bit 6 L 1 Brake Light Fail
-bit 5 H Tail Light Failure
-bit 4 H Lic Plate Light Fail
-bit 3 H Low Beam
-bit 2 L Coolant level
-bit 1 L Washer Fluid
-bit 0 H Pulldown
-*/
+#define MAX_PERIOD (2000000) //2000000us == ~0.24mph
 
-class CheckControlModule
+SpeedInput::SpeedInput(Input& input, InterruptManager& interruptManager) : input(input), interruptManager(interruptManager)
 {
+	interruptManager.attach(IRQ_EINT3, this, &SpeedInput::interruptHandler);
+	GPIO_IntEnable(input.getPort(), (1<<input.getPin()), 1);
+	NVIC_EnableIRQ(EINT3_IRQn);
 
-public:
-    CheckControlModule(Input& data, IO& clock, IO& latch);
+}
 
-	 void task();
+SpeedInput::~SpeedInput()
+{
+	GPIO_IntDisable(input.getPort(), (1<<input.getPin()), 1);
+	interruptManager.detach(IRQ_EINT3, this, &SpeedInput::interruptHandler);
+}
 
-	 uint8_t getRawByte() {return rawByte;}
+float SpeedInput::getSpeed()
+{
+	uint32_t currentPeriod = periodTimer.read_us();
+	if(currentPeriod > MAX_PERIOD)
+	{
+		currentSpeed = 0.0f;
+		return currentSpeed;
+	}
+	else
+	{
+		currentSpeed = (float)1000000 / lastPeriod_us / 4712 * 3600 * 0.621f;
+		return currentSpeed;
+	}
+}
 
-private:
-	void updateStatus();
-	
-	Input& data;
-	IO& clock;
-	IO& latch;
-	uint8_t rawByte;
-};
-
-#endif // CHECKCONTROLMODULE_H
+void SpeedInput::interruptHandler()
+{
+	if(GPIO_GetIntStatus(input.getPort(), input.getPin(), 1))
+	{
+		uint32_t currentPeriod = periodTimer.read_us();
+		periodTimer.start();
+		GPIO_ClearInt(input.getPort(), (1<<input.getPin()));
+		lastPeriod_us = currentPeriod;
+	}
+}
