@@ -33,6 +33,7 @@ CFLAGS += -Wl,--gc-sections
 CFLAGS += -g
 CFLAGS += -D__RAM_MODE__=0
 CFLAGS += $(INCSTRING)
+CFLAGS += -DGIT_VERSION="\"`git describe --always --dirty --abbrev=6`\""
 
 CPPFLAGS = $(INCSTRING)
 CPPFLAGS = $(CFLAGS)

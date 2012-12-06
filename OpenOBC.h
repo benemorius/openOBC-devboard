@@ -50,7 +50,9 @@
 
 typedef enum
 {
-	DISPLAY_CONSUM,
+	DISPLAY_CONSUM1,
+	DISPLAY_CONSUM2,
+	DISPLAY_CONSUM3,
 	DISPLAY_TEMP,
 	DISPLAY_SPEED,
 	DISPLAY_VOLTAGE,
@@ -67,12 +69,13 @@ class OpenOBC : public InterruptManagerOwner
 public:
 	OpenOBC();
 	void mainloop();
-	void setConsum();
-	void setTemp();
-	void setSpeed();
-	void setVoltage();
-	void setOpenOBC();
-	void setCheck();
+	void buttonConsum();
+	void buttonRange();
+	void buttonTemp();
+	void buttonSpeed();
+	void buttonKMMLS();
+	void button1();
+	void buttonCheck();
 	void buttonSet();
 	void buttonMemo();
 	void buttonDist();
@@ -124,6 +127,7 @@ private:
 	AnalogIn* temperature;
 	SpeedInput* speed;
 	FuelConsumption* fuelCons;
+	bool useMetricSystem;
 	
 };
 

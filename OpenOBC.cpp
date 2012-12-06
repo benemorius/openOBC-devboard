@@ -57,7 +57,6 @@ bool doSnoop = false;
 
 extern "C" void Reset_Handler(void);
 
-void speedHandler();
 void runHandler();
 
 void OpenOBC::printDS2Packet()
@@ -119,6 +118,7 @@ OpenOBC::OpenOBC()
 		//default config file parameters
 		config->setValueByName("DefaultDisplayMode", "DISPLAY_OPENOBC");
 		config->setValueByName("VoltageReferenceCalibration", "0.00");
+		config->setValueByName("MeasurementSystem", "METRIC");
 		
 		int32_t result = config->writeConfig();
 		if(result > 0)
@@ -142,8 +142,12 @@ OpenOBC::OpenOBC()
 	std::string defaultDisplayModeString = config->getValueByName("DefaultDisplayMode");
 	if(defaultDisplayModeString == "DISPLAY_CHECK")
 		displayMode = DISPLAY_CHECK;
-	else if(defaultDisplayModeString == "DISPLAY_CONSUM")
-		displayMode = DISPLAY_CONSUM;
+	else if(defaultDisplayModeString == "DISPLAY_CONSUM1")
+		displayMode = DISPLAY_CONSUM1;
+	else if(defaultDisplayModeString == "DISPLAY_CONSUM2")
+		displayMode = DISPLAY_CONSUM2;
+	else if(defaultDisplayModeString == "DISPLAY_CONSUM3")
+		displayMode = DISPLAY_CONSUM3;
 	else if(defaultDisplayModeString == "DISPLAY_FREEMEM")
 		displayMode = DISPLAY_FREEMEM;
 	else if(defaultDisplayModeString == "DISPLAY_FUEL_LEVEL")
@@ -160,6 +164,12 @@ OpenOBC::OpenOBC()
 		displayMode = DISPLAY_VOLTAGE;
 	else
 		displayMode = DISPLAY_OPENOBC;
+	if(config->getValueByName("MeasurementSystem") == "METRIC")
+		useMetricSystem = true;
+	else if(config->getValueByName("MeasurementSystem") == "IMPERIAL")
+		useMetricSystem = false;
+	else
+		useMetricSystem = false;
 
 	//rtc configuration
 	rtc = new RTC(); rtcS = rtc;
@@ -258,21 +268,22 @@ OpenOBC::OpenOBC()
 	Input* y2 = new Input(0, 10);
 	Input* y3 = new Input(0, 11);
 	keypad = new ObcKeypad(*x0, *x1, *x2, *x3, *x4, *y0, *y1, *y2, *y3, interruptManager);
-	keypad->attach(BUTTON_KMMLS, this, &OpenOBC::setVoltage);
-	keypad->attach(BUTTON_CONSUM, this, &OpenOBC::setConsum);
-	keypad->attach(BUTTON_CODE, this, &OpenOBC::setTemp);
-	keypad->attach(BUTTON_SPEED, this, &OpenOBC::setSpeed);
-	keypad->attach(BUTTON_1, this, &OpenOBC::setOpenOBC);
-	keypad->attach(BUTTON_CHECK, this, &OpenOBC::setCheck);
-	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
-	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonMemo);
-	keypad->attach(BUTTON_DIST, this, &OpenOBC::buttonDist);
 	keypad->attach(BUTTON_1000, this, &OpenOBC::button1000);
 	keypad->attach(BUTTON_100, this, &OpenOBC::button100);
+	keypad->attach(BUTTON_1, this, &OpenOBC::button1);
+	keypad->attach(BUTTON_CONSUM, this, &OpenOBC::buttonConsum);
+	keypad->attach(BUTTON_RANGE, this, &OpenOBC::buttonRange);
+	keypad->attach(BUTTON_CODE, this, &OpenOBC::buttonTemp);
+	keypad->attach(BUTTON_SPEED, this, &OpenOBC::buttonSpeed);
+	keypad->attach(BUTTON_DIST, this, &OpenOBC::buttonDist);
+	keypad->attach(BUTTON_TIMER, this, &OpenOBC::buttonTimer);
+	keypad->attach(BUTTON_CHECK, this, &OpenOBC::buttonCheck);
+	keypad->attach(BUTTON_KMMLS, this, &OpenOBC::buttonKMMLS);
 	keypad->attach(BUTTON_CLOCK, this, &OpenOBC::buttonClock);
 	keypad->attach(BUTTON_DATE, this, &OpenOBC::buttonDate);
-	keypad->attach(BUTTON_TIMER, this, &OpenOBC::buttonTimer);
-	
+	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonMemo);
+	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
+
 	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
@@ -289,6 +300,10 @@ OpenOBC::OpenOBC()
 	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 2.2) / 2.2 * REFERENCE_VOLTAGE);
 	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
 
+	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
+	lcd->printf("openOBC %s", GIT_VERSION);
+	delay(3000);
+	
 	go = true;
 }
 
@@ -320,7 +335,10 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_SPEED:
 			{
-				lcd->printf("%3.1f mph", speed->getSpeed());
+				if(useMetricSystem)
+					lcd->printf("%3.1f km/h", speed->getSpeed());
+				else
+					lcd->printf("%3.1f mph", speed->getSpeed() * 0.621371);
 				break;
 			}
 			case DISPLAY_TEMP:
@@ -330,12 +348,34 @@ void OpenOBC::mainloop()
 				float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15f;
 				lcd->printf("%.1fC  %.1fF", temperature, temperature * 1.78 + 32);
 				break;
-			}	
-			case DISPLAY_CONSUM:
+			}
+			case DISPLAY_CONSUM1:
+			{
+				float litresPerHour = 0.2449 * 6 * 60 * fuelCons->getDutyCycle();
+				float gallonsPerHour = litresPerHour / 3.78514;
+				float kilometresPerHour = speed->getSpeed();
+				float milesPerHour = kilometresPerHour * 0.621371;
+				if(useMetricSystem)
+					lcd->printf("%i L/100km", litresPerHour / (100 * kilometresPerHour));
+				else
+					lcd->printf("%.1f mpg", milesPerHour / gallonsPerHour);
+				break;
+			}
+			case DISPLAY_CONSUM2:
+			{
+				float litresPerMinute = 0.2449 * 6 * fuelCons->getDutyCycle();
+				float gallonsPerMinute = litresPerMinute / 3.78514;
+				if(useMetricSystem)
+					lcd->printf("%.3f L/min", litresPerMinute);
+				else
+					lcd->printf("%.3f gal/hour", gallonsPerMinute * 60);
+				break;
+			}
+			case DISPLAY_CONSUM3:
 			{
 				lcd->printf("%2.1f%% rpm: %4.0f", fuelCons->getDutyCycle() * 100, fuelCons->getRpm());
 				break;
-			}	
+			}
 			case DISPLAY_OPENOBC:
 			{
 				lcd->printf("openOBC");
@@ -353,8 +393,10 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_FUEL_LEVEL:
 			{
-// 				lcd->printf("%.1f litres", fuelLevel->getLitres());
-				lcd->printf("%.2f gallons", fuelLevel->getGallons());
+				if(useMetricSystem)
+					lcd->printf("%.1f litres", fuelLevel->getLitres());
+				else
+					lcd->printf("%.2f gallons", fuelLevel->getGallons());
 				break;
 			}
 			case DISPLAY_OUTPUTS:
@@ -448,62 +490,13 @@ void OpenOBC::sleep()
 
 void OpenOBC::wake()
 {
-// 	SystemInit();
-	Reset_Handler();
-	*obcS->lcdLight = true;
 	*obcS->clockLight = true;
+	delay(160); //80 = 2 seconds at 4MHz
+// 	SystemInit();
+	*obcS->lcdLight = true;
 	*obcS->keypadLight = true;
-}
-
-void OpenOBC::setConsum()
-{
-	displayMode = DISPLAY_CONSUM;
-}
-
-void OpenOBC::setSpeed()
-{
-	displayMode = DISPLAY_SPEED;
-}
-
-void OpenOBC::setTemp()
-{
-	displayMode = DISPLAY_TEMP;
-}
-
-void OpenOBC::setVoltage()
-{
-	displayMode = DISPLAY_VOLTAGE;
-}
-
-void OpenOBC::setOpenOBC()
-{
-	displayMode = DISPLAY_OPENOBC;
-}
-
-void OpenOBC::setCheck()
-{
-	displayMode = DISPLAY_CHECK;
-}
-
-void OpenOBC::buttonDist()
-{
-	displayMode = DISPLAY_FUEL_LEVEL;
-}
-
-void OpenOBC::buttonSet()
-{
-	if(doSnoop)
-	{
-		printf("not snooping\r\n");
-		diag->detach(this, &OpenOBC::printDS2Packet);
-		doSnoop = false;
-	}
-	else
-	{
-		printf("snooping...\r\n");
-		diag->attach(this, &OpenOBC::printDS2Packet);
-		doSnoop = true;
-	}
+	__set_MSP(0x10008000);
+	Reset_Handler();
 }
 
 void OpenOBC::button1000()
@@ -534,9 +527,56 @@ void OpenOBC::button100()
 		out1Bits = 0;
 }
 
-void OpenOBC::buttonMemo()
+void OpenOBC::button1()
 {
-	displayMode = DISPLAY_FREEMEM;
+	displayMode = DISPLAY_OPENOBC;
+}
+
+void OpenOBC::buttonConsum()
+{
+	if(displayMode == DISPLAY_CONSUM1)
+		displayMode = DISPLAY_CONSUM2;
+	else if(displayMode == DISPLAY_CONSUM2)
+		displayMode = DISPLAY_CONSUM3;
+	else if(displayMode == DISPLAY_CONSUM3)
+		displayMode = DISPLAY_CONSUM1;
+	else
+		displayMode = DISPLAY_CONSUM1;
+}
+
+void OpenOBC::buttonRange()
+{
+	displayMode = DISPLAY_FUEL_LEVEL;
+}
+
+void OpenOBC::buttonTemp()
+{
+	displayMode = DISPLAY_TEMP;
+}
+
+void OpenOBC::buttonSpeed()
+{
+	displayMode = DISPLAY_SPEED;
+}
+
+void OpenOBC::buttonDist()
+{
+	displayMode = DISPLAY_VOLTAGE;
+}
+
+void OpenOBC::buttonTimer()
+{
+	doQuery = true;
+}
+
+void OpenOBC::buttonCheck()
+{
+	displayMode = DISPLAY_CHECK;
+}
+
+void OpenOBC::buttonKMMLS()
+{
+	useMetricSystem = !useMetricSystem;
 }
 
 void OpenOBC::buttonClock()
@@ -549,9 +589,25 @@ void OpenOBC::buttonDate()
 	doLock = true;
 }
 
-void OpenOBC::buttonTimer()
+void OpenOBC::buttonMemo()
 {
-	doQuery = true;
+	displayMode = DISPLAY_FREEMEM;
+}
+
+void OpenOBC::buttonSet()
+{
+	if(doSnoop)
+	{
+		printf("not snooping\r\n");
+		diag->detach(this, &OpenOBC::printDS2Packet);
+		doSnoop = false;
+	}
+	else
+	{
+		printf("snooping...\r\n");
+		diag->attach(this, &OpenOBC::printDS2Packet);
+		doSnoop = true;
+	}
 }
 
 void runHandler()

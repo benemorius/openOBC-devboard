@@ -52,7 +52,7 @@ float SpeedInput::getSpeed()
 	}
 	else
 	{
-		currentSpeed = (float)1000000 / lastPeriod_us / 4712 * 3600 * 0.621f;
+		currentSpeed = (float)1000000 / lastPeriod_us / 4712 * 60 * 60;
 		return currentSpeed;
 	}
 }
