@@ -29,14 +29,15 @@
 #include <stdint.h>
 #include <vector>
 
+template<typename ReturnType>
 class FP
 {
 public:
-	virtual void call() = 0;
+	virtual ReturnType call() = 0;
 };
 
-template<typename Type>
-class FPointer : public FP
+template<typename ObjectType, typename ReturnType>
+class FPointer : public FP<ReturnType>
 {
 public:
 	FPointer()
@@ -45,7 +46,7 @@ public:
 		this->methodP = 0;
 	}
 
-	void attach(Type* objectP, void (Type::*methodP)(void))
+	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)())
 	{
 		if((objectP != 0) && (methodP != 0))
 		{
@@ -54,11 +55,11 @@ public:
 		}
 	}
 
-	virtual void call()
+	virtual ReturnType call()
 	{
 		if(objectP != 0 && methodP != 0)
 		{
-			(objectP->*methodP)();
+			return (objectP->*methodP)();
 		}
 	}
 
@@ -71,40 +72,35 @@ public:
 	}
 
 private:
-	Type* objectP;
-	void (Type::*methodP)(void);
+	ObjectType* objectP;
+	ReturnType (ObjectType::*methodP)();
 
 };
 
-
-
+template<typename ReturnType>
 class FunctionPointer
 {
 public:
-	FunctionPointer()
-	{
-		
-	}
 	
-	template<typename T>
-	void attach(T* objectP, void (T::*methodP)(void))
+	template<typename ObjectType>
+	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)())
 	{
 		if(objectP != 0 && methodP != 0)
 		{
-			FPointer<T>* fp = new FPointer<T>();
+			FPointer<ObjectType, ReturnType>* fp = new FPointer<ObjectType, ReturnType>();
 			fp->attach(objectP, methodP);
 			methodPointers.push_back(fp);
 		}
 	}
-	template<typename T>
-	void detach(T* objectP, void (T::*methodP)(void))
+	template<typename ObjectType>
+	void detach(ObjectType* objectP, void (ObjectType::*methodP)())
 	{
 		for(uint32_t numMethodPointers = methodPointers.size(); numMethodPointers;)
 		{
 			numMethodPointers--;
-			FPointer<T>* fp = new FPointer<T>();
+			FPointer<ObjectType, void>* fp = new FPointer<ObjectType, void>();
 			fp->attach(objectP, methodP);
-			if(*(FPointer<T>*)(methodPointers[numMethodPointers]) == *fp)
+			if(*(FPointer<ObjectType, void>*)(methodPointers[numMethodPointers]) == *fp)
 			{
 				delete methodPointers[numMethodPointers];
 				methodPointers.erase(methodPointers.begin() + numMethodPointers);
@@ -113,12 +109,12 @@ public:
 		}
 	}
 
-	void attach(void (*function)(void))
+	void attach(void (*function)())
 	{
 		if(function != 0)
 			functionPointers.push_back(function);
 	}
-	void detach(void (*function)(void))
+	void detach(void (*function)())
 	{
 		for(uint32_t numFunctionPointers = functionPointers.size(); numFunctionPointers;)
 		{
@@ -128,15 +124,21 @@ public:
 		}
 	}
 
-	void call()
+	ReturnType call()
 	{
 		uint32_t numFunctionPointers = functionPointers.size();
+		if(numFunctionPointers == 1)
+			return functionPointers[0]();
+		
 		while(numFunctionPointers--)
 		{
 			functionPointers[numFunctionPointers]();
 		}
 		
 		uint32_t numMethodPointers = methodPointers.size();
+		if(numMethodPointers == 1)
+			return methodPointers[0]->call();
+		
 		while(numMethodPointers--)
 		{
 			methodPointers[numMethodPointers]->call();
@@ -152,8 +154,8 @@ public:
 	}
 
 private:
-	std::vector<FP*> methodPointers;
-	std::vector<void (*)(void)> functionPointers;
+	std::vector<FP<ReturnType>*> methodPointers;
+	std::vector<ReturnType (*)()> functionPointers;
 	
 };
 

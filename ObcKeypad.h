@@ -89,14 +89,14 @@ public:
 		 if((methodPointer != 0) && (classPointer != 0))
 		 {
 			 if(!callbacks[button])
-				 callbacks[button] = new FunctionPointer();
+				 callbacks[button] = new FunctionPointer<void>();
 			 callbacks[button]->attach(classPointer, methodPointer);
 		 }
 	 }
 	 void attach(ObcKeypadButton_Type button, void (*functionPointer)(void))
 	 {
 		 if(!callbacks[button])
-			 callbacks[button] = new FunctionPointer;
+			 callbacks[button] = new FunctionPointer<void>;
 		 callbacks[button]->attach(functionPointer);
 	 }
 
@@ -115,7 +115,7 @@ private:
 	InterruptManager& interruptManager;
 	Timer debounce;
 	
-	FunctionPointer* callbacks[BUTTON_NUM_VALUES];
+	FunctionPointer<void>* callbacks[BUTTON_NUM_VALUES];
 
 	void interruptHandler();
 	

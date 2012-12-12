@@ -118,7 +118,7 @@ private:
 	Timer receiveTimeoutL;
 	std::deque<DS2Packet*> packetBufferK;
 	std::deque<DS2Packet*> packetBufferL;
-	FunctionPointer callback;
+	FunctionPointer<void> callback;
 	volatile bool taskEnabled;
 	bool interceptPackets;
 	std::deque<uint8_t>* bufferK;

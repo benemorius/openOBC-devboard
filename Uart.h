@@ -96,7 +96,7 @@ private:
 	volatile uint32_t bufferReadP;
 	char ringBuffer[RB_SIZE];
 	uint32_t baud;
-	FunctionPointer callback;
+	FunctionPointer<void> callback;
 	
 
 };

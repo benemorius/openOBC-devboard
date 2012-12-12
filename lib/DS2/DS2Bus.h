@@ -74,7 +74,7 @@ private:
 	volatile uint32_t bufferWriteP;
 	volatile uint32_t bufferReadP;
 	volatile uint8_t receiveBuffer[RECEIVE_BUFFER_SIZE];
-	FunctionPointer callback;
+	FunctionPointer<void> callback;
 };
 
 #endif // DS2BUS_H

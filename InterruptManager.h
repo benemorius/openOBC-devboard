@@ -98,7 +98,7 @@ public:
 		if((methodPointer != 0) && (classPointer != 0))
 		{
 			if(!pointers[irq])
-				pointers[irq] = new FunctionPointer();
+				pointers[irq] = new FunctionPointer<void>();
 			pointers[irq]->attach(classPointer, methodPointer);
 		}
 	}
@@ -115,7 +115,7 @@ public:
 	void attach(IRQHandler_Type irq, void (*functionPointer)(void))
 	{
 		if(!pointers[irq])
-			pointers[irq] = new FunctionPointer;
+			pointers[irq] = new FunctionPointer<void>;
 		pointers[irq]->attach(functionPointer);
 	}
 	void detach(IRQHandler_Type irq, void (*functionPointer)(void))
@@ -146,7 +146,7 @@ public:
 	}
 
 private:
-	FunctionPointer* pointers[IRQHandler_NUM_VALUES]; //FIXME enum values do not map completely to a congiguous array
+	FunctionPointer<void>* pointers[IRQHandler_NUM_VALUES]; //FIXME enum values do not map completely to a congiguous array
 };
 
 class InterruptManagerOwner
