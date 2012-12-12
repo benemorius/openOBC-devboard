@@ -37,7 +37,7 @@ extern "C" {
 #include <sys/stat.h>
 
 
-#include "lpc17xx.h" /* for _get_PSP() from core_cm3.h*/
+#include "LPC17xx.h" /* for _get_PSP() from core_cm3.h*/
 
 
 #ifdef __cplusplus
