@@ -97,6 +97,9 @@ OpenOBC::OpenOBC()
 	isr = new IO(2, 1, true);
 	obcS = this;
 	
+	callback = new Callback();
+	callback->addCallback(this, &OpenOBC::buttonMemo, 10000);
+	
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
 	debug = new Debug(DEBUG_TX_PORTNUM, DEBUG_TX_PINNUM, DEBUG_RX_PORTNUM, DEBUG_RX_PINNUM, DEBUG_BAUD, &interruptManager); debugS = debug;
 
@@ -334,6 +337,7 @@ void OpenOBC::mainloop()
 
 		ccm->task();
 		diag->task();
+		callback->task();
 
 		switch(displayMode)
 		{

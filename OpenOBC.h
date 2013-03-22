@@ -47,6 +47,7 @@
 #include "E36Kombi.h"
 #include "E36MK4.h"
 #include <MAX4896.h>
+#include <Callback.h>
 #include "FuelConsumption.h"
 
 typedef enum
@@ -86,6 +87,7 @@ public:
 	void buttonDate();
 	void buttonTimer();
 	
+	Callback* callback;
 	SPI* spi1;
 	IO* lcdLight;
 	IO* clockLight;
