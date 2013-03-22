@@ -46,6 +46,7 @@
 #include "E36IHKR.h"
 #include "E36Kombi.h"
 #include "E36MK4.h"
+#include <MAX4896.h>
 #include "FuelConsumption.h"
 
 typedef enum
@@ -89,6 +90,13 @@ public:
 	IO* lcdLight;
 	IO* clockLight;
 	IO* keypadLight;
+	IO* codeLed;
+	IO* limitLed;
+	IO* timerLed;
+	IO* ccmLight;
+	IO* ews;
+	MAX4896* out0;
+	MAX4896* out1;
 	Input* run;
 	ObcKeypad* keypad;
 	Input* sdcardDetect;
@@ -120,8 +128,6 @@ private:
 	ObcLcd* lcd;
 	CheckControlModule* ccm;
 	IO* lcdReset;
-	IO* out0Cs;
-	IO* out1Cs;
 	DisplayMode_Type displayMode;
 	AnalogIn* batteryVoltage;
 	AnalogIn* temperature;

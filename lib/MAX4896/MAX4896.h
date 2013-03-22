@@ -23,44 +23,32 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef IO_H
-#define IO_H
-#include <stdint.h>
 
-class IO
+#ifndef MAX4896_H
+#define MAX4896_H
+
+#include <SPI.h>
+#include <IO.h>
+#include <sys/types.h>
+
+#include "MAX4896Pin.h"
+
+#define MAX4896_SPI_CLOCKRATE (100000)
+
+class MAX4896
 {
-public:
-	IO(uint8_t port, uint8_t pin, bool isOn = false, bool onIsHigh = true);
-	
-	virtual void setState(bool on);
-	bool getState() const;
-	void on();
-	void off();
-	void toggle();
-	void setOpenDrain(bool isOpenDrain);
-	void setInput();
-	void setOutput();
-	void setPullup();
-	void setPulldown();
-	void setTristate();
-	void setOnIsHigh(bool onIsHigh) {this->onIsHigh = onIsHigh;}
-	bool getOnIsHigh()  {return this->onIsHigh;}
 
-	uint8_t getPort() const {return port;}
-	uint8_t getPin() const {return pin;}
+public:
+    MAX4896(SPI& spi, IO& select, uint8_t bits = 0x00);
+	uint8_t readBits();
+	MAX4896& writeBits(uint8_t bits);
 	
-	IO& operator=(bool state);
-	operator bool() const { return getState();}
-	
-protected:
-	bool onIsHigh;
-	bool isOn;
 	
 private:
-	uint8_t port;
-	uint8_t pin;
-	bool isOpenDrain;
-
+	
+	SPI& spi;
+	IO& select;
+	uint8_t bits;
 };
 
-#endif // IO_H
+#endif // MAX4896_H

@@ -23,44 +23,27 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef IO_H
-#define IO_H
-#include <stdint.h>
 
-class IO
+
+#ifndef MAX4896PIN_H
+#define MAX4896PIN_H
+
+#include <IO.h>
+
+class MAX4896;
+
+class MAX4896Pin : public IO
 {
-public:
-	IO(uint8_t port, uint8_t pin, bool isOn = false, bool onIsHigh = true);
-	
-	virtual void setState(bool on);
-	bool getState() const;
-	void on();
-	void off();
-	void toggle();
-	void setOpenDrain(bool isOpenDrain);
-	void setInput();
-	void setOutput();
-	void setPullup();
-	void setPulldown();
-	void setTristate();
-	void setOnIsHigh(bool onIsHigh) {this->onIsHigh = onIsHigh;}
-	bool getOnIsHigh()  {return this->onIsHigh;}
 
-	uint8_t getPort() const {return port;}
-	uint8_t getPin() const {return pin;}
+public:
+	MAX4896Pin(MAX4896& max, uint8_t bitmask, bool isOn = false, bool onIsHigh = false);
+	void setState(bool state);
 	
-	IO& operator=(bool state);
-	operator bool() const { return getState();}
-	
-protected:
-	bool onIsHigh;
-	bool isOn;
 	
 private:
-	uint8_t port;
-	uint8_t pin;
-	bool isOpenDrain;
-
+	
+	MAX4896& max;
+	uint8_t bitmask;
 };
 
-#endif // IO_H
+#endif // MAX4896PIN_H

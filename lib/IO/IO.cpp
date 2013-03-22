@@ -27,7 +27,6 @@
 
 #include <lpc17xx_gpio.h>
 #include <lpc17xx_pinsel.h>
-#include <stdio.h>
 
 IO::IO(uint8_t port, uint8_t pin, bool isOn, bool onIsHigh)
 {
@@ -35,18 +34,19 @@ IO::IO(uint8_t port, uint8_t pin, bool isOn, bool onIsHigh)
 	this->pin = pin;
 	this->onIsHigh = onIsHigh;
 	this->isOn = isOn;
-
-	PINSEL_CFG_Type PinCfg;
-	PinCfg.Funcnum = PINSEL_FUNC_0;
-	PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
-	PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE;
-	PinCfg.Portnum = this->port;
-	PinCfg.Pinnum = this->pin;
-	PINSEL_ConfigPin(&PinCfg);
-
-	setState(this->isOn);
 	
-	GPIO_SetDir(port, (1<<pin), 1);
+	if((port >= 0) && (port <= 3))
+	{
+		PINSEL_CFG_Type PinCfg;
+		PinCfg.Funcnum = PINSEL_FUNC_0;
+		PinCfg.OpenDrain = PINSEL_PINMODE_NORMAL;
+		PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE;
+		PinCfg.Portnum = this->port;
+		PinCfg.Pinnum = this->pin;
+		PINSEL_ConfigPin(&PinCfg);
+		GPIO_SetDir(port, (1<<pin), 1);
+		setState(this->isOn);
+	}
 }
 
 void IO::setOpenDrain(bool isOpenDrain)
@@ -94,6 +94,10 @@ bool IO::getState() const
 
 void IO::setState(bool on)
 {
+	if((port < 0) || (port > 3))
+	{
+		return;
+	}
 	isOn = on;
 	
 	if((isOn && onIsHigh) || (!isOn && !onIsHigh))

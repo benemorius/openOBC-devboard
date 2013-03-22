@@ -23,44 +23,21 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef IO_H
-#define IO_H
-#include <stdint.h>
 
-class IO
+
+#include "MAX4896Pin.h"
+#include "MAX4896.h"
+
+MAX4896Pin::MAX4896Pin(MAX4896& max, uint8_t bitmask, bool isOn, bool onIsHigh) : IO(0xff, 0, isOn, onIsHigh), max(max), bitmask(bitmask)
 {
-public:
-	IO(uint8_t port, uint8_t pin, bool isOn = false, bool onIsHigh = true);
-	
-	virtual void setState(bool on);
-	bool getState() const;
-	void on();
-	void off();
-	void toggle();
-	void setOpenDrain(bool isOpenDrain);
-	void setInput();
-	void setOutput();
-	void setPullup();
-	void setPulldown();
-	void setTristate();
-	void setOnIsHigh(bool onIsHigh) {this->onIsHigh = onIsHigh;}
-	bool getOnIsHigh()  {return this->onIsHigh;}
+	setState(isOn);
+}
 
-	uint8_t getPort() const {return port;}
-	uint8_t getPin() const {return pin;}
-	
-	IO& operator=(bool state);
-	operator bool() const { return getState();}
-	
-protected:
-	bool onIsHigh;
-	bool isOn;
-	
-private:
-	uint8_t port;
-	uint8_t pin;
-	bool isOpenDrain;
-
-};
-
-#endif // IO_H
+void MAX4896Pin::setState(bool state)
+{
+	uint8_t bits = max.readBits();
+	bits &= ~bitmask;
+	if(state ^ onIsHigh)
+		bits |= bitmask;
+	max.writeBits(bits);
+}

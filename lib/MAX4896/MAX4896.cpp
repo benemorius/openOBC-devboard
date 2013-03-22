@@ -23,44 +23,28 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef IO_H
-#define IO_H
-#include <stdint.h>
 
-class IO
+#include "MAX4896.h"
+
+MAX4896::MAX4896(SPI& spi, IO& select, uint8_t bits) : spi(spi), select(select), bits(bits)
 {
-public:
-	IO(uint8_t port, uint8_t pin, bool isOn = false, bool onIsHigh = true);
-	
-	virtual void setState(bool on);
-	bool getState() const;
-	void on();
-	void off();
-	void toggle();
-	void setOpenDrain(bool isOpenDrain);
-	void setInput();
-	void setOutput();
-	void setPullup();
-	void setPulldown();
-	void setTristate();
-	void setOnIsHigh(bool onIsHigh) {this->onIsHigh = onIsHigh;}
-	bool getOnIsHigh()  {return this->onIsHigh;}
+	select.on();
+	select.setOutput();
+	writeBits(bits);
+}
 
-	uint8_t getPort() const {return port;}
-	uint8_t getPin() const {return pin;}
-	
-	IO& operator=(bool state);
-	operator bool() const { return getState();}
-	
-protected:
-	bool onIsHigh;
-	bool isOn;
-	
-private:
-	uint8_t port;
-	uint8_t pin;
-	bool isOpenDrain;
+uint8_t MAX4896::readBits()
+{
+	return this->bits;
+}
 
-};
+MAX4896& MAX4896::writeBits(uint8_t bits)
+{
+	this->bits = bits;
 
-#endif // IO_H
+	spi.setClockRate(MAX4896_SPI_CLOCKRATE);
+	select.off();
+	spi.readWrite(this->bits);
+	select.on();
+	return *this;
+}

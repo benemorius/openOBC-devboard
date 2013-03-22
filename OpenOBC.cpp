@@ -293,8 +293,17 @@ OpenOBC::OpenOBC()
 
 	//output driver configuration
 	IO outRst(OUT_RESET_PORT, OUT_RESET_PIN, true);
-	out0Cs = new IO(OUT0_CS_PORT, OUT0_CS_PIN, true);
-	out1Cs = new IO(OUT1_CS_PORT, OUT1_CS_PIN, true);
+	IO* out0Cs = new IO(OUT0_CS_PORT, OUT0_CS_PIN, true);
+	IO* out1Cs = new IO(OUT1_CS_PORT, OUT1_CS_PIN, true);
+	out0 = new MAX4896(*spi1, *out0Cs);
+	out1 = new MAX4896(*spi1, *out1Cs);
+	codeLed = new MAX4896Pin(*out0, (1<<2));
+	limitLed = new MAX4896Pin(*out0, (1<<3));
+	timerLed = new MAX4896Pin(*out0, (1<<4));
+	ccmLight = new MAX4896Pin(*out0, (1<<5));
+	ews = new MAX4896Pin(*out1, (1<<6));
+
+	limitLed->on();
 	
 	//analog input configuration
 	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 2.2) / 2.2 * REFERENCE_VOLTAGE);
@@ -411,12 +420,8 @@ void OpenOBC::mainloop()
 			}	
 		}
 		
-		*out0Cs = false;
-		spi1->readWrite(out0Bits);
-		*out0Cs = true;
-		*out1Cs = false;
-		spi1->readWrite(out1Bits);
-		*out1Cs = true;
+		out0->writeBits(out0Bits);
+		out1->writeBits(out1Bits);
 
 		if(doQuery)
 		{
@@ -511,6 +516,8 @@ void OpenOBC::button1000()
 		out0Bits = (1<<0);
 	if(out0Bits > (1<<7))
 		out0Bits = 0;
+	
+
 }
 
 void OpenOBC::button100()

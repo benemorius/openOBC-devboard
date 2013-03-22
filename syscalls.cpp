@@ -370,7 +370,8 @@ int _write(int fd, char* data, int count)
 {
 	if(fd == fileno(stdout) || fd == fileno(stderr))
 	{
-		debugS->puts((uint8_t*)data, count);
+		if(debugS != NULL)
+			debugS->puts((uint8_t*)data, count);
 		return count;
 	}
 	

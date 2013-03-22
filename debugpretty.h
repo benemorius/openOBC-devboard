@@ -26,6 +26,8 @@
 #ifndef DEBUGPRETTY_H
 #define DEBUGPRETTY_H
 
+#include <stdio.h>
+
 #define DEBUG(format, ...) fprintf(stderr, "[%s{%i} %s()] " format, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
 #endif // DEBUGPRETTY_H
