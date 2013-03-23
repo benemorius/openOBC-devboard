@@ -56,12 +56,16 @@ void Callback::task()
 	{
 		if((*timer)->read_ms() >= *time)
 		{
-			(*function)->call();
-			delete *function;
-			delete *timer;
+			FunctionPointer<void>* f = *function;
+			Timer* t = *timer;
 			functions.erase(function);
 			timers.erase(timer);
 			times.erase(time);
+			
+			f->call();
+			delete f;
+			delete t;
+			
 			function = functions.begin();
 			timer = timers.begin();
 			time = times.begin();
