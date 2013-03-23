@@ -82,6 +82,15 @@ class FunctionPointer
 {
 public:
 	
+	~FunctionPointer()
+	{
+		for(uint32_t numMethodPointers = methodPointers.size(); numMethodPointers;)
+		{
+			numMethodPointers--;
+			delete methodPointers[numMethodPointers];
+		}
+	}
+	
 	template<typename ObjectType>
 	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)())
 	{
