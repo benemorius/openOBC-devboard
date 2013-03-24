@@ -98,7 +98,7 @@ OpenOBC::OpenOBC()
 	obcS = this;
 	
 	callback = new Callback();
-	callback->addCallback(this, &OpenOBC::buttonMemo, 10000);
+// 	callback->addCallback(this, &OpenOBC::buttonMemo, 10000);
 	
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
 	debug = new Debug(DEBUG_TX_PORTNUM, DEBUG_TX_PINNUM, DEBUG_RX_PORTNUM, DEBUG_RX_PINNUM, DEBUG_BAUD, &interruptManager); debugS = debug;
@@ -151,10 +151,14 @@ OpenOBC::OpenOBC()
 		displayMode = DISPLAY_CONSUM2;
 	else if(defaultDisplayModeString == "DISPLAY_CONSUM3")
 		displayMode = DISPLAY_CONSUM3;
+	else if(defaultDisplayModeString == "DISPLAY_CONSUM4")
+		displayMode = DISPLAY_CONSUM4;
 	else if(defaultDisplayModeString == "DISPLAY_FREEMEM")
 		displayMode = DISPLAY_FREEMEM;
-	else if(defaultDisplayModeString == "DISPLAY_FUEL_LEVEL")
-		displayMode = DISPLAY_FUEL_LEVEL;
+	else if(defaultDisplayModeString == "DISPLAY_RANGE1")
+		displayMode = DISPLAY_RANGE1;
+	else if(defaultDisplayModeString == "DISPLAY_RANGE2")
+		displayMode = DISPLAY_RANGE2;
 	else if(defaultDisplayModeString == "DISPLAY_OPENOBC")
 		displayMode = DISPLAY_OPENOBC;
 	else if(defaultDisplayModeString == "DISPLAY_OUTPUTS")
@@ -311,6 +315,9 @@ OpenOBC::OpenOBC()
 	//analog input configuration
 	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 2.2) / 2.2 * REFERENCE_VOLTAGE);
 	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
+	
+	averageFuelConsumptionSeconds = 0;
+	averageLitresPer100km = 0;
 
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 	lcd->printf("openOBC %s", GIT_VERSION);
@@ -328,12 +335,27 @@ void OpenOBC::mainloop()
 // 	doSnoop = true;
 // 	diag->attach(this, &OpenOBC::printDS2Packet);
 	
+	Timer averageLitresPer100kmTimer;
+	
 	while(1)
 	{
 		if(!*stalkButton)
 			lcd->printfClock("  :D");
 		else
 			lcd->printfClock("%02i%02i", rtc->getHours(), rtc->getMinutes());
+		
+		if(averageLitresPer100kmTimer.read_ms() >= 1000 && speed->getSpeed() > 0)
+		{
+			averageLitresPer100kmTimer.start();
+			float litresPerHour = 0.2449 * 6 * 60 * fuelCons->getDutyCycle();
+			float kilometresPerHour = speed->getSpeed();
+			float litresPer100km = litresPerHour / kilometresPerHour * 100;
+			if(averageFuelConsumptionSeconds > 0)
+				averageLitresPer100km = (averageLitresPer100km * (averageFuelConsumptionSeconds - 1) + litresPer100km) / averageFuelConsumptionSeconds;
+			else
+				averageLitresPer100km = litresPer100km;
+			averageFuelConsumptionSeconds++;
+		}
 
 		ccm->task();
 		diag->task();
@@ -364,27 +386,35 @@ void OpenOBC::mainloop()
 			}
 			case DISPLAY_CONSUM1:
 			{
+				if(useMetricSystem)
+					lcd->printf("avg %2.1f L/100km", averageLitresPer100km);
+				else
+					lcd->printf("avg %2.1f mpg", 235.214f / averageLitresPer100km);
+				break;
+			}
+			case DISPLAY_CONSUM2:
+			{
 				float litresPerHour = 0.2449 * 6 * 60 * fuelCons->getDutyCycle();
 				float gallonsPerHour = litresPerHour / 3.78514;
 				float kilometresPerHour = speed->getSpeed();
 				float milesPerHour = kilometresPerHour * 0.621371;
 				if(useMetricSystem)
-					lcd->printf("%i L/100km", litresPerHour / (100 * kilometresPerHour));
+					lcd->printf("%2.1f L/100km", litresPerHour / kilometresPerHour * 100);
 				else
-					lcd->printf("%.1f mpg", milesPerHour / gallonsPerHour);
+					lcd->printf("%2.1f mpg", milesPerHour / gallonsPerHour);
 				break;
 			}
-			case DISPLAY_CONSUM2:
+			case DISPLAY_CONSUM3:
 			{
 				float litresPerMinute = 0.2449 * 6 * fuelCons->getDutyCycle();
 				float gallonsPerMinute = litresPerMinute / 3.78514;
 				if(useMetricSystem)
-					lcd->printf("%.3f L/min", litresPerMinute);
+					lcd->printf("%1.3f L/min", litresPerMinute);
 				else
-					lcd->printf("%.3f gal/hour", gallonsPerMinute * 60);
+					lcd->printf("%2.2f gal/hour", gallonsPerMinute * 60);
 				break;
 			}
-			case DISPLAY_CONSUM3:
+			case DISPLAY_CONSUM4:
 			{
 				lcd->printf("%2.1f%% rpm: %4.0f", fuelCons->getDutyCycle() * 100, fuelCons->getRpm());
 				break;
@@ -404,7 +434,16 @@ void OpenOBC::mainloop()
 				lcd->printf("free memory: %i", get_stack_top() - get_heap_end());
 				break;
 			}
-			case DISPLAY_FUEL_LEVEL:
+			case DISPLAY_RANGE1:
+			{
+				float range = fuelLevel->getLitres() / averageLitresPer100km * 100;
+				if(useMetricSystem)
+					lcd->printf("%.0f km  %.1f L", range, fuelLevel->getLitres());
+				else
+					lcd->printf("%.0f miles  %.2f gal", range * 0.621371f, fuelLevel->getGallons());
+				break;
+			}
+			case DISPLAY_RANGE2:
 			{
 				if(useMetricSystem)
 					lcd->printf("%.1f litres", fuelLevel->getLitres());
@@ -550,14 +589,17 @@ void OpenOBC::buttonConsum()
 	else if(displayMode == DISPLAY_CONSUM2)
 		displayMode = DISPLAY_CONSUM3;
 	else if(displayMode == DISPLAY_CONSUM3)
-		displayMode = DISPLAY_CONSUM1;
+		displayMode = DISPLAY_CONSUM4;
 	else
 		displayMode = DISPLAY_CONSUM1;
 }
 
 void OpenOBC::buttonRange()
 {
-	displayMode = DISPLAY_FUEL_LEVEL;
+	if(displayMode == DISPLAY_RANGE1)
+		displayMode = DISPLAY_RANGE2;
+	else
+		displayMode = DISPLAY_RANGE1;
 }
 
 void OpenOBC::buttonTemp()
@@ -607,17 +649,25 @@ void OpenOBC::buttonMemo()
 
 void OpenOBC::buttonSet()
 {
-	if(doSnoop)
+	if(displayMode == DISPLAY_OPENOBC)
 	{
-		printf("not snooping\r\n");
-		diag->detach(this, &OpenOBC::printDS2Packet);
-		doSnoop = false;
+		if(doSnoop)
+		{
+			printf("not snooping\r\n");
+			diag->detach(this, &OpenOBC::printDS2Packet);
+			doSnoop = false;
+		}
+		else
+		{
+			printf("snooping...\r\n");
+			diag->attach(this, &OpenOBC::printDS2Packet);
+			doSnoop = true;
+		}
 	}
-	else
+	else if(displayMode == DISPLAY_CONSUM1)
 	{
-		printf("snooping...\r\n");
-		diag->attach(this, &OpenOBC::printDS2Packet);
-		doSnoop = true;
+		averageFuelConsumptionSeconds = 0;
+		averageLitresPer100km = 0;
 	}
 }
 

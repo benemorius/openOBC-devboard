@@ -55,13 +55,15 @@ typedef enum
 	DISPLAY_CONSUM1,
 	DISPLAY_CONSUM2,
 	DISPLAY_CONSUM3,
+	DISPLAY_CONSUM4,
 	DISPLAY_TEMP,
 	DISPLAY_SPEED,
 	DISPLAY_VOLTAGE,
 	DISPLAY_OPENOBC,
 	DISPLAY_CHECK,
 	DISPLAY_FREEMEM,
-	DISPLAY_FUEL_LEVEL,
+	DISPLAY_RANGE1,
+	DISPLAY_RANGE2,
 	DISPLAY_OUTPUTS
 } DisplayMode_Type;
 
@@ -114,7 +116,7 @@ public:
 	E36MK4* mk4;
 	
 
-private:
+protected:
 	void sleep();
 	void wake();
 	void printDS2Packet();
@@ -136,6 +138,8 @@ private:
 	SpeedInput* speed;
 	FuelConsumption* fuelCons;
 	bool useMetricSystem;
+	float averageLitresPer100km;
+	uint32_t averageFuelConsumptionSeconds;
 	
 };
 
