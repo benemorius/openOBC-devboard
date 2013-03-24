@@ -197,9 +197,17 @@ int SDFS::initialise_card() {
 	}
 	
 	// send CMD0, should return with all zeros except IDLE STATE set (bit 0)
-	if(_cmd(0, 0) != R1_IDLE_STATE) {
-		fprintf(stderr, "No disk, or could not put SD card in to SPI idle state\r\n");
-		return SDCARD_FAIL;
+	for(int timeout = 10; ; timeout--)
+	{
+		int ret = _cmd(0,0);
+		if(ret == R1_IDLE_STATE)
+			break;
+		fprintf(stderr, "cmd0 failed: 0x%x\r\n", ret);
+		if(timeout == 0)
+		{
+			fprintf(stderr, "No disk, or could not put SD card in to SPI idle state\r\n");
+			return SDCARD_FAIL;
+		}
 	}
 	
 	// send CMD8 to determine whther it is ver 2.x

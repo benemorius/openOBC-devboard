@@ -118,15 +118,18 @@ OpenOBC::OpenOBC()
 	//parse the config file; create one with default parameters if it doesn't exist
 	if(config->readConfig() < 0)
 	{
-		//default config file parameters
-		config->setValueByName("DefaultDisplayMode", "DISPLAY_OPENOBC");
-		config->setValueByName("VoltageReferenceCalibration", "0.00");
-		config->setValueByName("MeasurementSystem", "METRIC");
-		
 		int32_t result = config->writeConfig();
-		if(result > 0)
+		if(result >= 0)
 		{
+			//default config file parameters
+			config->setValueByName("DefaultDisplayMode", "DISPLAY_OPENOBC");
+			config->setValueByName("VoltageReferenceCalibration", "0.00");
+			config->setValueByName("MeasurementSystem", "METRIC");
 			fprintf(stderr, "wrote default config file to %s\r\n", config->getFilename().c_str());
+		}
+		else
+		{
+			DEBUG("couldn't open file for writing\r\n");
 		}
 	}
 
@@ -321,7 +324,7 @@ OpenOBC::OpenOBC()
 
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 	lcd->printf("openOBC %s", GIT_VERSION);
-	delay(3000);
+	delay(2000);
 	
 	go = true;
 }
