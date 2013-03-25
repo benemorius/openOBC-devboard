@@ -57,7 +57,7 @@ float SpeedInput::getSpeed()
 	}
 }
 
-void SpeedInput::interruptHandler()
+void SpeedInput::interruptHandler(bool isLast)
 {
 	if(GPIO_GetIntStatus(input.getPort(), input.getPin(), 1))
 	{

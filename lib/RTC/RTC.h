@@ -36,9 +36,19 @@ public:
 	void setTime(RTC_TIME_Type* time);
 	void getTime(RTC_TIME_Type* time);
 
-	uint8_t getSeconds();
-	uint8_t getMinutes();
-	uint8_t getHours();
+	uint8_t getSecond();
+	uint8_t getMinute();
+	uint8_t getHour();
+	uint8_t getDay();
+	uint8_t getMonth();
+	uint16_t getYear();
+	
+	void setSecond(uint8_t second);
+	void setMinute(uint8_t minute);
+	void setHour(uint8_t hour);
+	void setDay(uint8_t day);
+	void setMonth(uint8_t month);
+	void setYear(uint16_t year);
 
 private:
 	RTC_TIME_Type time;

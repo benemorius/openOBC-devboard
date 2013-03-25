@@ -64,8 +64,16 @@ typedef enum
 	DISPLAY_FREEMEM,
 	DISPLAY_RANGE1,
 	DISPLAY_RANGE2,
-	DISPLAY_OUTPUTS
+	DISPLAY_OUTPUTS,
+	DISPLAY_CLOCKSET,
+	DISPLAY_DATESET
 } DisplayMode_Type;
+
+typedef enum
+{
+	CLOCKDISPLAY_CLOCK,
+	CLOCKDISPLAY_DATE
+} ClockDisplayMode_Type;
 
 class OpenOBC : public InterruptManagerOwner
 {
@@ -73,21 +81,22 @@ class OpenOBC : public InterruptManagerOwner
 public:
 	OpenOBC();
 	void mainloop();
-	void buttonConsum();
-	void buttonRange();
-	void buttonTemp();
-	void buttonSpeed();
-	void buttonKMMLS();
-	void button1();
-	void buttonCheck();
-	void buttonSet();
-	void buttonMemo();
-	void buttonDist();
-	void button1000();
-	void button100();
-	void buttonClock();
-	void buttonDate();
-	void buttonTimer();
+	void buttonConsum(bool isLast);
+	void buttonRange(bool isLast);
+	void buttonTemp(bool isLast);
+	void buttonSpeed(bool isLast);
+	void buttonKMMLS(bool isLast);
+	void button1(bool isLast);
+	void buttonCheck(bool isLast);
+	void buttonSet(bool isLast);
+	void buttonMemo(bool isLast);
+	void buttonDist(bool isLast);
+	void button1000(bool isLast);
+	void button100(bool isLast);
+	void button10(bool isLast);
+	void buttonClock(bool isLast);
+	void buttonDate(bool isLast);
+	void buttonTimer(bool isLast);
 	
 	Callback* callback;
 	SPI* spi1;
@@ -119,7 +128,7 @@ public:
 protected:
 	void sleep();
 	void wake();
-	void printDS2Packet();
+	void printDS2Packet(bool isLast = false);
 	
 	Debug* debug;
 	RTC* rtc;
@@ -133,6 +142,7 @@ protected:
 	CheckControlModule* ccm;
 	IO* lcdReset;
 	DisplayMode_Type displayMode;
+	ClockDisplayMode_Type clockDisplayMode;
 	AnalogIn* batteryVoltage;
 	AnalogIn* temperature;
 	SpeedInput* speed;
@@ -140,6 +150,7 @@ protected:
 	bool useMetricSystem;
 	float averageLitresPer100km;
 	uint32_t averageFuelConsumptionSeconds;
+    DisplayMode_Type lastDisplayMode;
 	
 };
 

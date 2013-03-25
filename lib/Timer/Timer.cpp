@@ -26,21 +26,41 @@
 #include "Timer.h"
 
 #include <lpc17xx_timer.h>
+#include <debugpretty.h>
 
 bool Timer::timerInitialized = false;
 
-Timer::Timer() : interruptManager(0)
+Timer::Timer() : interruptManager(NULL)
 {
+	initialize();
+	start();
+}
+Timer::Timer(InterruptManager& interruptManager) : interruptManager(&interruptManager)
+{
+	interruptManager.attach(TIMER_MANAGED_INTERRUPT, this, &Timer::interruptHandler);
+
+	NVIC_SetPriority(TIMER_INTERRUPT, ((0x01<<3)|0x01));
+	NVIC_EnableIRQ(TIMER_INTERRUPT);
+
+	initialize();
+	start();
+}
+
+void Timer::initialize()
+{
+	callbackFunction = new FunctionPointer<void>;
+	callbackTime = 0;
+	
 	if(!timerInitialized)
 	{
 		timerInitialized = true;
-
+		
 		//configure timer for 25MHz, overflow at 2^32 / 25000000 = ~171.798 seconds
 		TIM_TIMERCFG_Type TIM_ConfigStruct;
 		TIM_ConfigStruct.PrescaleOption = TIM_PRESCALE_TICKVAL;
 		TIM_ConfigStruct.PrescaleValue	= 1;
 		TIM_Init(TIMER_PERIPHERAL, TIM_TIMER_MODE, &TIM_ConfigStruct);
-
+		
 		TIM_MATCHCFG_Type TIM_MatchConfigStruct;
 		TIM_MatchConfigStruct.MatchChannel = 0;
 		TIM_MatchConfigStruct.IntOnMatch   = TRUE;
@@ -49,63 +69,128 @@ Timer::Timer() : interruptManager(0)
 		TIM_MatchConfigStruct.ExtMatchOutputType = TIM_EXTMATCH_NOTHING;
 		TIM_MatchConfigStruct.MatchValue   = 0xffffffff;
 		TIM_ConfigMatch(TIMER_PERIPHERAL,&TIM_MatchConfigStruct);
-
+		
 		TIM_ResetCounter(TIMER_PERIPHERAL);
 		TIM_Cmd(TIMER_PERIPHERAL,ENABLE);
 	}
-	
-	start();
-}
-Timer::Timer(InterruptManager& interruptManager) : interruptManager(&interruptManager)
-{
-	interruptManager.attach(TIMER_MANAGED_INTERRUPT, this, &Timer::overflowHandler);
-
-	NVIC_SetPriority(TIMER_INTERRUPT, ((0x01<<3)|0x01));
-	NVIC_EnableIRQ(TIMER_INTERRUPT);
-
-	Timer();
 }
 
 Timer::~Timer()
 {
-	if(interruptManager)
+	if(interruptManager != NULL)
 	{
-		interruptManager->detach(TIMER_MANAGED_INTERRUPT, this, &Timer::overflowHandler);
-
+		interruptManager->detach(TIMER_MANAGED_INTERRUPT, this, &Timer::interruptHandler);
+		
 		//disable the interrupt if nothing remains attached to it
 		if(!interruptManager->isAttached(TIMER_MANAGED_INTERRUPT))
 			NVIC_DisableIRQ(TIMER_INTERRUPT);
 	}
+	if(callbackFunction != NULL)
+		delete callbackFunction;
 }
 
 void Timer::start()
 {
 	overflows = 0;
 	startCount = TIMER_PERIPHERAL->TC;
+	if(callbackFunction->isValid())
+		setCallbackTime(callbackTime); //FIXME select callbacktime from next soonest timer object
 }
 
 uint32_t Timer::read()
 {
-	return TIMER_PERIPHERAL->TC - startCount;
+	uint32_t counter = TIMER_PERIPHERAL->TC;
+	uint32_t ret;
+	if(counter >= startCount)
+	{
+		ret = counter - startCount;
+		overflowed = false;
+	}
+	else
+	{
+		ret = counter + (0xffffffff - startCount);
+		overflowed = true;
+	}
+	
+	return ret;
 }
 
 uint32_t Timer::read_ms()
 {
-	int32_t ms = (int32_t)(TIMER_PERIPHERAL->TC / 25000) - (startCount / 25000);
-	return ms + ((0xffffffff / 25000) * overflows);
+	uint32_t ms = read() / 25000;
+	
+	if((overflows > 0) && (overflowed == true))
+		return ms + (((uint32_t)0xffffffff / 25000) * (overflows - 1));
+	else if((overflows > 0) && (overflowed == false))
+		return ms + (((uint32_t)0xffffffff / 25000) * overflows);
+	else
+		return ms;
 }
 
 uint32_t Timer::read_us()
 {
-	int32_t us = (int32_t)(TIMER_PERIPHERAL->TC / 25) - (startCount / 25);
-	return us + ((0xffffffff / 25) * overflows);
+	uint32_t us = read() / 25;
+	
+	if((overflows > 0) && (overflowed == true))
+		return us + (((uint32_t)0xffffffff / 25) * (overflows - 1));
+	else if(overflows > 0 && overflowed == false)
+		return us + (((uint32_t)0xffffffff / 25) * overflows);
 }
 
-void Timer::overflowHandler()
+void Timer::interruptHandler(bool isLast)
 {
+// 	DEBUG("timer irq 0x%x\r\n", this);
 	if(TIM_GetIntStatus(TIMER_PERIPHERAL, TIM_MR0_INT) == SET)
 	{
-		TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR0_INT);
+// 		DEBUG("overflow 0x%x\r\n", this);
+		if(isLast)
+		{
+			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR0_INT);
+		}
 		overflows++;
 	}
+	if(TIM_GetIntStatus(TIMER_PERIPHERAL, TIM_MR1_INT) == SET)
+	{
+		if(isLast)
+		{
+// 			DEBUG("clearing 0x%x\r\n", this);
+			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR1_INT);
+		}
+// 		setCallbackTime(0); //FIXME select callbacktime from next soonest timer object
+		if(callbackFunction->isValid())
+		{
+// 			DEBUG("calling 0x%x\r\n", this);
+			callbackFunction->call();
+		}
+		else
+		{
+// 			DEBUG("not calling 0x%x\r\n", this);
+		}
+	}
+}
+
+void Timer::setCallbackTime(uint32_t microseconds)
+{
+	if(microseconds != 0)
+		callbackTime = microseconds;
+	
+	uint64_t matchValue = (uint64_t)callbackTime * 25 + (TIMER_PERIPHERAL->TC);
+	matchValue %= 0x100000000;
+	
+	TIM_MATCHCFG_Type TIM_MatchConfigStruct;
+	TIM_MatchConfigStruct.MatchChannel = 1;
+	TIM_MatchConfigStruct.IntOnMatch =  (microseconds != 0) ? TRUE : FALSE;
+	TIM_MatchConfigStruct.ResetOnMatch = FALSE;
+	TIM_MatchConfigStruct.StopOnMatch = FALSE;
+	TIM_MatchConfigStruct.ExtMatchOutputType = TIM_EXTMATCH_NOTHING;
+	TIM_MatchConfigStruct.MatchValue = matchValue;
+	TIM_ConfigMatch(TIMER_PERIPHERAL, &TIM_MatchConfigStruct);
+}
+
+void Timer::deleteCallback(uint32_t pointer)
+{
+	if(callbackFunction != NULL)
+		delete callbackFunction;
+	callbackFunction = NULL;
+	setCallbackTime(0);
 }

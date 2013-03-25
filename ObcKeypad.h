@@ -80,11 +80,11 @@ public:
 	ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y1, Input& y2, Input& y3, InterruptManager& interruptManager);
 
 	 uint32_t getKeys();
-	 void scan();
+	 void scan(bool isLast = false);
 
 
 	 template<typename T>
-	 void attach(ObcKeypadButton_Type button, T* classPointer, void (T::*methodPointer)(void))
+	 void attach(ObcKeypadButton_Type button, T* classPointer, void (T::*methodPointer)(bool isLast))
 	 {
 		 if((methodPointer != 0) && (classPointer != 0))
 		 {
@@ -93,7 +93,7 @@ public:
 			 callbacks[button]->attach(classPointer, methodPointer);
 		 }
 	 }
-	 void attach(ObcKeypadButton_Type button, void (*functionPointer)(void))
+	 void attach(ObcKeypadButton_Type button, void (*functionPointer)(bool isLast))
 	 {
 		 if(!callbacks[button])
 			 callbacks[button] = new FunctionPointer<void>;
@@ -113,11 +113,12 @@ private:
 	Input& y2;
 	Input& y3;
 	InterruptManager& interruptManager;
-	Timer debounce;
+	Timer* debounce;
+	Timer* interruptTimer;
 	
 	FunctionPointer<void>* callbacks[BUTTON_NUM_VALUES];
 
-	void interruptHandler();
+	void interruptHandler(bool isLast);
 	
 	void call(ObcKeypadButton_Type button)
 	{
@@ -127,6 +128,8 @@ private:
 		}
 	}
 	 
+protected:
+    uint32_t activeKeys;
 };
 
 #endif // OBCKEYPAD_H

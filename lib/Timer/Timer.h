@@ -28,6 +28,7 @@
 
 #include <stdint.h>
 #include "InterruptManager.h"
+#include <debugpretty.h>
 
 #define TIMER_PERIPHERAL (LPC_TIM0)
 #define TIMER_INTERRUPT (TIMER0_IRQn)
@@ -37,19 +38,61 @@ class Timer
 {
 public:
 	Timer();
-	Timer(InterruptManager& interruptManager);
+	Timer(InterruptManager& interruptManager); //required to use timer past 171 second overflow
 	~Timer();
 	void start();
 	uint32_t read();
 	uint32_t read_ms();
 	uint32_t read_us();
-	void overflowHandler();
+	void interruptHandler(bool isLast);
+	
+	uint32_t getOverflowCount() {return overflows;}
+	void setStartCount(uint32_t count) {startCount = count;}
+	
+	template<typename T>
+	uint32_t setCallback(T* classPointer, void (T::*methodPointer)(bool isLast), uint32_t milliseconds)
+	{
+		setCallbackUs(classPointer, methodPointer, milliseconds * 1000);
+	}
+	template<typename T>
+	uint32_t setCallbackUs(T* classPointer, void (T::*methodPointer)(bool isLast), uint32_t microseconds)
+	{
+		if(interruptManager == NULL)
+		{
+			DEBUG("interruptManager required\r\n");
+			while(1);
+		}
+		if((methodPointer != 0) && (classPointer != 0))
+		{
+			callbackFunction->detachAll();
+			callbackFunction->attach(classPointer, methodPointer);
+			setCallbackTime(microseconds);
+		}
+	}
+	uint32_t setCallback(void (*functionPointer)(bool isLast), uint32_t milliseconds)
+	{
+		setCallbackUs(functionPointer, milliseconds * 1000);
+	}
+	uint32_t setCallbackUs(void (*functionPointer)(bool isLast), uint32_t microseconds)
+	{
+		callbackFunction->detachAll();
+		callbackFunction->attach(functionPointer);
+		setCallbackTime(microseconds);
+	}
+	void deleteCallback(uint32_t pointer);
+	
 
-private:
+protected:
+	void initialize();
+	void setCallbackTime(uint32_t microseconds);
+	
 	static bool timerInitialized;
 	uint32_t startCount;
-	uint32_t overflows;
+	volatile uint32_t overflows;
 	InterruptManager* interruptManager;
+	bool overflowed; //FIXME this is really dirty
+	FunctionPointer<void>* callbackFunction;
+	uint32_t callbackTime;
 };
 
 #endif // TIMER_H

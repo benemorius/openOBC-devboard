@@ -33,7 +33,7 @@ template<typename ReturnType>
 class FP
 {
 public:
-	virtual ReturnType call() = 0;
+	virtual ReturnType call(bool isLast) = 0;
 };
 
 template<typename ObjectType, typename ReturnType>
@@ -46,7 +46,7 @@ public:
 		this->methodP = 0;
 	}
 
-	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)())
+	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)(bool isLast))
 	{
 		if((objectP != 0) && (methodP != 0))
 		{
@@ -55,11 +55,11 @@ public:
 		}
 	}
 
-	virtual ReturnType call()
+	virtual ReturnType call(bool isLast)
 	{
 		if(objectP != 0 && methodP != 0)
 		{
-			return (objectP->*methodP)();
+			return (objectP->*methodP)(isLast);
 		}
 	}
 
@@ -73,7 +73,7 @@ public:
 
 private:
 	ObjectType* objectP;
-	ReturnType (ObjectType::*methodP)();
+	ReturnType (ObjectType::*methodP)(bool isLast);
 
 };
 
@@ -92,7 +92,7 @@ public:
 	}
 	
 	template<typename ObjectType>
-	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)())
+	void attach(ObjectType* objectP, ReturnType (ObjectType::*methodP)(bool isLast))
 	{
 		if(objectP != 0 && methodP != 0)
 		{
@@ -102,7 +102,7 @@ public:
 		}
 	}
 	template<typename ObjectType>
-	void detach(ObjectType* objectP, void (ObjectType::*methodP)())
+	void detach(ObjectType* objectP, void (ObjectType::*methodP)(bool isLast))
 	{
 		for(uint32_t numMethodPointers = methodPointers.size(); numMethodPointers;)
 		{
@@ -118,12 +118,12 @@ public:
 		}
 	}
 
-	void attach(void (*function)())
+	void attach(void (*function)(bool isLast))
 	{
 		if(function != 0)
 			functionPointers.push_back(function);
 	}
-	void detach(void (*function)())
+	void detach(void (*function)(bool isLast))
 	{
 		for(uint32_t numFunctionPointers = functionPointers.size(); numFunctionPointers;)
 		{
@@ -132,25 +132,41 @@ public:
 				functionPointers.erase(functionPointers.begin() + numFunctionPointers);
 		}
 	}
+	void detachAll()
+	{
+		for(uint32_t numMethodPointers = methodPointers.size(); numMethodPointers;)
+		{
+			numMethodPointers--;
+			delete methodPointers[numMethodPointers];
+			methodPointers.erase(methodPointers.begin() + numMethodPointers);
+		}
+		for(uint32_t numFunctionPointers = functionPointers.size(); numFunctionPointers;)
+		{
+			numFunctionPointers--;
+			functionPointers.erase(functionPointers.begin() + numFunctionPointers);
+		}
+	}
 
 	ReturnType call()
 	{
 		uint32_t numFunctionPointers = functionPointers.size();
 		if(numFunctionPointers == 1)
-			return functionPointers[0]();
+			return functionPointers[0](true);
 		
 		while(numFunctionPointers--)
 		{
-			functionPointers[numFunctionPointers]();
+			bool isLast = (numFunctionPointers == 0) ? true : false;
+			functionPointers[numFunctionPointers](isLast);
 		}
 		
 		uint32_t numMethodPointers = methodPointers.size();
 		if(numMethodPointers == 1)
-			return methodPointers[0]->call();
+			return methodPointers[0]->call(true);
 		
 		while(numMethodPointers--)
 		{
-			methodPointers[numMethodPointers]->call();
+			bool isLast = (numMethodPointers == 0) ? true : false;
+			methodPointers[numMethodPointers]->call(isLast);
 		}
 	}
 
@@ -164,7 +180,7 @@ public:
 
 private:
 	std::vector<FP<ReturnType>*> methodPointers;
-	std::vector<ReturnType (*)()> functionPointers;
+	std::vector<ReturnType (*)(bool isLast)> functionPointers;
 	
 };
 

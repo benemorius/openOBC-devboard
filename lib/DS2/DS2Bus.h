@@ -42,7 +42,7 @@ public:
 	void receiveHandler();
 
 	template<typename T>
-	void attach(T* classPointer, void (T::*methodPointer)(void))
+	void attach(T* classPointer, void (T::*methodPointer)(bool isLast))
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -50,18 +50,18 @@ public:
 		}
 	}
 	template<typename T>
-	void detach(T* classPointer, void (T::*methodPointer)(void))
+	void detach(T* classPointer, void (T::*methodPointer)(bool isLast))
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
 			callback.detach(classPointer, methodPointer);
 		}
 	}
-	void attach(void (*functionPointer)(void))
+	void attach(void (*functionPointer)(bool isLast))
 	{
 		callback.attach(functionPointer);
 	}
-	void detach(void (*functionPointer)(void))
+	void detach(void (*functionPointer)(bool isLast))
 	{
 		callback.detach(functionPointer);
 	}

@@ -46,7 +46,7 @@ FuelLevel::~FuelLevel()
 	interruptManager.detach(IRQ_EINT3, this, &FuelLevel::interruptHandler);
 }
 
-void FuelLevel::interruptHandler()
+void FuelLevel::interruptHandler(bool isLast)
 {
 	static bool haveStartBit;
 	static bool currentLogicState;
@@ -61,7 +61,10 @@ void FuelLevel::interruptHandler()
 	else
 		return;
 
-	GPIO_ClearInt(dataPin.getPort(), (1<<dataPin.getPin()));
+	if(isLast)
+	{
+		GPIO_ClearInt(dataPin.getPort(), (1<<dataPin.getPin()));
+	}
 
 	uint32_t currentPeriod = periodTimer.read_us();
 	periodTimer.start();

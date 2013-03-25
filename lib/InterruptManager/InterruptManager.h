@@ -93,7 +93,7 @@ public:
     InterruptManager(InterruptManagerOwner* owner);
 
 	template<typename T>
-	void attach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(void))
+	void attach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(bool isLast))
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -103,7 +103,7 @@ public:
 		}
 	}
 	template<typename T>
-	void detach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(void))
+	void detach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(bool isLast))
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -112,13 +112,13 @@ public:
 		}
 	}
 	
-	void attach(IRQHandler_Type irq, void (*functionPointer)(void))
+	void attach(IRQHandler_Type irq, void (*functionPointer)(bool isLast))
 	{
 		if(!pointers[irq])
 			pointers[irq] = new FunctionPointer<void>;
 		pointers[irq]->attach(functionPointer);
 	}
-	void detach(IRQHandler_Type irq, void (*functionPointer)(void))
+	void detach(IRQHandler_Type irq, void (*functionPointer)(bool isLast))
 	{
 		if(pointers[irq])
 			pointers[irq]->detach(functionPointer);

@@ -76,7 +76,7 @@ uint32_t FuelConsumption::getOntime_us()
 	return ontime_us;
 }
 
-void FuelConsumption::interruptHandler()
+void FuelConsumption::interruptHandler(bool isLast)
 {
 	bool edgeIsRising;
 	if(GPIO_GetIntStatus(input.getPort(), input.getPin(), 1)) //falling edge
@@ -85,7 +85,10 @@ void FuelConsumption::interruptHandler()
 		edgeIsRising = true;
 	else
 		return;
-	GPIO_ClearInt(input.getPort(), (1<<input.getPin()));
+	if(isLast)
+	{
+		GPIO_ClearInt(input.getPort(), (1<<input.getPin()));
+	}
 
 	if(!edgeIsRising)
 	{

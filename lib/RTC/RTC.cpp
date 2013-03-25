@@ -56,20 +56,77 @@ void RTC::setTime(RTC_TIME_Type* time)
 	RTC_SetFullTime(LPC_RTC, time);
 }
 
-uint8_t RTC::getSeconds()
+uint8_t RTC::getSecond()
 {
 	RTC_GetFullTime(LPC_RTC, &time);
 	return time.SEC;
 }
 
-uint8_t RTC::getMinutes()
+uint8_t RTC::getMinute()
 {
 	RTC_GetFullTime(LPC_RTC, &time);
 	return time.MIN;
 }
 
-uint8_t RTC::getHours()
+uint8_t RTC::getHour()
 {
 	RTC_GetFullTime(LPC_RTC, &time);
 	return time.HOUR;
+}
+
+uint8_t RTC::getDay()
+{
+	RTC_GetFullTime(LPC_RTC, &time);
+	return time.DOM;
+}
+
+uint8_t RTC::getMonth()
+{
+	RTC_GetFullTime(LPC_RTC, &time);
+	return time.MONTH;
+}
+
+uint16_t RTC::getYear()
+{
+	RTC_GetFullTime(LPC_RTC, &time);
+	return time.YEAR;
+}
+
+void RTC::setSecond(uint8_t second)
+{
+	second %= 60;
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_SECOND, second);
+}
+
+void RTC::setMinute(uint8_t minute)
+{
+	minute %= 60;
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_SECOND, 0);
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_MINUTE, minute);
+}
+
+void RTC::setHour(uint8_t hour)
+{
+	hour %= 24;
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_HOUR, hour);
+}
+
+void RTC::setDay(uint8_t day)
+{
+	if(day > 31)
+		day = 1;
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_DAYOFMONTH, day);
+}
+
+void RTC::setMonth(uint8_t month)
+{
+	if(month > 12)
+		month = 1;
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_MONTH, month);
+}
+
+void RTC::setYear(uint16_t year)
+{
+	year %= 4096;
+	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_YEAR, year);
 }

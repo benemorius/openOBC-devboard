@@ -44,7 +44,7 @@ public:
 
 	
 private:
-	void interruptHandler();
+	void interruptHandler(bool isLast);
 	
 	Input& input;
 	InterruptManager& interruptManager;

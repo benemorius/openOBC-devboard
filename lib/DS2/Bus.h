@@ -43,7 +43,7 @@ public:
 	virtual int _bus_write( const uint8_t* data, int dataLength);
 	virtual bool _bus_readable();
 
-	void receiveHandler();
+	void receiveHandler(bool isLast);
 
 private:
 	Uart& uart;

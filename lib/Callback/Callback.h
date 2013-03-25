@@ -42,7 +42,7 @@ public:
 	
 	
 	template<typename T>
-	uint32_t addCallback(T* classPointer, void (T::*methodPointer)(void), uint32_t milliseconds)
+	uint32_t addCallback(T* classPointer, void (T::*methodPointer)(bool isLast), uint32_t milliseconds)
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -54,7 +54,7 @@ public:
 		}
 	}
 	template<typename T>
-	uint32_t addRepeatingCallback(T* classPointer, void (T::*methodPointer)(void), uint32_t milliseconds)
+	uint32_t addRepeatingCallback(T* classPointer, void (T::*methodPointer)(bool isLast), uint32_t milliseconds)
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -65,7 +65,7 @@ public:
 			times.push_back(milliseconds);;
 		}
 	}
-	uint32_t addCallback(void (*functionPointer)(void))
+	uint32_t addCallback(void (*functionPointer)(bool isLast))
 	{
 		functions.push_back(new FunctionPointer<void>);
 		functions.back()->attach(functionPointer);

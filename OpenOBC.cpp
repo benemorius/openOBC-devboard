@@ -57,9 +57,9 @@ bool doSnoop = false;
 
 extern "C" void Reset_Handler(void);
 
-void runHandler();
+void runHandler(bool isLast = false);
 
-void OpenOBC::printDS2Packet()
+void OpenOBC::printDS2Packet(bool isLast)
 {
 	DS2Packet* packet;
 	while(1)
@@ -180,6 +180,7 @@ OpenOBC::OpenOBC()
 		useMetricSystem = false;
 	else
 		useMetricSystem = false;
+	clockDisplayMode = CLOCKDISPLAY_CLOCK;
 
 	//rtc configuration
 	rtc = new RTC(); rtcS = rtc;
@@ -280,6 +281,7 @@ OpenOBC::OpenOBC()
 	keypad = new ObcKeypad(*x0, *x1, *x2, *x3, *x4, *y0, *y1, *y2, *y3, interruptManager);
 	keypad->attach(BUTTON_1000, this, &OpenOBC::button1000);
 	keypad->attach(BUTTON_100, this, &OpenOBC::button100);
+	keypad->attach(BUTTON_10, this, &OpenOBC::button10);
 	keypad->attach(BUTTON_1, this, &OpenOBC::button1);
 	keypad->attach(BUTTON_CONSUM, this, &OpenOBC::buttonConsum);
 	keypad->attach(BUTTON_RANGE, this, &OpenOBC::buttonRange);
@@ -291,7 +293,7 @@ OpenOBC::OpenOBC()
 	keypad->attach(BUTTON_KMMLS, this, &OpenOBC::buttonKMMLS);
 	keypad->attach(BUTTON_CLOCK, this, &OpenOBC::buttonClock);
 	keypad->attach(BUTTON_DATE, this, &OpenOBC::buttonDate);
-	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonMemo);
+	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonSet);
 	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 
 	//backlight configuration
@@ -324,7 +326,7 @@ OpenOBC::OpenOBC()
 
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 	lcd->printf("openOBC %s", GIT_VERSION);
-	delay(2000);
+	delay(1500);
 	
 	go = true;
 }
@@ -338,14 +340,23 @@ void OpenOBC::mainloop()
 // 	doSnoop = true;
 // 	diag->attach(this, &OpenOBC::printDS2Packet);
 	
-	Timer averageLitresPer100kmTimer;
+	Timer averageLitresPer100kmTimer(interruptManager);
 	
 	while(1)
 	{
 		if(!*stalkButton)
 			lcd->printfClock("  :D");
 		else
-			lcd->printfClock("%02i%02i", rtc->getHours(), rtc->getMinutes());
+		{
+			if(clockDisplayMode == CLOCKDISPLAY_CLOCK)
+			{
+				lcd->printfClock("%02i%02i", rtc->getHour(), rtc->getMinute());
+			}
+			else if(clockDisplayMode == CLOCKDISPLAY_DATE)
+			{
+				lcd->printfClock("%02i%02i", rtc->getMonth(), rtc->getDay());
+			}
+		}
 		
 		if(averageLitresPer100kmTimer.read_ms() >= 1000 && speed->getSpeed() > 0)
 		{
@@ -459,6 +470,16 @@ void OpenOBC::mainloop()
 				lcd->printf("outputs: 0x%02x 0x%02x", out0Bits, out1Bits);
 				break;
 			}
+			case DISPLAY_CLOCKSET:
+			{
+				lcd->printf("set clock");
+				break;
+			}
+			case DISPLAY_DATESET:
+			{
+				lcd->printf("set date  %4i", rtc->getYear());
+				break;
+			}
 			default:
 			{
 				lcd->printf("invalid displayMode");
@@ -550,42 +571,59 @@ void OpenOBC::wake()
 	Reset_Handler();
 }
 
-void OpenOBC::button1000()
+void OpenOBC::button1000(bool isLast)
 {
-	if(displayMode != DISPLAY_OUTPUTS)
+	if(displayMode == DISPLAY_CLOCKSET)
 	{
-		displayMode = DISPLAY_OUTPUTS;
-		return;
+		rtc->setHour(rtc->getHour() + 10);
 	}
-	out0Bits *= 2;
-	if(out0Bits == 0)
-		out0Bits = (1<<0);
-	if(out0Bits > (1<<7))
-		out0Bits = 0;
-	
-
-}
-
-void OpenOBC::button100()
-{
-	if(displayMode != DISPLAY_OUTPUTS)
+	else if(displayMode == DISPLAY_DATESET)
 	{
-		displayMode = DISPLAY_OUTPUTS;
-		return;
+		rtc->setMonth(rtc->getMonth() + 10);
 	}
-	out1Bits *= 2;
-	if(out1Bits == 0)
-		out1Bits = (1<<0);
-	if(out1Bits > (1<<7))
-		out1Bits = 0;
 }
 
-void OpenOBC::button1()
+void OpenOBC::button100(bool isLast)
 {
-	displayMode = DISPLAY_OPENOBC;
+	if(displayMode == DISPLAY_CLOCKSET)
+	{
+		rtc->setHour(rtc->getHour() + 1);
+	}
+	else if(displayMode == DISPLAY_DATESET)
+	{
+		rtc->setMonth(rtc->getMonth() + 1);
+	}
 }
 
-void OpenOBC::buttonConsum()
+void OpenOBC::button10(bool isLast)
+{
+	if(displayMode == DISPLAY_CLOCKSET)
+	{
+		rtc->setMinute(rtc->getMinute() + 10);
+	}
+	else if(displayMode == DISPLAY_DATESET)
+	{
+		rtc->setDay(rtc->getDay() + 10);
+	}
+}
+
+void OpenOBC::button1(bool isLast)
+{
+	if(displayMode == DISPLAY_CLOCKSET)
+	{
+		rtc->setMinute(rtc->getMinute() + 1);
+	}
+	else if(displayMode == DISPLAY_DATESET)
+	{
+		rtc->setDay(rtc->getDay() + 1);
+	}
+	else
+	{
+		displayMode = DISPLAY_OPENOBC;
+	}
+}
+
+void OpenOBC::buttonConsum(bool isLast)
 {
 	if(displayMode == DISPLAY_CONSUM1)
 		displayMode = DISPLAY_CONSUM2;
@@ -597,7 +635,7 @@ void OpenOBC::buttonConsum()
 		displayMode = DISPLAY_CONSUM1;
 }
 
-void OpenOBC::buttonRange()
+void OpenOBC::buttonRange(bool isLast)
 {
 	if(displayMode == DISPLAY_RANGE1)
 		displayMode = DISPLAY_RANGE2;
@@ -605,54 +643,74 @@ void OpenOBC::buttonRange()
 		displayMode = DISPLAY_RANGE1;
 }
 
-void OpenOBC::buttonTemp()
+void OpenOBC::buttonTemp(bool isLast)
 {
 	displayMode = DISPLAY_TEMP;
 }
 
-void OpenOBC::buttonSpeed()
+void OpenOBC::buttonSpeed(bool isLast)
 {
 	displayMode = DISPLAY_SPEED;
 }
 
-void OpenOBC::buttonDist()
+void OpenOBC::buttonDist(bool isLast)
 {
 	displayMode = DISPLAY_VOLTAGE;
 }
 
-void OpenOBC::buttonTimer()
+void OpenOBC::buttonTimer(bool isLast)
 {
 	doQuery = true;
 }
 
-void OpenOBC::buttonCheck()
+void OpenOBC::buttonCheck(bool isLast)
 {
 	displayMode = DISPLAY_CHECK;
 }
 
-void OpenOBC::buttonKMMLS()
+void OpenOBC::buttonKMMLS(bool isLast)
 {
 	useMetricSystem = !useMetricSystem;
 }
 
-void OpenOBC::buttonClock()
+void OpenOBC::buttonClock(bool isLast)
 {
-	doUnlock = true;
+	clockDisplayMode = CLOCKDISPLAY_CLOCK;
 }
 
-void OpenOBC::buttonDate()
+void OpenOBC::buttonDate(bool isLast)
 {
-	doLock = true;
+	clockDisplayMode = CLOCKDISPLAY_DATE;
 }
 
-void OpenOBC::buttonMemo()
+void OpenOBC::buttonMemo(bool isLast)
 {
 	displayMode = DISPLAY_FREEMEM;
 }
 
-void OpenOBC::buttonSet()
+void OpenOBC::buttonSet(bool isLast)
 {
-	if(displayMode == DISPLAY_OPENOBC)
+	if(keypad->getKeys() & BUTTON_CLOCK_MASK)
+	{
+		if(displayMode != DISPLAY_CLOCKSET)
+			lastDisplayMode = displayMode;
+		displayMode = DISPLAY_CLOCKSET;
+	}
+	else if(keypad->getKeys() & BUTTON_DATE_MASK)
+	{
+		if((displayMode != DISPLAY_CLOCKSET) && (displayMode != DISPLAY_DATESET))
+			lastDisplayMode = displayMode;
+		displayMode = DISPLAY_DATESET;
+	}
+	else if(displayMode == DISPLAY_CLOCKSET)
+	{
+		displayMode = lastDisplayMode;
+	}
+	else if(displayMode == DISPLAY_DATESET)
+	{
+		displayMode = lastDisplayMode;
+	}
+	else if(displayMode == DISPLAY_OPENOBC)
 	{
 		if(doSnoop)
 		{
@@ -674,7 +732,7 @@ void OpenOBC::buttonSet()
 	}
 }
 
-void runHandler()
+void runHandler(bool isLast)
 {
 	EXTI_ClearEXTIFlag(EXTI_EINT1);
 	doSleep = false;

@@ -45,6 +45,9 @@ ObcKeypad::ObcKeypad(IO& x0, IO& x1, IO& x2, IO& x3, IO& x4, Input& y0, Input& y
 
 	for(uint32_t i = 0; i < BUTTON_NUM_VALUES; i++)
 		callbacks[i] = 0;
+	debounce = new Timer(interruptManager);
+	interruptTimer = new Timer(interruptManager);
+	activeKeys = 0;
 
 	interruptManager.attach(IRQ_EINT3, this, &ObcKeypad::interruptHandler);
 	GPIO_IntEnable(y0.getPort(), (1<<y0.getPin()), 1);
@@ -92,9 +95,34 @@ uint32_t ObcKeypad::getKeys()
 	return keys;
 }
 
-void ObcKeypad::scan()
+void ObcKeypad::scan(bool isLast)
 {
-	uint32_t key = getKeys(); //TODO support multiple keys
+	uint32_t key = getKeys();
+// 	DEBUG("scan: 0x%x (0x%x)\r\n", key, activeKeys);
+	
+	if(activeKeys == 0 && key != 0)
+	{
+// 		DEBUG("new key press 0x%x\r\n", key);
+		interruptTimer->start();
+		interruptTimer->setCallback(this, &ObcKeypad::scan, 50);
+		activeKeys = key;
+	}
+	else if(activeKeys != 0 && key != 0)
+	{
+		interruptTimer->start();
+		interruptTimer->setCallback(this, &ObcKeypad::scan, 50);
+		key &= ~activeKeys;
+		activeKeys |= key;
+		if(key)
+		{
+// 			DEBUG("additional key press: 0x%x\r\n", key);
+		}
+	}
+	else if(activeKeys != 0 && key == 0)
+	{
+// 		DEBUG("all keys released\r\n");
+		activeKeys = 0;
+	}
 
 	switch(key)
 	{
@@ -156,13 +184,14 @@ void ObcKeypad::scan()
 	}
 }
 
-void ObcKeypad::interruptHandler()
+void ObcKeypad::interruptHandler(bool isLast)
 {
+// 	DEBUG("keypad irq\r\n");
 	if((GPIO_GetIntStatus(y0.getPort(), y0.getPin(), 1)) || (GPIO_GetIntStatus(y1.getPort(), y1.getPin(), 1)) || (GPIO_GetIntStatus(y2.getPort(), y2.getPin(), 1)) || (GPIO_GetIntStatus(y3.getPort(), y3.getPin(), 1)))
 	{
-		if(debounce.read_ms() >= 100)
+		if(debounce->read_ms() >= 100)
 			scan();
-		debounce.start();
+		debounce->start();
 		GPIO_ClearInt(y0.getPort(), (1<<y0.getPin()));
 		GPIO_ClearInt(y1.getPort(), (1<<y1.getPin()));
 		GPIO_ClearInt(y2.getPort(), (1<<y2.getPin()));
@@ -170,7 +199,7 @@ void ObcKeypad::interruptHandler()
 	}
 	if((GPIO_GetIntStatus(y0.getPort(), y0.getPin(), 0)) || (GPIO_GetIntStatus(y1.getPort(), y1.getPin(), 0)) || (GPIO_GetIntStatus(y2.getPort(), y2.getPin(), 0)) || (GPIO_GetIntStatus(y3.getPort(), y3.getPin(), 0)))
 	{
-		debounce.start();
+		debounce->start();
 		GPIO_ClearInt(y0.getPort(), (1<<y0.getPin()));
 		GPIO_ClearInt(y1.getPort(), (1<<y1.getPin()));
 		GPIO_ClearInt(y2.getPort(), (1<<y2.getPin()));
