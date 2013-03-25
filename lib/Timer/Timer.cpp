@@ -89,12 +89,25 @@ Timer::~Timer()
 		delete callbackFunction;
 }
 
+void Timer::insertEvent(uint32_t timerMatchValue)
+{
+	//TODO insert timerMatchValue chronologically into list according to current timer position
+}
+
+void Timer::removeEvent(uint32_t timerMatchValue)
+{
+	//TODO iterate list and remove one or zero entries matching timerMatchValue
+}
+
 void Timer::start()
 {
 	overflows = 0;
 	startCount = TIMER_PERIPHERAL->TC;
 	if(callbackFunction->isValid())
+	{
+// 		insertEvent();
 		setCallbackTime(callbackTime); //FIXME select callbacktime from next soonest timer object
+	}
 }
 
 uint32_t Timer::read()
@@ -157,7 +170,7 @@ void Timer::interruptHandler(bool isLast)
 			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR1_INT);
 		}
 // 		setCallbackTime(0); //FIXME select callbacktime from next soonest timer object
-		if(callbackFunction->isValid())
+		if(callbackFunction->isValid()) //FIXME check if it's time to run the callback
 		{
 // 			DEBUG("calling 0x%x\r\n", this);
 			callbackFunction->call();

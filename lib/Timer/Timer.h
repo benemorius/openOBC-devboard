@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include "InterruptManager.h"
 #include <debugpretty.h>
+#include <list>
 
 #define TIMER_PERIPHERAL (LPC_TIM0)
 #define TIMER_INTERRUPT (TIMER0_IRQn)
@@ -85,6 +86,8 @@ public:
 protected:
 	void initialize();
 	void setCallbackTime(uint32_t microseconds);
+	void insertEvent(uint32_t timerMatchValue);
+	void removeEvent(uint32_t timerMatchValue);
 	
 	static bool timerInitialized;
 	uint32_t startCount;
@@ -93,6 +96,7 @@ protected:
 	bool overflowed; //FIXME this is really dirty
 	FunctionPointer<void>* callbackFunction;
 	uint32_t callbackTime;
+	static std::list<uint32_t> callbackTimes;
 };
 
 #endif // TIMER_H
