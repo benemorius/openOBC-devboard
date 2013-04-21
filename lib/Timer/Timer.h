@@ -67,9 +67,11 @@ public:
 		{
 			callbackFunction->detachAll();
 			callbackFunction->attach(classPointer, methodPointer);
-			setCallbackTime(microseconds);
+			setCallbackDelay(microseconds);
+			callbackActive = true;
 		}
 	}
+	
 	uint32_t setCallback(void (*functionPointer)(bool isLast), uint32_t milliseconds)
 	{
 		setCallbackUs(functionPointer, milliseconds * 1000);
@@ -78,16 +80,21 @@ public:
 	{
 		callbackFunction->detachAll();
 		callbackFunction->attach(functionPointer);
-		setCallbackTime(microseconds);
+		setCallbackDelay(microseconds);
+		callbackActive = true;
 	}
-	void deleteCallback(uint32_t pointer);
+	void deleteCallback();
 	
 
 protected:
 	void initialize();
-	void setCallbackTime(uint32_t microseconds);
-	void insertEvent(uint32_t timerMatchValue);
-	void removeEvent(uint32_t timerMatchValue);
+	void setCallbackDelay(uint32_t microseconds);
+	void _insertMatch(uint32_t timerMatchValue);
+	void _removeMatch(uint32_t timerMatchValue);
+	void _updateMatch();
+	void _setMatch(uint32_t timerMatchValue);
+	void _clearMatch();
+	uint32_t _computeMatchValue(uint32_t microseconds);
 	
 	static bool timerInitialized;
 	uint32_t startCount;
@@ -95,8 +102,11 @@ protected:
 	InterruptManager* interruptManager;
 	bool overflowed; //FIXME this is really dirty
 	FunctionPointer<void>* callbackFunction;
-	uint32_t callbackTime;
-	static std::list<uint32_t> callbackTimes;
+	uint32_t callbackDelay;
+	uint32_t matchValue;
+	static std::list<uint32_t> matchValues;
+	bool callbackActive;
+	uint32_t frozenTimerValue;
 };
 
 #endif // TIMER_H
