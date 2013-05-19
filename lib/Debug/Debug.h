@@ -34,12 +34,38 @@ class Debug : public Stream
 public:
 	Debug(int8_t txPort, int8_t txPin, int8_t rxPort, int8_t rxPin, uint32_t baud, InterruptManager* interruptManager);
 
-	void receiveHandler();
+	void receiveHandler(bool isLast);
 
 	size_t puts(const void* txbuf, uint32_t buflen);
 	size_t puts(const char* string);
 	size_t put(char c);
 	int32_t get();
+	bool readable() {return uart.readable();};
+	
+	template<typename T>
+	void attach(T* classPointer, void (T::*methodPointer)(bool isLast))
+	{
+		if((methodPointer != 0) && (classPointer != 0))
+		{
+			callback.attach(classPointer, methodPointer);
+		}
+	}
+	template<typename T>
+	void detach(T* classPointer, void (T::*methodPointer)(bool isLast))
+	{
+		if((methodPointer != 0) && (classPointer != 0))
+		{
+			callback.detach(classPointer, methodPointer);
+		}
+	}
+	void attach(void (*functionPointer)(bool isLast))
+	{
+		callback.attach(functionPointer);
+	}
+	void detach(void (*functionPointer)(bool isLast))
+	{
+		callback.detach(functionPointer);
+	}
 	
 private:
 	virtual void streamIn(const char* string);
@@ -52,8 +78,9 @@ private:
 	virtual void streamOut(char* buffer);
 	virtual void streamOut(char& c);
 	
-
 	Uart uart;
+	FunctionPointer<void> callback;
+	
 };
 
 #endif // DEBUG_H

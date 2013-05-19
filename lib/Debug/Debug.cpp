@@ -32,7 +32,7 @@
 
 Debug::Debug(int8_t txPort, int8_t txPin, int8_t rxPort, int8_t rxPin, uint32_t baud, InterruptManager* interruptManager) : uart(txPort, txPin, rxPort, rxPin, baud, UART_PARITY_NONE, interruptManager)
 {
-
+	uart.attach(this, &Debug::receiveHandler);
 }
 
 void Debug::streamIn(const char* string)
@@ -74,9 +74,9 @@ void Debug::streamOut(char& c)
 	c = (char)get();
 }
 
-void Debug::receiveHandler()
+void Debug::receiveHandler(bool isLast)
 {
-	uart.receiveHandler();
+	callback.call();
 }
 
 size_t Debug::put(char c)

@@ -54,6 +54,19 @@ bool doQuery = false;
 bool doUnlock = false;
 bool doLock = false;
 bool doSnoop = false;
+int ctemp = 0x32;
+int fuelc = 0x00;
+int seti = 5;
+int setvalue = 0;
+
+uint8_t reply8[] = {0x0d, 0x00, 0x13, 0x08, 0x03, 0x05, 0x17, 0x90, 0xb5, 0x5d, 0xff, 0x01, 0xec, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x12};
+const uint8_t coolant_temp_table[256] = {200, 199, 196, 192, 189, 185, 182, 179, 175, 172, 169, 165, 162, 158, 155, 152, 148, 145, 142, 138, 135, 131, 
+130, 128, 126, 125, 123, 121, 120, 118, 116, 115, 114, 113, 112, 111, 110, 108, 107, 106, 104, 103, 102, 101, 101, 99, 99, 98, 97, 97, 96, 95, 94, 93, 93, 
+92, 91, 90, 89, 88, 88, 87, 86, 85, 85, 84, 84, 83, 83, 82, 81, 81, 80, 80, 79, 79, 78, 77, 76, 76, 75, 75, 74, 74, 73, 72, 72, 71, 71, 71, 70, 70, 69, 69, 69, 68, 
+67, 67, 67, 66, 66, 65, 65, 65, 64, 63, 63, 62, 62, 62, 61, 61, 60, 60, 60, 59, 58, 58, 57, 57, 57, 56, 55, 54, 54, 53, 53, 52, 52, 51, 51, 50, 50, 49, 49, 48, 48, 
+47, 47, 46, 46, 45, 44, 44, 43, 43, 42, 42, 41, 40, 40, 40, 39, 39, 38, 38, 37, 37, 36, 35, 35, 34, 34, 33, 33, 32, 31, 31, 30, 30, 30, 29, 29, 28, 28, 27, 26, 26, 
+25, 25, 24, 24, 23, 22, 22, 21, 21, 20, 20, 20, 19, 19, 18, 17, 17, 16, 16, 15, 15, 15, 15, 15, 14, 14, 14, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12, 11, 11, 11, 11, 
+11, 10, 10, 10, 10, 9, 9, 8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0};
 
 extern "C" void Reset_Handler(void);
 
@@ -76,6 +89,64 @@ void OpenOBC::printDS2Packet(bool isLast)
 			fprintf(stderr, "received packet on L: ");
 			packet->printPacket(stderr);
 			fprintf(stderr, "\r");
+			
+			//check packet and send reply
+			if((packet->getType() == DS2_16BIT) && (packet->getDataLength() == 1))
+			{
+				char data = packet->getData()[0];
+				const uint8_t reply0[] = {0x0d, 0x00, 0x0b, 0x00, 0x03, 0x37, 0xbe, 0x25, 0x02, 0x94, 0x3f};
+// 				reply8[5] = setvalue; //set 58g high time (raw value)
+// 				reply8[6] = setvalue; //set 58g low time (raw value)
+// 				reply8[7] = setvalue; //set clamp 30 voltage
+// 				reply8[8] = setvalue; //set coolant temperature
+// 				reply8[9] = setvalue; //set fuel capacity
+// 				reply8[10] = setvalue; //set ???
+// 				reply8[11] = setvalue; //set ec signal
+// 				reply8[12] = setvalue; //set ec signal
+// 				reply8[13] = setvalue; //set rpm
+// 				reply8[14] = setvalue; //set rpm
+// 				reply8[15] = setvalue; //set speed
+// 				reply8[16] = setvalue; //set speed
+// 				reply8[17] = setvalue; //set digital values
+
+				reply8[seti] = setvalue;
+				
+				if(data == 0x00)
+				{
+					DS2Packet* reply = new DS2Packet(reply0, 11, DS2_16BIT);
+					diag->write(*reply, DS2_K);
+					delete reply;
+					DEBUG("replied to 0\r\n");
+				}
+				else if(data == 0x08)
+				{
+					DS2Packet* reply = new DS2Packet(reply8, 0x17, DS2_16BIT);
+					diag->write(*reply, DS2_K);
+					delete reply;
+					DEBUG("replied to 8\r\n");
+				}
+			}
+			else if(((packet->getType() == DS2_16BIT) && (packet->getDataLength() == 5)))
+			{
+				uint8_t* data = packet->getData();
+				const uint8_t replyc[] = {0x0d, 0x00, 0x07, 0x0c, 0x97, 0x02, 0x93};
+				const uint8_t replyc1[] = {0x0d, 0x00, 0x07, 0x0c, 0x73, 0x58, 0x2d};
+				if(data[0] == 0x0c && data[4] == 0x00)
+				{
+					DS2Packet* reply = new DS2Packet(replyc, 7, DS2_16BIT);
+					diag->write(*reply, DS2_K);
+					delete reply;
+					DEBUG("replied to c\r\n");
+				}
+				else if(data[0] == 0x0c && data[4] == 0x10)
+				{
+					DS2Packet* reply = new DS2Packet(replyc1, 7, DS2_16BIT);
+					diag->write(*reply, DS2_K);
+					delete reply;
+					DEBUG("replied to c1\r\n");
+				}
+			}
+			
 			delete packet;
 		}
 		else
@@ -253,12 +324,12 @@ OpenOBC::OpenOBC()
 	NVIC_SetPriorityGrouping(4);
 	NVIC_SetPriority(EINT1_IRQn, 0);
 	NVIC_EnableIRQ(EINT1_IRQn);
-
+	
 	//fuel consumption configuration
 	Input* fuelConsInput = new Input(FUEL_CONS_PORT, FUEL_CONS_PIN);
 	fuelConsInput->setPullup();
 	fuelCons = new FuelConsumption(*fuelConsInput, interruptManager);
-
+	
 	//speed configuration
 	Input* speedPin = new Input(SPEED_PORT, SPEED_PIN);
 	speedPin->setPullup();
@@ -331,9 +402,65 @@ OpenOBC::OpenOBC()
 	go = true;
 }
 
+void uarthandler(bool isLast)
+{
+	while(debugS->readable())
+	{
+		static int esc;
+		char c = debugS->get();
+		DEBUG("0x%x\r\n", c);
+		if(esc == 0)
+		{
+			if(c == 0x1b)
+				esc = 1;
+			else if(c == 'u')
+				++ctemp;
+			else if(c == 'd')
+				--ctemp;
+		}
+		else if(esc == 1)
+		{
+			if(esc == 1 && c == 0x5b)
+				esc = 2;
+			else
+				esc = 0;
+		}
+		else if(esc == 2)
+		{
+			esc = 0;
+			if(c == 0x41)
+				++setvalue;
+			else if(c == 0x42)
+				--setvalue;
+			else if(c == 0x43)
+			{
+				++seti;
+				if(seti < 5)
+					seti = 5;
+				if(seti > 17)
+					seti = 17;
+				setvalue = reply8[seti];
+			}
+			else if(c == 0x44)
+			{
+				--seti;
+				if(seti < 5)
+					seti = 5;
+				if(seti > 17)
+					seti = 17;
+				setvalue = reply8[seti];
+			}
+
+		}
+		else
+			esc = 0;
+	}
+}
 
 void OpenOBC::mainloop()
 {
+	debug->attach(&uarthandler);
+	
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 	printf("starting mainloop...\r\n");
 
@@ -379,7 +506,7 @@ void OpenOBC::mainloop()
 		{
 			case DISPLAY_VOLTAGE:
 			{
-				lcd->printf("%.2fV", batteryVoltage->read());
+				lcd->printf("%i %i  %.2fV", seti, setvalue, batteryVoltage->read());
 				break;
 			}
 			case DISPLAY_SPEED:
@@ -395,7 +522,32 @@ void OpenOBC::mainloop()
 				float voltage = temperature->read();
 				float resistance = (10000 * voltage) / (3.3 - voltage);
 				float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15f;
-				lcd->printf("%.1fC  %.1fF", temperature, temperature * 1.78 + 32);
+				lcd->printf("%.1fC  %.0fF", temperature, temperature * 1.78 + 32);
+				break;
+			}
+			case DISPLAY_TEMP1:
+			{
+				float temperature = -273.15;
+				int ctraw = -1;
+				
+				DS2Packet* query = new DS2Packet(DS2_16BIT);
+				query->setAddress(0x0d);
+				uint8_t qdata[] = {0x08};
+				query->setData(qdata, sizeof(qdata));
+				
+				DS2Packet* reply = diag->query(*query, DS2_L, 100);
+				delete query;
+				if(reply != NULL)
+				{
+					ctraw = reply->getData()[5];
+					temperature = coolant_temp_table[ctraw];
+					delete reply;
+				}
+				
+				if(useMetricSystem)
+					lcd->printf("coolant temp %.0fC", temperature);
+				else
+					lcd->printf("coolant temp %.0fF", temperature * 1.78 + 32);
 				break;
 			}
 			case DISPLAY_CONSUM1:
@@ -516,7 +668,7 @@ void OpenOBC::mainloop()
 			doLock = false;
 		}
 
-		delay(200);
+		delay(100);
 
 		if(doSleep)
 		{
@@ -645,7 +797,10 @@ void OpenOBC::buttonRange(bool isLast)
 
 void OpenOBC::buttonTemp(bool isLast)
 {
-	displayMode = DISPLAY_TEMP;
+	if(displayMode == DISPLAY_TEMP)
+		displayMode = DISPLAY_TEMP1;
+	else
+		displayMode = DISPLAY_TEMP;
 }
 
 void OpenOBC::buttonSpeed(bool isLast)

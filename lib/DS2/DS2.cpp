@@ -78,9 +78,9 @@ DS2Packet* DS2::read(DS2BusType bus)
 
 DS2Packet* DS2::query(const DS2Packet& txPacket, DS2BusType txBus, int timeout_ms)
 {
-	DEBUG("sending: ");
-	txPacket.printPacket(stderr);
-	fprintf(stderr, "\r");
+// 	DEBUG("sending: ");
+// 	txPacket.printPacket(stderr);
+// 	fprintf(stderr, "\r");
 
 	interceptPackets = true;
 		
@@ -99,15 +99,15 @@ DS2Packet* DS2::query(const DS2Packet& txPacket, DS2BusType txBus, int timeout_m
 		DS2Packet* rxPacket = read();
 		if(rxPacket != NULL)
 		{
-			DEBUG("received a reply: ");
-			rxPacket->printPacket(stderr);
-			fprintf(stderr, "\r");
+// 			DEBUG("received a reply: ");
+// 			rxPacket->printPacket(stderr);
+// 			fprintf(stderr, "\r");
 			interceptPackets = false;
 			return rxPacket; //TODO maybe verify packet type and address
 		}
 	}
 	interceptPackets = false;
-	DEBUG("no reply\r\n");
+// 	DEBUG("no reply\r\n");
 	return NULL;
 }
 
