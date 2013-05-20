@@ -28,7 +28,7 @@
 
 #define MAX_PERIOD (500000) //us
 
-FuelConsumption::FuelConsumption(Input& input, InterruptManager& interruptManager) : input(input), interruptManager(interruptManager)
+FuelConsumption::FuelConsumption(Input& input, InterruptManager& interruptManager) : input(input), interruptManager(interruptManager), timeSinceLastFallingEdge(interruptManager)
 {
 	period_us = 0;
 	ontime_us = 0;
@@ -85,7 +85,7 @@ void FuelConsumption::interruptHandler(bool isLast)
 		edgeIsRising = true;
 	else
 		return;
-	if(isLast)
+// 	if(isLast)
 	{
 		GPIO_ClearInt(input.getPort(), (1<<input.getPin()));
 	}

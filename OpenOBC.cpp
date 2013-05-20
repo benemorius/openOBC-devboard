@@ -174,7 +174,8 @@ OpenOBC::OpenOBC()
 	SysTick_Config(SystemCoreClock/1000 - 1); //interrupt period 1ms
 	debug = new Debug(DEBUG_TX_PORTNUM, DEBUG_TX_PINNUM, DEBUG_RX_PORTNUM, DEBUG_RX_PINNUM, DEBUG_BAUD, &interruptManager); debugS = debug;
 
-	printf("-"); fflush(stdout); delay(250); printf("-"); fflush(stdout); delay(250); printf("-"); fflush(stdout); delay(250); printf(">\r\n"); delay(250);
+// 	printf("-"); fflush(stdout); delay(250); printf("-"); fflush(stdout); delay(250); printf("-"); fflush(stdout); delay(250); printf(">\r\n"); delay(250);
+	printf("--->\r\n");
 	printf("clock speed: %i MHz\r\n", SystemCoreClock / 1000000);
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 
@@ -535,7 +536,7 @@ void OpenOBC::mainloop()
 				uint8_t qdata[] = {0x08};
 				query->setData(qdata, sizeof(qdata));
 				
-				DS2Packet* reply = diag->query(*query, DS2_L, 100);
+				DS2Packet* reply = diag->query(*query, DS2_L);
 				delete query;
 				if(reply != NULL)
 				{
@@ -682,6 +683,7 @@ void OpenOBC::mainloop()
 
 void OpenOBC::sleep()
 {
+	printf("sleeping...\r\n");
 	*obcS->lcdLight = false;
 	*obcS->clockLight = false;
 	*obcS->keypadLight = false;
@@ -714,11 +716,11 @@ void OpenOBC::sleep()
 
 void OpenOBC::wake()
 {
-	*obcS->clockLight = true;
-	delay(160); //80 = 2 seconds at 4MHz
+// 	*obcS->clockLight = true;
+// 	delay(160); //80 = 2 seconds at 4MHz
 // 	SystemInit();
-	*obcS->lcdLight = true;
-	*obcS->keypadLight = true;
+// 	*obcS->lcdLight = true;
+// 	*obcS->keypadLight = true;
 	__set_MSP(0x10008000);
 	Reset_Handler();
 }

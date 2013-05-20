@@ -61,7 +61,7 @@ void FuelLevel::interruptHandler(bool isLast)
 	else
 		return;
 
-	if(isLast)
+// 	if(isLast)
 	{
 		GPIO_ClearInt(dataPin.getPort(), (1<<dataPin.getPin()));
 	}

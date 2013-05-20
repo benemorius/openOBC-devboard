@@ -230,8 +230,10 @@ uint32_t Timer::read_us()
 	
 	if((overflows > 0) && (overflowed == true))
 		return us + (((uint32_t)0xffffffff / 25) * (overflows - 1));
-	else if(overflows > 0 && overflowed == false)
+	else if((overflows > 0) && (overflowed == false))
 		return us + (((uint32_t)0xffffffff / 25) * overflows);
+	else
+		return us;
 }
 
 void Timer::interruptHandler(bool isLast)
