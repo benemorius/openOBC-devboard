@@ -31,7 +31,7 @@
 class AnalogIn
 {
 public:
-	AnalogIn(uint8_t port, uint8_t pin, float referenceVoltage = 3.0f, float scaleVoltage = 0.0f);
+	AnalogIn(uint8_t port, uint8_t pin, float referenceVoltage = 3.0f, float scaleVoltage = 0.0f, float calibrationScale = 1.0f);
 
 	float read();
 	float readPercent();
@@ -47,6 +47,7 @@ private:
 	uint8_t pin;
 	float referenceVoltage;
 	float scaleVoltage;
+	float calibrationScale;
 	ADC_CHANNEL_SELECTION channel;
 	ADC_TYPE_INT_OPT interrupt;
 };

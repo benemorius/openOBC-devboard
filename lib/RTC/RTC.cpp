@@ -113,14 +113,16 @@ void RTC::setHour(uint8_t hour)
 
 void RTC::setDay(uint8_t day)
 {
-	if(day > 31)
+	day %= 32;
+	if(day == 0)
 		day = 1;
 	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_DAYOFMONTH, day);
 }
 
 void RTC::setMonth(uint8_t month)
 {
-	if(month > 12)
+	month %= 13;
+	if(month == 0)
 		month = 1;
 	RTC_SetTime(LPC_RTC, RTC_TIMETYPE_MONTH, month);
 }

@@ -35,9 +35,15 @@ MAX4896Pin::MAX4896Pin(MAX4896& max, uint8_t bitmask, bool isOn, bool onIsHigh) 
 
 void MAX4896Pin::setState(bool state)
 {
+	this->state = state;
 	uint8_t bits = max.readBits();
 	bits &= ~bitmask;
 	if(state ^ onIsHigh)
 		bits |= bitmask;
 	max.writeBits(bits);
+}
+
+bool MAX4896Pin::getState() const
+{
+	return this->state;
 }

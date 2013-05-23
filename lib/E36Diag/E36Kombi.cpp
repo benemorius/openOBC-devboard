@@ -26,6 +26,9 @@
 #include "E36Kombi.h"
 
 #define CMD_QUERY {0x00}
+#define CMD_READ_STATUS {0x08}
+
+#define STATUS_BYTE_COOLANT_TEMPERATURE (5)
 
 E36Kombi::E36Kombi(DS2& diagnosticInterface) : diag(diagnosticInterface)
 {
@@ -44,4 +47,24 @@ bool E36Kombi::query()
 		return true;
 	}
 	return false;
+}
+
+float E36Kombi::getCoolantTemperature()
+{
+	const uint8_t cmd[] = CMD_READ_STATUS;
+	DS2Packet query(address, cmd, sizeof(cmd), packetType);
+	DS2Packet* reply = diag.query(query, DS2_L);
+	if(reply != NULL)
+	{
+		uint8_t* statusData = reply->getData();
+		uint8_t index = STATUS_BYTE_COOLANT_TEMPERATURE;
+		if(index >= reply->getDataLength())
+			return -273.15f;
+		
+		uint8_t rawTemp = statusData[index];
+		delete reply;
+		float temperature = coolant_temp_table[rawTemp];
+		return temperature;
+	}
+	return -273.15f;
 }

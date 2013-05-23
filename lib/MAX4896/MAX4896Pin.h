@@ -38,12 +38,19 @@ class MAX4896Pin : public IO
 public:
 	MAX4896Pin(MAX4896& max, uint8_t bitmask, bool isOn = false, bool onIsHigh = false);
 	void setState(bool state);
-	
+	bool getState() const;
+	void setOpenDrain(bool isOpenDrain) {};
+	void setInput() {};
+	void setOutput() {};
+	void setPullup() {};
+	void setPulldown() {};
+	void setTristate() {};
 	
 private:
 	
 	MAX4896& max;
 	uint8_t bitmask;
+	bool state;
 };
 
 #endif // MAX4896PIN_H

@@ -116,6 +116,12 @@ IO& IO::operator=(bool state)
 	return *this;
 }
 
+IO& IO::operator=(IO& io)
+{
+	setState(io.getState());
+	return *this;
+}
+
 void IO::setInput()
 {
 	GPIO_SetDir(port, (1<<pin), 0);

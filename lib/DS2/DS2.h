@@ -72,7 +72,7 @@ public:
 	 * @param timeout_ms time to wait for reply
 	 * @return reply packet
 	 */
-	DS2Packet* query(const DS2Packet& txPacket, DS2BusType txBus = DS2_BOTH, int timeout_ms = 600);
+	DS2Packet* query(const DS2Packet& txPacket, DS2BusType txBus = DS2_BOTH, int timeout_ms = 200);
 
 	/**
 	 * Check for new packets in receive buffers, validate them, pop them onto

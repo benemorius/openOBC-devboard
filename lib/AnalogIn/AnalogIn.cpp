@@ -27,10 +27,11 @@
 #include <lpc17xx_pinsel.h>
 #include <cstdio>
 
-AnalogIn::AnalogIn(uint8_t port, uint8_t pin, float referenceVoltage, float scaleVoltage) : port(port), pin(pin), referenceVoltage(referenceVoltage), scaleVoltage(scaleVoltage)
+AnalogIn::AnalogIn(uint8_t port, uint8_t pin, float referenceVoltage, float scaleVoltage, float calibrationScale) : port(port), pin(pin), referenceVoltage(referenceVoltage), scaleVoltage(scaleVoltage)
 {
 	if(this->scaleVoltage == 0.0f)
 		this->scaleVoltage = referenceVoltage;
+	this->calibrationScale = calibrationScale;
 	
 	uint8_t funcnum;
 	if(port == 0 && pin == 23)
@@ -90,7 +91,7 @@ AnalogIn::AnalogIn(uint8_t port, uint8_t pin, float referenceVoltage, float scal
 
 float AnalogIn::read()
 {
-	return readPercent() * scaleVoltage;
+	return readPercent() * scaleVoltage * calibrationScale;
 }
 
 float AnalogIn::readPercent()

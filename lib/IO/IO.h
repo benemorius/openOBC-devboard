@@ -33,23 +33,24 @@ public:
 	IO(uint8_t port, uint8_t pin, bool isOn = false, bool onIsHigh = true);
 	
 	virtual void setState(bool on);
-	bool getState() const;
+	virtual bool getState() const;
 	void on();
 	void off();
 	void toggle();
-	void setOpenDrain(bool isOpenDrain);
-	void setInput();
-	void setOutput();
-	void setPullup();
-	void setPulldown();
-	void setTristate();
+	virtual void setOpenDrain(bool isOpenDrain);
+	virtual void setInput();
+	virtual void setOutput();
+	virtual void setPullup();
+	virtual void setPulldown();
+	virtual void setTristate();
 	void setOnIsHigh(bool onIsHigh) {this->onIsHigh = onIsHigh;}
-	bool getOnIsHigh()  {return this->onIsHigh;}
+	bool getOnIsHigh() const {return this->onIsHigh;}
 
 	uint8_t getPort() const {return port;}
 	uint8_t getPin() const {return pin;}
 	
 	IO& operator=(bool state);
+	IO& operator=(IO& io);
 	operator bool() const { return getState();}
 	
 protected:

@@ -58,6 +58,7 @@ typedef enum
 	DISPLAY_CONSUM4,
 	DISPLAY_TEMP,
 	DISPLAY_TEMP1,
+	DISPLAY_TEMP1SET,
 	DISPLAY_SPEED,
 	DISPLAY_VOLTAGE,
 	DISPLAY_OPENOBC,
@@ -65,7 +66,6 @@ typedef enum
 	DISPLAY_FREEMEM,
 	DISPLAY_RANGE1,
 	DISPLAY_RANGE2,
-	DISPLAY_OUTPUTS,
 	DISPLAY_CLOCKSET,
 	DISPLAY_DATESET
 } DisplayMode_Type;
@@ -82,22 +82,24 @@ class OpenOBC : public InterruptManagerOwner
 public:
 	OpenOBC();
 	void mainloop();
-	void buttonConsum(bool isLast);
-	void buttonRange(bool isLast);
-	void buttonTemp(bool isLast);
-	void buttonSpeed(bool isLast);
-	void buttonKMMLS(bool isLast);
-	void button1(bool isLast);
-	void buttonCheck(bool isLast);
-	void buttonSet(bool isLast);
-	void buttonMemo(bool isLast);
-	void buttonDist(bool isLast);
 	void button1000(bool isLast);
 	void button100(bool isLast);
 	void button10(bool isLast);
+	void button1(bool isLast);
+	void buttonConsum(bool isLast);
+	void buttonRange(bool isLast);
+	void buttonTemp(bool isLast);
+	void buttonCode(bool isLast);
+	void buttonSpeed(bool isLast);
+	void buttonLimit(bool isLast);
+	void buttonDist(bool isLast);
+	void buttonTimer(bool isLast);
+	void buttonCheck(bool isLast);
+	void buttonKMMLS(bool isLast);
 	void buttonClock(bool isLast);
 	void buttonDate(bool isLast);
-	void buttonTimer(bool isLast);
+	void buttonMemo(bool isLast);
+	void buttonSet(bool isLast);
 	
 	Callback* callback;
 	SPI* spi1;
@@ -108,6 +110,10 @@ public:
 	IO* limitLed;
 	IO* timerLed;
 	IO* ccmLight;
+	IO* chime0;
+	IO* chime1;
+	IO* ventilation;
+	IO* antitheftHorn;
 	IO* ews;
 	MAX4896* out0;
 	MAX4896* out1;
@@ -130,6 +136,7 @@ protected:
 	void sleep();
 	void wake();
 	void printDS2Packet(bool isLast = false);
+	void writeConfigData(bool isLast = false);
 	
 	Debug* debug;
 	RTC* rtc;
@@ -142,16 +149,21 @@ protected:
 	ObcLcd* lcd;
 	CheckControlModule* ccm;
 	IO* lcdReset;
-	DisplayMode_Type displayMode;
+	volatile DisplayMode_Type& displayMode;
+// 	volatile DisplayMode_Type& displayModeNonvolatile;
 	ClockDisplayMode_Type clockDisplayMode;
 	AnalogIn* batteryVoltage;
 	AnalogIn* temperature;
 	SpeedInput* speed;
 	FuelConsumption* fuelCons;
 	bool useMetricSystem;
-	float averageLitresPer100km;
-	uint32_t averageFuelConsumptionSeconds;
+	bool useMetricSystemBoth; //both metric and imperial
+	volatile float& averageLitresPer100km;
+	volatile uint32_t& averageFuelConsumptionSeconds;
     DisplayMode_Type lastDisplayMode;
+	float coolantTemperature; //coolant temperature in degrees celsius from KOMBI via diagnostic bus
+	uint32_t coolantWarningTemp;
+	uint32_t coolantWarningTempSet;
 	
 };
 
