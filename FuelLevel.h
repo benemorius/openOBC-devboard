@@ -41,7 +41,7 @@ public:
 	float getGallons() {return getLitres() / 3.78541f;}
 
 private:
-	void interruptHandler(bool isLast);
+	void interruptHandler();
 	
 	Input& dataPin;
 	InterruptManager& interruptManager;

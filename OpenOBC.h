@@ -82,24 +82,24 @@ class OpenOBC : public InterruptManagerOwner
 public:
 	OpenOBC();
 	void mainloop();
-	void button1000(bool isLast);
-	void button100(bool isLast);
-	void button10(bool isLast);
-	void button1(bool isLast);
-	void buttonConsum(bool isLast);
-	void buttonRange(bool isLast);
-	void buttonTemp(bool isLast);
-	void buttonCode(bool isLast);
-	void buttonSpeed(bool isLast);
-	void buttonLimit(bool isLast);
-	void buttonDist(bool isLast);
-	void buttonTimer(bool isLast);
-	void buttonCheck(bool isLast);
-	void buttonKMMLS(bool isLast);
-	void buttonClock(bool isLast);
-	void buttonDate(bool isLast);
-	void buttonMemo(bool isLast);
-	void buttonSet(bool isLast);
+	void button1000();
+	void button100();
+	void button10();
+	void button1();
+	void buttonConsum();
+	void buttonRange();
+	void buttonTemp();
+	void buttonCode();
+	void buttonSpeed();
+	void buttonLimit();
+	void buttonDist();
+	void buttonTimer();
+	void buttonCheck();
+	void buttonKMMLS();
+	void buttonClock();
+	void buttonDate();
+	void buttonMemo();
+	void buttonSet();
 	
 	Callback* callback;
 	SPI* spi1;
@@ -135,8 +135,8 @@ public:
 protected:
 	void sleep();
 	void wake();
-	void printDS2Packet(bool isLast = false);
-	void writeConfigData(bool isLast = false);
+	void printDS2Packet();
+	void writeConfigData();
 	
 	Debug* debug;
 	RTC* rtc;

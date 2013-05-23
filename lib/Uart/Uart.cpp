@@ -281,7 +281,7 @@ size_t Uart::printf(const char* format, ... )
 	return puts(buffer, strlen(buffer));
 }
 
-void Uart::receiveHandler(bool isLast)
+void Uart::receiveHandler()
 {
 	uint32_t intsrc, tmp, tmp1;
 	

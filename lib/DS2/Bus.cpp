@@ -97,7 +97,7 @@ bool Bus::_bus_readable()
 	return uart.readable();
 }
 
-void Bus::receiveHandler(bool isLast)
+void Bus::receiveHandler()
 {
 	if(!readEnabled)
 		return;

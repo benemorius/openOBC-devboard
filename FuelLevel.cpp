@@ -46,7 +46,7 @@ FuelLevel::~FuelLevel()
 	interruptManager.detach(IRQ_EINT3, this, &FuelLevel::interruptHandler);
 }
 
-void FuelLevel::interruptHandler(bool isLast)
+void FuelLevel::interruptHandler()
 {
 	static bool haveStartBit;
 	static bool currentLogicState;

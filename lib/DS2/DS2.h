@@ -81,11 +81,11 @@ public:
 	 */
 	void task();
 	
-	void receiveHandlerK(bool isLast);
-	void receiveHandlerL(bool isLast);
+	void receiveHandlerK();
+	void receiveHandlerL();
 
 	template<typename T>
-	void attach(T* classPointer, void (T::*methodPointer)(bool isLast))
+	void attach(T* classPointer, void (T::*methodPointer)())
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -93,18 +93,18 @@ public:
 		}
 	}
 	template<typename T>
-	void detach(T* classPointer, void (T::*methodPointer)(bool isLast))
+	void detach(T* classPointer, void (T::*methodPointer)())
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
 			callback.detach(classPointer, methodPointer);
 		}
 	}
-	void attach(void (*functionPointer)(bool isLast))
+	void attach(void (*functionPointer)())
 	{
 		callback.attach(functionPointer);
 	}
-	void detach(void (*functionPointer)(bool isLast))
+	void detach(void (*functionPointer)())
 	{
 		callback.detach(functionPointer);
 	}

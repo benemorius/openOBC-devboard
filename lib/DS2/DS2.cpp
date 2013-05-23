@@ -316,13 +316,13 @@ DS2Packet* DS2::getPacketFromBus(DS2BusType bus) //TODO clean this mess up
 	}
 }
 
-void DS2::receiveHandlerK(bool isLast)
+void DS2::receiveHandlerK()
 {
 	if(k.readable())
 		taskEnabled = true;
 }
 
-void DS2::receiveHandlerL(bool isLast)
+void DS2::receiveHandlerL()
 {
 	if(l.readable())
 		taskEnabled = true;

@@ -45,18 +45,18 @@ public:
 	uint32_t read();
 	uint32_t read_ms();
 	uint32_t read_us();
-	void interruptHandler(bool isLast);
+	void interruptHandler();
 	
 	uint32_t getOverflowCount() {return overflows;}
 	void setStartCount(uint32_t count) {startCount = count;}
 	
 	template<typename T>
-	uint32_t setCallback(T* classPointer, void (T::*methodPointer)(bool isLast), uint32_t milliseconds)
+	uint32_t setCallback(T* classPointer, void (T::*methodPointer)(), uint32_t milliseconds)
 	{
 		setCallbackUs(classPointer, methodPointer, milliseconds * 1000);
 	}
 	template<typename T>
-	uint32_t setCallbackUs(T* classPointer, void (T::*methodPointer)(bool isLast), uint32_t microseconds)
+	uint32_t setCallbackUs(T* classPointer, void (T::*methodPointer)(), uint32_t microseconds)
 	{
 		if(interruptManager == NULL)
 		{
@@ -72,11 +72,11 @@ public:
 		}
 	}
 	
-	uint32_t setCallback(void (*functionPointer)(bool isLast), uint32_t milliseconds)
+	uint32_t setCallback(void (*functionPointer)(), uint32_t milliseconds)
 	{
 		setCallbackUs(functionPointer, milliseconds * 1000);
 	}
-	uint32_t setCallbackUs(void (*functionPointer)(bool isLast), uint32_t microseconds)
+	uint32_t setCallbackUs(void (*functionPointer)(), uint32_t microseconds)
 	{
 		callbackFunction->detachAll();
 		callbackFunction->attach(functionPointer);

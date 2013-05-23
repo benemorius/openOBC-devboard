@@ -74,7 +74,7 @@ void Debug::streamOut(char& c)
 	c = (char)get();
 }
 
-void Debug::receiveHandler(bool isLast)
+void Debug::receiveHandler()
 {
 	callback.call();
 }

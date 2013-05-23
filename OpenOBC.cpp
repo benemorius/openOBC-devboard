@@ -62,9 +62,9 @@ uint8_t reply8[] = {0x0d, 0x00, 0x13, 0x08, 0x03, 0x05, 0x17, 0x90, 0xb5, 0x5d, 
 
 extern "C" void Reset_Handler(void);
 
-void runHandler(bool isLast = false);
+void runHandler();
 
-void OpenOBC::printDS2Packet(bool isLast)
+void OpenOBC::printDS2Packet()
 {
 	DS2Packet* packet;
 	while(1)
@@ -146,7 +146,7 @@ void OpenOBC::printDS2Packet(bool isLast)
 	}
 }
 
-void OpenOBC::writeConfigData(bool isLast)
+void OpenOBC::writeConfigData()
 {
 	if(this->useMetricSystemBoth && (config->getValueByName("MeasurementSystem") != "BOTH"))
 		config->setValueByName("MeasurementSystem", "BOTH");
@@ -453,7 +453,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	go = true;
 }
 
-void uarthandler(bool isLast)
+void uarthandler()
 {
 	while(debugS->readable())
 	{
@@ -856,7 +856,7 @@ void OpenOBC::wake()
 	Reset_Handler();
 }
 
-void OpenOBC::button1000(bool isLast)
+void OpenOBC::button1000()
 {
 	if(displayMode == DISPLAY_CLOCKSET)
 	{
@@ -878,7 +878,7 @@ void OpenOBC::button1000(bool isLast)
 	}
 }
 
-void OpenOBC::button100(bool isLast)
+void OpenOBC::button100()
 {
 	if(displayMode == DISPLAY_CLOCKSET)
 	{
@@ -896,7 +896,7 @@ void OpenOBC::button100(bool isLast)
 	}
 }
 
-void OpenOBC::button10(bool isLast)
+void OpenOBC::button10()
 {
 	if(displayMode == DISPLAY_CLOCKSET)
 	{
@@ -924,7 +924,7 @@ void OpenOBC::button10(bool isLast)
 	}
 }
 
-void OpenOBC::button1(bool isLast)
+void OpenOBC::button1()
 {
 	if(displayMode == DISPLAY_CLOCKSET)
 	{
@@ -946,7 +946,7 @@ void OpenOBC::button1(bool isLast)
 	}
 }
 
-void OpenOBC::buttonConsum(bool isLast)
+void OpenOBC::buttonConsum()
 {
 	if(displayMode == DISPLAY_CONSUM1)
 		displayMode = DISPLAY_CONSUM2;
@@ -958,7 +958,7 @@ void OpenOBC::buttonConsum(bool isLast)
 		displayMode = DISPLAY_CONSUM1;
 }
 
-void OpenOBC::buttonRange(bool isLast)
+void OpenOBC::buttonRange()
 {
 	if(displayMode == DISPLAY_RANGE1)
 		displayMode = DISPLAY_RANGE2;
@@ -966,7 +966,7 @@ void OpenOBC::buttonRange(bool isLast)
 		displayMode = DISPLAY_RANGE1;
 }
 
-void OpenOBC::buttonTemp(bool isLast)
+void OpenOBC::buttonTemp()
 {
 	if(displayMode == DISPLAY_TEMP)
 		displayMode = DISPLAY_TEMP1;
@@ -974,37 +974,37 @@ void OpenOBC::buttonTemp(bool isLast)
 		displayMode = DISPLAY_TEMP;
 }
 
-void OpenOBC::buttonCode(bool isLast)
+void OpenOBC::buttonCode()
 {
 	*codeLed = !*codeLed;
 }
 
-void OpenOBC::buttonSpeed(bool isLast)
+void OpenOBC::buttonSpeed()
 {
 	displayMode = DISPLAY_SPEED;
 }
 
-void OpenOBC::buttonLimit(bool isLast)
+void OpenOBC::buttonLimit()
 {
 	*limitLed = !*limitLed;
 }
 
-void OpenOBC::buttonDist(bool isLast)
+void OpenOBC::buttonDist()
 {
 	displayMode = DISPLAY_VOLTAGE;
 }
 
-void OpenOBC::buttonTimer(bool isLast)
+void OpenOBC::buttonTimer()
 {
 	*timerLed = !*timerLed;
 }
 
-void OpenOBC::buttonCheck(bool isLast)
+void OpenOBC::buttonCheck()
 {
 	displayMode = DISPLAY_CHECK;
 }
 
-void OpenOBC::buttonKMMLS(bool isLast)
+void OpenOBC::buttonKMMLS()
 {
 	if(useMetricSystemBoth)
 	{
@@ -1021,26 +1021,26 @@ void OpenOBC::buttonKMMLS(bool isLast)
 	}
 }
 
-void OpenOBC::buttonClock(bool isLast)
+void OpenOBC::buttonClock()
 {
 	if(displayMode == DISPLAY_DATESET)
 		displayMode = DISPLAY_CLOCKSET;
 	clockDisplayMode = CLOCKDISPLAY_CLOCK;
 }
 
-void OpenOBC::buttonDate(bool isLast)
+void OpenOBC::buttonDate()
 {
 	if(displayMode == DISPLAY_CLOCKSET)
 		displayMode = DISPLAY_DATESET;
 	clockDisplayMode = CLOCKDISPLAY_DATE;
 }
 
-void OpenOBC::buttonMemo(bool isLast)
+void OpenOBC::buttonMemo()
 {
 	displayMode = DISPLAY_FREEMEM;
 }
 
-void OpenOBC::buttonSet(bool isLast)
+void OpenOBC::buttonSet()
 {
 	if(keypad->getKeys() & BUTTON_CLOCK_MASK)
 	{
@@ -1094,7 +1094,7 @@ void OpenOBC::buttonSet(bool isLast)
 	}
 }
 
-void runHandler(bool isLast)
+void runHandler()
 {
 	EXTI_ClearEXTIFlag(EXTI_EINT1);
 	doSleep = false;

@@ -236,25 +236,25 @@ uint32_t Timer::read_us()
 		return us;
 }
 
-void Timer::interruptHandler(bool isLast)
+void Timer::interruptHandler()
 {
 // 	DEBUG("timer irq 0x%x\r\n", this);
 	if(TIM_GetIntStatus(TIMER_PERIPHERAL, TIM_MR0_INT) == SET)
 	{
 // 		DEBUG("overflow 0x%x\r\n", this);
-		if(isLast)
-		{
-			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR0_INT);
-		}
+// 		if(isLast)
+// 		{
+// 			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR0_INT);
+// 		}
 		overflows++;
 	}
 	if(TIM_GetIntStatus(TIMER_PERIPHERAL, TIM_MR1_INT) == SET)
 	{
-		if(isLast)
-		{
-// 			DEBUG("clearing 0x%x\r\n", this);
-			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR1_INT);
-		}
+// 		if(isLast)
+// 		{
+// // 			DEBUG("clearing 0x%x\r\n", this);
+// 			TIM_ClearIntPending(TIMER_PERIPHERAL, TIM_MR1_INT);
+// 		}
 		if(callbackActive && read_us() >= callbackDelay)
 		{
 			frozenTimerValue = TIMER_PERIPHERAL->TC;

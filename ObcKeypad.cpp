@@ -95,7 +95,7 @@ uint32_t ObcKeypad::getKeys()
 	return keys;
 }
 
-void ObcKeypad::scan(bool isLast)
+void ObcKeypad::scan()
 {
 	uint32_t key = getKeys();
 // 	DEBUG("scan: 0x%x (0x%x)\r\n", key, activeKeys);
@@ -184,7 +184,7 @@ void ObcKeypad::scan(bool isLast)
 	}
 }
 
-void ObcKeypad::interruptHandler(bool isLast)
+void ObcKeypad::interruptHandler()
 {
 // 	DEBUG("keypad irq\r\n");
 	if((GPIO_GetIntStatus(y0.getPort(), y0.getPin(), 1)) || (GPIO_GetIntStatus(y1.getPort(), y1.getPin(), 1)) || (GPIO_GetIntStatus(y2.getPort(), y2.getPin(), 1)) || (GPIO_GetIntStatus(y3.getPort(), y3.getPin(), 1)))

@@ -28,6 +28,7 @@
 
 #include "FunctionPointer.h"
 #include <cstdio>
+#include <lpc17xx_timer.h> //FIXME remove
 #include <IO.h> //FIXME remove
 extern IO* isr; //FIXME remove
 extern IO* idle; //FIXME remove
@@ -93,7 +94,7 @@ public:
     InterruptManager(InterruptManagerOwner* owner);
 
 	template<typename T>
-	void attach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(bool isLast))
+	void attach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)())
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -103,7 +104,7 @@ public:
 		}
 	}
 	template<typename T>
-	void detach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)(bool isLast))
+	void detach(IRQHandler_Type irq, T* classPointer, void (T::*methodPointer)())
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
@@ -112,13 +113,13 @@ public:
 		}
 	}
 	
-	void attach(IRQHandler_Type irq, void (*functionPointer)(bool isLast))
+	void attach(IRQHandler_Type irq, void (*functionPointer)())
 	{
 		if(!pointers[irq])
 			pointers[irq] = new FunctionPointer<void>;
 		pointers[irq]->attach(functionPointer);
 	}
-	void detach(IRQHandler_Type irq, void (*functionPointer)(bool isLast))
+	void detach(IRQHandler_Type irq, void (*functionPointer)())
 	{
 		if(pointers[irq])
 			pointers[irq]->detach(functionPointer);
@@ -138,6 +139,12 @@ public:
 
 // 		idle->off(); //FIXME remove
 		isr->off(); //FIXME remove
+		
+		if(irq == IRQ_TIMER0) //FIXME this is really bad
+		{
+			TIM_ClearIntPending(LPC_TIM0, TIM_MR0_INT);
+			TIM_ClearIntPending(LPC_TIM0, TIM_MR1_INT);
+		}
 	}
 
 	bool isAttached(IRQHandler_Type irq)
