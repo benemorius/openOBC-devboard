@@ -561,24 +561,23 @@ void OpenOBC::mainloop()
 			hasWarned = true;
 			displayMode = DISPLAY_TEMP1;
 			ccmLight->on();
+			callback->addCallback(ccmLight, &IO::off, 4000);
 			chime1->on();
-			delay(100);
-			chime1->off();
+			callback->addCallback(chime1, &IO::off, 100);
 		}
 		else if(coolantTemperature >= coolantWarningTemp)
 		{
 			if(coolantWarningTimer.read_ms() >= 5000)
 			{
 				coolantWarningTimer.start();
+				ccmLight->on();
+				callback->addCallback(ccmLight, &IO::off, 4000);
 				chime1->on();
-				delay(100);
-				chime1->off();
+				callback->addCallback(chime1, &IO::off, 100);
 			}
 		}
 		else
 		{
-			if(ccmLight->getState())
-				ccmLight->off();
 			hasWarned = false;
 		}
 		
@@ -595,7 +594,9 @@ void OpenOBC::mainloop()
 			{
 				if(ccmByte != 0xff && ccmByteLast != 0xff)
 				{
-					displayMode = DISPLAY_CHECK;
+					ccmLight->on();
+					callback->addCallback(ccmLight, &IO::off, 10000);
+// 					displayMode = DISPLAY_CHECK;
 				}
 			}
 			ccmByteLast = ccm->getRawByte();
@@ -727,7 +728,7 @@ void OpenOBC::mainloop()
 				{
 					float range = fuelLevel->getLitres() / averageLitresPer100km * 100;
 					if(useMetricSystemBoth)
-						lcd->printf("%.0f km %.0f miles", range, fuelLevel->getLitres(), range * 0.621371f);
+						lcd->printf("%.0f km %.0f miles", range, range * 0.621371f);
 					else if(useMetricSystem)
 						lcd->printf("%.0f km  %.1f L", range, fuelLevel->getLitres());
 					else
