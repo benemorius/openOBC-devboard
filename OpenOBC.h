@@ -48,6 +48,7 @@
 #include "E36MK4.h"
 #include <MAX4896.h>
 #include <Callback.h>
+#include <Watchdog.h>
 #include "FuelConsumption.h"
 
 typedef enum
@@ -164,6 +165,7 @@ protected:
 	float coolantTemperature; //coolant temperature in degrees celsius from KOMBI via diagnostic bus
 	uint32_t coolantWarningTemp;
 	uint32_t coolantWarningTempSet;
+	Watchdog wdt;
 	
 };
 

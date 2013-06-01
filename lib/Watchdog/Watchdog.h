@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 <benemorius@gmail.com>
+    Copyright (c) 2013 <benemorius@gmail.com>
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -23,36 +23,23 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef OBCLCD_H
-#define OBCLCD_H
-#include "SPI.h"
-#include "IO.h"
 
-#define LCD_MAX_CHARACTERS (20)
-#define CLOCK_MAX_CHARACTERS (4)
+#ifndef WATCHDOG_H
+#define WATCHDOG_H
 
-class ObcLcd
+#include <lpc17xx_wdt.h>
+
+class Watchdog
 {
+
 public:
-    ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1);
-
-	 void printf(char* format, ...);
-	 void printfClock(char* format, ...);
-	 void clear();
-	 void clearClock();
-	 
-
-private:
-	void update();
-
-	SPI& spi;
-	IO& cs;
-	IO& refresh;
-	IO& unk0;
-	IO& unk1;
+    Watchdog();
+    virtual ~Watchdog();
 	
-	char lcdBuffer[LCD_MAX_CHARACTERS+1];
-	char clockBuffer[CLOCK_MAX_CHARACTERS+1];
+	void start(float seconds);
+	void stop();
+	void feed();
+	bool wasReset();
 };
 
-#endif // OBCLCD_H
+#endif // WATCHDOG_H

@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 <benemorius@gmail.com>
+    Copyright (c) 2013 <benemorius@gmail.com>
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -23,36 +23,40 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef OBCLCD_H
-#define OBCLCD_H
-#include "SPI.h"
-#include "IO.h"
 
-#define LCD_MAX_CHARACTERS (20)
-#define CLOCK_MAX_CHARACTERS (4)
+#include "Watchdog.h"
 
-class ObcLcd
+Watchdog::Watchdog()
 {
-public:
-    ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1);
+	WDT_Init(WDT_CLKSRC_IRC, WDT_MODE_RESET);
+}
 
-	 void printf(char* format, ...);
-	 void printfClock(char* format, ...);
-	 void clear();
-	 void clearClock();
-	 
+Watchdog::~Watchdog()
+{
+	//FIXME deinit wdt
+}
 
-private:
-	void update();
+void Watchdog::start(float seconds)
+{
+	WDT_Start(seconds * 1000 * 1000);
+}
 
-	SPI& spi;
-	IO& cs;
-	IO& refresh;
-	IO& unk0;
-	IO& unk1;
-	
-	char lcdBuffer[LCD_MAX_CHARACTERS+1];
-	char clockBuffer[CLOCK_MAX_CHARACTERS+1];
-};
+void Watchdog::stop()
+{
+	LPC_WDT->WDMOD &= ~WDT_WDMOD_WDEN;
+}
 
-#endif // OBCLCD_H
+void Watchdog::feed()
+{
+	WDT_Feed();
+}
+
+bool Watchdog::wasReset()
+{
+	if(WDT_ReadTimeOutFlag())
+	{
+		WDT_ClrTimeOutFlag();
+		return true;
+	}
+	return false;
+}

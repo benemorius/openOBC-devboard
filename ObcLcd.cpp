@@ -58,6 +58,16 @@ void ObcLcd::printfClock(char* format, ...)
 	update();
 }
 
+void ObcLcd::clear()
+{
+	printf("");
+}
+
+void ObcLcd::clearClock()
+{
+	printfClock("");
+}
+
 void ObcLcd::update()
 {
 	cs = false;

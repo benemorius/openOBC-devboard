@@ -166,6 +166,7 @@ void OpenOBC::writeConfigData()
 
 OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LPC_RTC->GPREG0)), averageLitresPer100km(reinterpret_cast<volatile float&>(LPC_RTC->GPREG1)), averageFuelConsumptionSeconds(reinterpret_cast<volatile uint32_t&>(LPC_RTC->GPREG2))
 {
+	wdt.start(10);
 	GPIO_IntDisable(0, 0xffffffff, 0);
 	GPIO_IntDisable(0, 0xffffffff, 1);
 	GPIO_IntDisable(2, 0xffffffff, 0);
@@ -441,6 +442,29 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	codeLed->on();
 	limitLed->on();
 	timerLed->on();
+	if(wdt.wasReset())
+	{
+		lcd->printfClock("!!!!");
+		Timer flashTimer;
+		while((keypad->getKeys() & BUTTON_SET_MASK) != BUTTON_SET_MASK)
+		{
+			if(flashTimer.read_ms() <= 1500)
+			{
+				lcd->printf("WATCHDOG RESET");
+			}
+			else if(flashTimer.read_ms() <= 3000)
+			{
+				lcd->printf("push SET to continue");
+			}
+			else
+			{
+				flashTimer.start();
+			}
+			wdt.feed();
+		}
+		lcd->clear();
+		lcd->clearClock();
+	}
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 	lcd->printf("openOBC %s", GIT_VERSION);
 	lcd->printfClock(" r01");;
@@ -514,6 +538,7 @@ void OpenOBC::mainloop()
 	
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 	printf("starting mainloop...\r\n");
+	wdt.start(5);
 
 	Timer averageLitresPer100kmTimer(interruptManager);
 	Timer coolantTemperatureTimer(interruptManager);
@@ -523,6 +548,8 @@ void OpenOBC::mainloop()
 	
 	while(1)
 	{
+		wdt.feed();
+		
 // 		uint32_t keys = keypad->getKeys();
 // 		if((keys & BUTTON_1000_MASK) == BUTTON_1000_MASK)
 // 			chime0->on();
