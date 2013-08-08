@@ -68,7 +68,8 @@ typedef enum
 	DISPLAY_RANGE1,
 	DISPLAY_RANGE2,
 	DISPLAY_CLOCKSET,
-	DISPLAY_DATESET
+	DISPLAY_DATESET,
+	DISPLAY_CALIBRATE
 } DisplayMode_Type;
 
 typedef enum
@@ -166,6 +167,7 @@ protected:
 	uint32_t coolantWarningTemp;
 	uint32_t coolantWarningTempSet;
 	Watchdog wdt;
+	float batteryVoltageCalibration;
 	
 };
 

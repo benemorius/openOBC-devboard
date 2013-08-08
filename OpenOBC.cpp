@@ -161,6 +161,13 @@ void OpenOBC::writeConfigData()
 		config->setValueByName("CoolantWarningTemperature", temp);
 		delete[] temp;
 	}
+	if(this->batteryVoltageCalibration != (float)atof(config->getValueByName("BatteryVoltageCalibration").c_str()))
+	{
+		char* newValue = new char[8];
+		snprintf(newValue, 8, "%.4f", batteryVoltageCalibration);
+		config->setValueByName("BatteryVoltageCalibration", newValue);
+		delete[] newValue;
+	}
 
 }
 
@@ -242,7 +249,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	if(config->getValueByName("BatteryVoltageCalibration") == "")
 		config->setValueByName("BatteryVoltageCalibration", "1.0000");	
 	if(config->getValueByName("MeasurementSystem") == "")
-		config->setValueByName("MeasurementSystem", "METRIC");
+		config->setValueByName("MeasurementSystem", "BOTH");
 	if(config->getValueByName("CoolantWarningTemperature") == "")
 		config->setValueByName("CoolantWarningTemperature", "100");
 
@@ -297,8 +304,10 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	clockDisplayMode = CLOCKDISPLAY_CLOCK;
 	
 	coolantWarningTemp = atof(config->getValueByName("CoolantWarningTemperature").c_str());
+	coolantWarningTempSet = coolantWarningTemp;
 	
-
+	batteryVoltageCalibration = atof(config->getValueByName("BatteryVoltageCalibration").c_str());
+	
 	//rtc configuration
 	rtc = new RTC(); rtcS = rtc;
 	RTC_TIME_Type settime;
@@ -653,6 +662,11 @@ void OpenOBC::mainloop()
 					lcd->printf("%.2fV", batteryVoltage->read());
 					break;
 				}
+				case DISPLAY_CALIBRATE:
+				{
+					lcd->printf("set %.2fV", batteryVoltage->read());
+					break;
+				}
 				case DISPLAY_SPEED:
 				{
 					float kmh = speed->getSpeed();
@@ -839,6 +853,8 @@ void OpenOBC::sleep()
 	DEBUG("writing config file...\r\n");
 	lcd->printf("write config file...");
 	writeConfigData();
+	if(!doSleep)
+		return;
 	printf("sleeping...\r\n");
 	lcd->printf("sleeping...");
 	*lcdReset = false;
@@ -950,6 +966,11 @@ void OpenOBC::button10()
 		if((coolantWarningTempSet % 100) < 10)
 			coolantWarningTempSet -= 100;
 	}
+	else if(displayMode == DISPLAY_CALIBRATE)
+	{
+		batteryVoltageCalibration += 0.0005;
+		batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
+	}
 }
 
 void OpenOBC::button1()
@@ -967,6 +988,11 @@ void OpenOBC::button1()
 		++coolantWarningTempSet;
 		if(coolantWarningTempSet % 10 == 0)
 			coolantWarningTempSet -= 10;
+	}
+	else if(displayMode == DISPLAY_CALIBRATE)
+	{
+		batteryVoltageCalibration -= 0.0005;
+		batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
 	}
 	else
 	{
@@ -1119,6 +1145,15 @@ void OpenOBC::buttonSet()
 	{
 		coolantWarningTemp = coolantWarningTempSet;
 		displayMode = DISPLAY_TEMP1;
+	}
+	else if(displayMode == DISPLAY_VOLTAGE)
+	{
+		batteryVoltageCalibration = atof(config->getValueByName("BatteryVoltageCalibration").c_str());
+		displayMode = DISPLAY_CALIBRATE;
+	}
+	else if(displayMode == DISPLAY_CALIBRATE)
+	{
+		displayMode = DISPLAY_VOLTAGE;
 	}
 }
 

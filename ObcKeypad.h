@@ -31,9 +31,9 @@
 #include "InterruptManager.h"
 #include "Timer.h"
 
-#define BUTTON_1000_MASK (0x110)
-#define BUTTON_100_MASK (0x11)
-#define BUTTON_10_MASK (0x11000)
+#define BUTTON_1000_MASK (0x10)
+#define BUTTON_100_MASK (0x1)
+#define BUTTON_10_MASK (0x1000)
 #define BUTTON_1_MASK (0x10000)
 #define BUTTON_CONSUM_MASK (0x20)
 #define BUTTON_RANGE_MASK (0x2000)

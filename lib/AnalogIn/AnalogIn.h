@@ -41,6 +41,8 @@ public:
 	uint8_t getPin() const {return pin;}
 	float getReferenceVoltage() const {return referenceVoltage;}
 	float getScaleVoltage() const {return scaleVoltage;}
+	float getCalibrationScale() const {return calibrationScale;}
+	float setCalibrationScale(float calibrationScale) {this->calibrationScale = calibrationScale;}
 
 private:
 	uint8_t port;
