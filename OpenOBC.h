@@ -168,6 +168,7 @@ protected:
 	uint32_t coolantWarningTempSet;
 	Watchdog wdt;
 	float batteryVoltageCalibration;
+	bool disableComms;
 	
 };
 

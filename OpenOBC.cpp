@@ -338,6 +338,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	DS2Bus* k = new Bus(*kline);
 	DS2Bus* l = new Bus(*lline);
 	diag = new DS2(*k, *l);
+	disableComms = false;
 
 // 	while(1)
 // 	{
@@ -583,10 +584,17 @@ void OpenOBC::mainloop()
 			DEBUG("new average fuel consumption is %.1fmpg (%.1fmpg %.1fmph %.1fkm/h) with %i seconds\r\n", 235.214f / averageLitresPer100km, 235.214f / litresPer100km, kilometresPerHour / 1.609f, kilometresPerHour, averageFuelConsumptionSeconds);
 		}
 		
-		if(coolantTemperatureTimer.read_ms() >= 1000)
+		if(!disableComms)
 		{
-			coolantTemperatureTimer.start();
-			coolantTemperature = kombi->getCoolantTemperature();
+			if(coolantTemperatureTimer.read_ms() >= 1000)
+			{
+				coolantTemperatureTimer.start();
+				coolantTemperature = kombi->getCoolantTemperature();
+			}
+		}
+		else
+		{
+			coolantTemperature = 0;
 		}
 		
 		static Timer coolantWarningTimer;
@@ -919,6 +927,10 @@ void OpenOBC::button1000()
 		if(month == 0)
 			month = 10;
 		rtc->setMonth(month);
+	}
+	else if(displayMode == DISPLAY_OPENOBC)
+	{
+		disableComms = !disableComms;
 	}
 }
 
