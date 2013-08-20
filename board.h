@@ -33,9 +33,6 @@
 extern "C" char* get_stack_top(void);
 extern "C" char* get_heap_end(void);
 
-#define SD_PRESENT_PORTNUM (0)
-#define SD_PRESENT_PINNUM (5)
-
 #define SPI0_MOSI_PORT (0)
 #define SPI0_MOSI_PIN (18)
 #define SPI0_MISO_PORT (0)
@@ -54,14 +51,14 @@ extern "C" char* get_heap_end(void);
 
 #define LCD_SELECT_PORT (2)
 #define LCD_SELECT_PIN (7)
-#define LCD_REFRESH_PORT (1)
-#define LCD_REFRESH_PIN (28)
+#define LCD_REFRESH_PORT (2)
+#define LCD_REFRESH_PIN (2)
 #define LCD_UNK0_PORT (2)
 #define LCD_UNK0_PIN (5)
 #define LCD_UNK1_PORT (2)
 #define LCD_UNK1_PIN (6)
-#define LCD_RESET_PORT (0)
-#define LCD_RESET_PIN (22)
+#define LCD_RESET_PORT (2)
+#define LCD_RESET_PIN (3)
 
 #define DEBUG_TX_PORTNUM (0)
 #define DEBUG_TX_PINNUM (2)
@@ -82,6 +79,8 @@ extern "C" char* get_heap_end(void);
 #define LLINE_RX_PINNUM (9)
 #define LLINE_BAUD (9600)
 
+#define KL_WAKE_PORT (2)
+#define KL_WAKE_PIN (4)
 
 #define LCD_BACKLIGHT_PORT (1)
 #define LCD_BACKLIGHT_PIN (23)
@@ -97,10 +96,10 @@ extern "C" char* get_heap_end(void);
 
 #define OUT_RESET_PORT (0)
 #define OUT_RESET_PIN (19)
-#define OUT0_CS_PORT (0)
-#define OUT0_CS_PIN (20)
+#define OUT0_CS_PORT (2)
+#define OUT0_CS_PIN (0)
 #define OUT1_CS_PORT (2)
-#define OUT1_CS_PIN (3)
+#define OUT1_CS_PIN (1)
 
 #define RUN_PORT (2)
 #define RUN_PIN (11)
@@ -121,7 +120,7 @@ extern "C" char* get_heap_end(void);
 #define FUEL_LEVEL_PIN (6)
 
 #define STALK_BUTTON_PORT (2)
-#define STALK_BUTTON_PIN (10)
+#define STALK_BUTTON_PIN (12)
 
 #define SPEED_PORT (0)
 #define SPEED_PIN (4)
@@ -134,3 +133,21 @@ extern "C" char* get_heap_end(void);
 
 #define EXT_TEMP_PORT (0)
 #define EXT_TEMP_PIN (23)
+
+#define VREF_EN_PORT (1)
+#define VREF_EN_PIN (14)
+
+#define CAN1_TD_PORT (0)
+#define CAN1_TD_PIN (22)
+#define CAN1_RD_PORT (0)
+#define CAN1_RD_PIN (21)
+
+#define I2C1_SDA_PORT (0)
+#define I2C1_SDA_PIN (19)
+#define I2C1_SCL_PORT (0)
+#define I2C1_SCL_PIN (20)
+
+#define I2C0_SDA_PORT (0)
+#define I2C0_SDA_PIN (27)
+#define I2C0_SCL_PORT (0)
+#define I2C0_SCL_PIN (28)

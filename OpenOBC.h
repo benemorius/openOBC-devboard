@@ -169,6 +169,8 @@ protected:
 	Watchdog wdt;
 	float batteryVoltageCalibration;
 	bool disableComms;
+    IO* klWake;
+    IO* vrefEn;
 	
 };
 

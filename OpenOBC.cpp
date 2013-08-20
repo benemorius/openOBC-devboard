@@ -198,6 +198,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	printf("clock speed: %i MHz\r\n", SystemCoreClock / 1000000);
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 
+	vrefEn = new IO(VREF_EN_PORT, VREF_EN_PIN, true, false);
 	
 	//spi coniguration
 	spi1 = new SPI(SPI1_MOSI_PORT, SPI1_MOSI_PIN, SPI1_MISO_PORT, SPI1_MISO_PIN, SPI1_SCK_PORT, SPI1_SCK_PIN, SPI1_CLOCKRATE);
@@ -333,6 +334,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	stalkButton = new Input(STALK_BUTTON_PORT, STALK_BUTTON_PIN);
 
 	//diagnostics interface configuration
+	klWake = new IO(KL_WAKE_PORT, KL_WAKE_PIN, true);
 	kline = new Uart(KLINE_TX_PORTNUM, KLINE_TX_PINNUM, KLINE_RX_PORTNUM, KLINE_RX_PINNUM, KLINE_BAUD, UART_PARITY_EVEN, &interruptManager);
 	lline = new Uart(LLINE_TX_PORTNUM, LLINE_TX_PINNUM, LLINE_RX_PORTNUM, LLINE_RX_PINNUM, LLINE_BAUD, UART_PARITY_EVEN, &interruptManager);
 	DS2Bus* k = new Bus(*kline);
@@ -869,6 +871,8 @@ void OpenOBC::sleep()
 	*obcS->lcdLight = false;
 	*obcS->clockLight = false;
 	*obcS->keypadLight = false;
+	*klWake = false;
+	*vrefEn = false;
 
 	NVIC_DisableIRQ(EINT3_IRQn);
 	GPIO_IntDisable(0, 0xffffffff, 0);
