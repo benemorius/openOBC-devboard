@@ -590,7 +590,7 @@ void OpenOBC::mainloop()
 // 		else
 // 			chime1->off();
 		
-		float kilometresPerHour = speed->getSpeed();
+		float kilometresPerHour = speed->getKmh();
 		if(averageLitresPer100kmTimer.read_ms() >= 1000 && kilometresPerHour > 1)
 		{
 			averageLitresPer100kmTimer.start();
@@ -697,13 +697,14 @@ void OpenOBC::mainloop()
 				}
 				case DISPLAY_SPEED:
 				{
-					float kmh = speed->getSpeed();
+					float kmh = speed->getKmh();
+					float mph = speed->getMph();
 					if(useMetricSystemBoth)
-						lcd->printf("%3.1f km/h %3.1f mph", kmh, kmh * 0.621371);
+						lcd->printf("%3.1f km/h %3.1f mph", kmh, mph);
 					else if(useMetricSystem)
 						lcd->printf("%3.1f km/h", kmh);
 					else
-						lcd->printf("%3.1f mph", kmh * 0.621371);
+						lcd->printf("%3.1f mph", mph);
 					break;
 				}
 				case DISPLAY_TEMP:
@@ -748,8 +749,8 @@ void OpenOBC::mainloop()
 				{
 					float litresPerHour = 0.2449 * 6 * 60 * fuelCons->getDutyCycle();
 					float gallonsPerHour = litresPerHour / 3.78514;
-					float kilometresPerHour = speed->getSpeed();
-					float milesPerHour = kilometresPerHour * 0.621371;
+					float kilometresPerHour = speed->getKmh();
+					float milesPerHour = speed->getMph();
 					if(useMetricSystemBoth)
 						lcd->printf("%2.1fL/100km %2.1fmpg", litresPerHour / kilometresPerHour * 100, milesPerHour / gallonsPerHour);
 					else if(useMetricSystem)

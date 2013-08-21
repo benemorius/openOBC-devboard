@@ -36,15 +36,15 @@ public:
 	SpeedInput(Input& input, InterruptManager& interruptManager);
 	~SpeedInput();
 	
-	float getSpeed();
+	float getKmh();
+	float getMph() {return getKmh() * 0.621371f;}
 	
 private:
 	void interruptHandler();
 	
 	Input& input;
 	InterruptManager& interruptManager;
-	Timer periodTimer;
-	uint32_t lastPeriod_us;
+	Timer* periodTimer;
 	float currentSpeed;
 };
 

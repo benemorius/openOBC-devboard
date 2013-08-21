@@ -30,6 +30,8 @@
 
 SpeedInput::SpeedInput(Input& input, InterruptManager& interruptManager) : input(input), interruptManager(interruptManager)
 {
+	currentSpeed = 0.0f;
+	periodTimer = new Timer(interruptManager);
 	interruptManager.attach(IRQ_EINT3, this, &SpeedInput::interruptHandler);
 	GPIO_IntEnable(input.getPort(), (1<<input.getPin()), 1);
 	NVIC_EnableIRQ(EINT3_IRQn);
@@ -40,30 +42,27 @@ SpeedInput::~SpeedInput()
 {
 	GPIO_IntDisable(input.getPort(), (1<<input.getPin()), 1);
 	interruptManager.detach(IRQ_EINT3, this, &SpeedInput::interruptHandler);
+	delete periodTimer;
 }
 
-float SpeedInput::getSpeed()
+float SpeedInput::getKmh()
 {
-	uint32_t currentPeriod = periodTimer.read_us();
+	uint32_t currentPeriod = periodTimer->read_us();
 	if(currentPeriod > MAX_PERIOD)
-	{
 		currentSpeed = 0.0f;
-		return currentSpeed;
-	}
-	else
-	{
-		currentSpeed = (float)1000000 / lastPeriod_us / 4712 * 60 * 60;
-		return currentSpeed;
-	}
+	return currentSpeed;
 }
 
 void SpeedInput::interruptHandler()
 {
 	if(GPIO_GetIntStatus(input.getPort(), input.getPin(), 1))
 	{
-		uint32_t currentPeriod = periodTimer.read_us();
-		periodTimer.start();
+		uint32_t currentPeriod = periodTimer->read_us();
+		periodTimer->start();
 		GPIO_ClearInt(input.getPort(), (1<<input.getPin()));
-		lastPeriod_us = currentPeriod;
+		if(currentPeriod > MAX_PERIOD)
+			currentSpeed = 0.0f;
+		else
+			currentSpeed = (float)1000000 / currentPeriod / 4712 * 60 * 60;
 	}
 }
