@@ -455,7 +455,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 
 	//analog input configuration
-	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 2.2) / 2.2 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
+	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
 	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
 	
 // 	averageFuelConsumptionSeconds = 0;
@@ -501,7 +501,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	go = true;
 }
 
-void uarthandler()
+void OpenOBC::uartHandler()
 {
 	while(debugS->readable())
 	{
@@ -513,9 +513,15 @@ void uarthandler()
 			if(c == 0x1b)
 				esc = 1;
 			else if(c == 'u')
-				++ctemp;
+			{
+				batteryVoltageCalibration += 0.0005;
+				batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
+			}
 			else if(c == 'd')
-				--ctemp;
+			{
+				batteryVoltageCalibration -= 0.0005;
+				batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
+			}
 		}
 		else if(esc == 1)
 		{
@@ -558,7 +564,7 @@ void uarthandler()
 
 void OpenOBC::mainloop()
 {
-	debug->attach(&uarthandler);
+	debug->attach(this, &OpenOBC::uartHandler);
 	
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
 	printf("starting mainloop...\r\n");

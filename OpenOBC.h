@@ -105,6 +105,7 @@ public:
 	void buttonDate();
 	void buttonMemo();
 	void buttonSet();
+	void uartHandler();
 	
 	Callback* callback;
 	SPI* spi0;
