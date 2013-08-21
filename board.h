@@ -169,3 +169,6 @@ extern "C" char* get_heap_end(void);
 #define LCD_BIAS_EN_PORT (1)
 #define LCD_BIAS_EN_PIN (6)
 
+#define ACCEL_ADDRESS (0x38)
+#define ACCEL_INTERRUPT_PORT (2)
+#define ACCEL_INTERRUPT_PIN (13)

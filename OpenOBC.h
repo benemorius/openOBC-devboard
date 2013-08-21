@@ -50,6 +50,7 @@
 #include <Watchdog.h>
 #include <I2C.h>
 #include <PCA95xx.h>
+#include <MMA845x.h>
 #include "FuelConsumption.h"
 
 typedef enum
@@ -68,6 +69,7 @@ typedef enum
 	DISPLAY_FREEMEM,
 	DISPLAY_RANGE1,
 	DISPLAY_RANGE2,
+	DISPLAY_ACCELEROMETER,
 	DISPLAY_CLOCKSET,
 	DISPLAY_DATESET,
 	DISPLAY_CALIBRATE
@@ -135,7 +137,7 @@ public:
 	I2C* i2c0;
 	I2C* i2c1;
 	PCA95xx* io0;
-	
+	MMA845x* accel;
 
 protected:
 	void sleep();

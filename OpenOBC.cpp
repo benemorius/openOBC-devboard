@@ -295,6 +295,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 		displayMode = DISPLAY_RANGE1;
 	else if(defaultDisplayModeString == "DISPLAY_RANGE2")
 		displayMode = DISPLAY_RANGE2;
+	else if(defaultDisplayModeString == "DISPLAY_ACCELEROMETER")
+		displayMode = DISPLAY_ACCELEROMETER;
 	else if(defaultDisplayModeString == "DISPLAY_OPENOBC")
 		displayMode = DISPLAY_OPENOBC;
 	else if(defaultDisplayModeString == "DISPLAY_SPEED")
@@ -340,6 +342,10 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	settime.MIN = 29;
 	settime.SEC = 0;
 // 	rtc->setTime(&settime);
+	
+	//accelerometer configuration
+	Input* accelInterrupt = new Input(ACCEL_INTERRUPT_PORT, ACCEL_INTERRUPT_PIN);
+	accel = new MMA845x(*i2c0, ACCEL_ADDRESS, *accelInterrupt, interruptManager);
 
 	//ccm configuration
 	Input* ccmData = new Input(CCM_DATA_PORT, CCM_DATA_PIN);
@@ -802,6 +808,15 @@ void OpenOBC::mainloop()
 						lcd->printf("%.2f gallons", fuelLevel->getGallons());
 					break;
 				}
+				case DISPLAY_ACCELEROMETER:
+				{
+					float x = accel->getX();
+					float y = accel->getY();
+					float z = accel->getZ();
+					lcd->printf("x:% 2.2f y:% 2.2f z:% 2.2f", x, y, z);
+// 					printf("accelerometer x:% 2.2f y:% 2.2f z:% 2.2f\r\n", x, y, z);
+					break;
+				}
 				case DISPLAY_CLOCKSET:
 				{
 					lcd->printf("set clock");
@@ -880,6 +895,7 @@ void OpenOBC::sleep()
 	*keypadLight = false;
 	*klWake = false;
 	*vrefEn = false;
+	accel->disable();
 
 	NVIC_DisableIRQ(EINT3_IRQn);
 	GPIO_IntDisable(0, 0xffffffff, 0);
@@ -1073,7 +1089,8 @@ void OpenOBC::buttonDist()
 
 void OpenOBC::buttonTimer()
 {
-	*timerLed = !*timerLed;
+// 	*timerLed = !*timerLed;
+	displayMode = DISPLAY_ACCELEROMETER;
 }
 
 void OpenOBC::buttonCheck()
