@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 <benemorius@gmail.com>
+    Copyright (c) 2013 <benemorius@gmail.com>
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -24,31 +24,47 @@
 */
 
 
-#ifndef MAX4896_H
-#define MAX4896_H
+#include "PCA95xxPin.h"
 
-#include <SPI.h>
-#include <IO.h>
-#include <sys/types.h>
-
-#include "MAX4896Pin.h"
-
-#define MAX4896_SPI_CLOCKRATE (100000)
-
-class MAX4896
+PCA95xxPin::PCA95xxPin(PCA95xx& pca, uint8_t port, uint8_t pin, bool isOutput, bool isOn, bool onIsHigh) : IO(0xff, 0, isOutput, onIsHigh), pca(pca), port(port), pin(pin), isOutput(isOutput)
 {
+	bitmask = (1 << pin) << (port * 8);
+	
+	setState(isOn);
+	if(isOutput)
+		setOutput();
+}
 
-public:
-    MAX4896(SPI& spi, IO& select, uint8_t bits = 0x00);
-	uint8_t readBits();
-	MAX4896& writeBits(uint8_t bits);
-	
-	
-private:
-	
-	SPI& spi;
-	IO& select;
-	uint8_t bits;
-};
+PCA95xxPin::~PCA95xxPin()
+{
+	setInput();
+	setState(false);
+}
 
-#endif // MAX4896_H
+void PCA95xxPin::setState(bool state)
+{
+	this->state = state;
+	uint16_t bits = pca.getCurrentOutputBits();
+	bits &= ~bitmask;
+	if(state ^ !onIsHigh)
+		bits |= bitmask;
+	pca.writeBits(bits);
+}
+
+bool PCA95xxPin::getState() const
+{
+	if(isOutput)
+		return state;
+	uint16_t bits = pca.readBits();
+	return (bits >> (port * 8)) & (1<<pin);
+}
+
+void PCA95xxPin::setInput()
+{
+	pca.setInput(port, pin);
+}
+
+void PCA95xxPin::setOutput()
+{
+	pca.setOutput(port, pin);
+}

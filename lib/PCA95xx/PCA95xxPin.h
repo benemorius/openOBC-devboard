@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 <benemorius@gmail.com>
+    Copyright (c) 2013 <benemorius@gmail.com>
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -23,27 +23,34 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#ifndef PCA95XXPIN_H
+#define PCA95XXPIN_H
 
+#include "PCA95xx.h"
+#include <IO.h>
 
-#include "MAX4896Pin.h"
-#include "MAX4896.h"
-
-MAX4896Pin::MAX4896Pin(MAX4896& max, uint8_t bitmask, bool isOn, bool onIsHigh) : IO(0xff, 0, isOn, onIsHigh), max(max), bitmask(bitmask)
+class PCA95xxPin : public IO
 {
-	setState(isOn);
-}
-
-void MAX4896Pin::setState(bool state)
-{
-	this->state = state;
-	uint8_t bits = max.readBits();
-	bits &= ~bitmask;
-	if(state ^ onIsHigh)
-		bits |= bitmask;
-	max.writeBits(bits);
-}
-
-bool MAX4896Pin::getState() const
-{
-	return this->state;
-}
+public:
+	PCA95xxPin(PCA95xx& pca, uint8_t port, uint8_t pin, bool isOutput = false, bool isOn = false, bool onIsHigh = true);
+	~PCA95xxPin();
+	
+	void setState(bool state);
+	bool getState() const;
+	void setOpenDrain(bool isOpenDrain) {}; //NOT SUPPORTED
+	void setInput();
+	void setOutput();
+	void setPullup() {}; //NOT SUPPORTED
+	void setPulldown() {}; //NOT SUPPORTED
+	void setTristate() {}; //NOT SUPPORTED
+	
+private:
+	PCA95xx& pca;
+	uint8_t port;
+	uint8_t pin;
+	bool state;
+	uint16_t bitmask;
+	bool isOutput;
+	
+};
+#endif // PCA95XXPIN_H

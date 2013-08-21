@@ -34,7 +34,7 @@ class SPI
 {
 
 public:
-    SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, uint8_t sckPort, uint8_t sckPin, uint32_t clockRate);
+	SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, uint8_t sckPort, uint8_t sckPin, uint32_t clockRate = 100000);
 
 	 uint8_t readWrite(uint8_t writeByte);
 	 void setClockRate(uint32_t hz);

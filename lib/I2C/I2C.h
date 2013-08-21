@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 <benemorius@gmail.com>
+    Copyright (c) 2013 <benemorius@gmail.com>
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -24,27 +24,31 @@
 */
 
 
-#include "MAX4896.h"
+#ifndef I2C_H
+#define I2C_H
 
-MAX4896::MAX4896(SPI& spi, IO& select, uint8_t bits) : spi(spi), select(select), bits(bits)
+#include <stdint.h>
+#include <lpc17xx_i2c.h>
+
+class I2C
 {
-	select.on();
-	select.setOutput();
-	writeBits(bits);
-}
 
-uint8_t MAX4896::readBits()
-{
-	return this->bits;
-}
+public:
+	I2C(uint8_t sdaPort, uint8_t sdaPin, uint8_t sclPort, uint8_t sclPin, uint32_t hz = 100000);
+	~I2C();
+	
+	I2C& setFrequency(uint32_t hz);
+	uint32_t read(uint8_t address, uint8_t* buffer, uint32_t length);
+	uint32_t write(uint8_t address, uint8_t* data, uint32_t length);
+	uint32_t readwrite(uint8_t address, uint8_t* writeData, uint32_t writeLength, uint8_t* readBuffer, uint32_t readLength);
+	
+private:
+	uint8_t sdaPort;
+	uint8_t sdaPin;
+	uint8_t sclPort;
+	uint8_t sclPin;
+	uint32_t hz;
+	LPC_I2C_TypeDef* peripheral;
+};
 
-MAX4896& MAX4896::writeBits(uint8_t bits)
-{
-	this->bits = bits;
-
-	spi.setClockRate(MAX4896_SPI_CLOCKRATE);
-	select.off();
-	spi.readWrite(this->bits);
-	select.on();
-	return *this;
-}
+#endif // I2C_H

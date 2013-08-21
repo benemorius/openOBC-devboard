@@ -38,6 +38,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <Bus.h>
+#include <PCA95xxPin.h>
 
 volatile uint32_t SysTickCnt;
 OpenOBC* obcS;
@@ -201,9 +202,28 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	vrefEn = new IO(VREF_EN_PORT, VREF_EN_PIN, true, false);
 	
 	//spi coniguration
-	spi1 = new SPI(SPI1_MOSI_PORT, SPI1_MOSI_PIN, SPI1_MISO_PORT, SPI1_MISO_PIN, SPI1_SCK_PORT, SPI1_SCK_PIN, SPI1_CLOCKRATE);
-
+	spi0 = new SPI(SPI0_MOSI_PORT, SPI0_MOSI_PIN, SPI0_MISO_PORT, SPI0_MISO_PIN, SPI0_SCK_PORT, SPI0_SCK_PIN);
+	spi1 = new SPI(SPI1_MOSI_PORT, SPI1_MOSI_PIN, SPI1_MISO_PORT, SPI1_MISO_PIN, SPI1_SCK_PORT, SPI1_SCK_PIN);
+	
+	//i2c configuration
+	i2c0 = new I2C(I2C0_SDA_PORT, I2C0_SDA_PIN, I2C0_SCL_PORT, I2C0_SCL_PIN);
+	i2c1 = new I2C(I2C1_SDA_PORT, I2C1_SDA_PIN, I2C1_SCL_PORT, I2C1_SCL_PIN);
+	
+	//i/o expander configuration
+	Input* io0Interrupt = new Input(PCA95XX_INTERRUPT_PORT, PCA95XX_INTERRUPT_PIN);
+	io0 = new PCA95xx(*i2c0, PCA95XX_ADDRESS, *io0Interrupt, 400000);
+	codeLed = new PCA95xxPin(*io0, CODE_LED_PORT, CODE_LED_PIN, true);
+	limitLed = new PCA95xxPin(*io0, LIMIT_LED_PORT, LIMIT_LED_PIN, true);
+	timerLed = new PCA95xxPin(*io0, TIMER_LED_PORT, TIMER_LED_PIN, true);
+	ccmLight = new PCA95xxPin(*io0, CCM_LIGHT_PORT, CCM_LIGHT_PIN, true);
+	chime0 = new PCA95xxPin(*io0, CHIME0_PORT, CHIME0_PIN, true);
+	chime1 = new PCA95xxPin(*io0, CHIME1_PORT, CHIME1_PIN, true);
+	ventilation = new PCA95xxPin(*io0, VENTILATION_PORT, VENTILATION_PIN, true);
+	antitheftHorn = new PCA95xxPin(*io0, ANTITHEFT_HORN_PORT, ANTITHEFT_HORN_PIN, true);
+	ews = new PCA95xxPin(*io0, EWS_PORT, EWS_PIN, true);
+	
 	//lcd configuration
+	lcdBiasEn = new PCA95xxPin(*io0, LCD_BIAS_EN_PORT, LCD_BIAS_EN_PIN, true);
 	lcdReset = new IO(LCD_RESET_PORT, LCD_RESET_PIN, false);
 // 	IO lcdBias(LCD_BIASCLOCK_PORT, LCD_BIASCLOCK_PIN, true);
 	lcdBiasClock = new PWM(LCD_BIASCLOCK_PORT, LCD_BIASCLOCK_PIN, .99);
@@ -213,6 +233,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	IO* lcdUnk1 = new IO(LCD_UNK1_PORT, LCD_UNK1_PIN, false);
 	lcd = new ObcLcd(*spi1, *lcdSel, *lcdRefresh, *lcdUnk0, *lcdUnk1);
 	*lcdReset = true;
+	*lcdBiasEn = true;
 	
 	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
@@ -427,22 +448,6 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonMemo);
 	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 
-	//output driver configuration
-	IO outRst(OUT_RESET_PORT, OUT_RESET_PIN, true);
-	IO* out0Cs = new IO(OUT0_CS_PORT, OUT0_CS_PIN, true);
-	IO* out1Cs = new IO(OUT1_CS_PORT, OUT1_CS_PIN, true);
-	out0 = new MAX4896(*spi1, *out0Cs);
-	out1 = new MAX4896(*spi1, *out1Cs);
-	codeLed = new MAX4896Pin(*out0, (1<<2));
-	limitLed = new MAX4896Pin(*out0, (1<<3));
-	timerLed = new MAX4896Pin(*out0, (1<<4));
-	ccmLight = new MAX4896Pin(*out0, (1<<5));
-	chime0 = new MAX4896Pin(*out0, (1<<7));
-	chime1 = new MAX4896Pin(*out0, (1<<6));
-	ventilation = new MAX4896Pin(*out1, (1<<3));
-	antitheftHorn = new MAX4896Pin(*out1, (1<<4));
-	ews = new MAX4896Pin(*out1, (1<<6));
-
 	//analog input configuration
 	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 2.2) / 2.2 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
 	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
@@ -456,6 +461,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	timerLed->on();
 	if(wdt.wasReset())
 	{
+		printf("WATCHDOG RESET\r\n");
 		lcd->printfClock("!!!!");
 		Timer flashTimer;
 		while((keypad->getKeys() & BUTTON_SET_MASK) != BUTTON_SET_MASK)
@@ -867,10 +873,11 @@ void OpenOBC::sleep()
 		return;
 	printf("sleeping...\r\n");
 	lcd->printf("sleeping...");
+	*lcdBiasEn = false;
 	*lcdReset = false;
-	*obcS->lcdLight = false;
-	*obcS->clockLight = false;
-	*obcS->keypadLight = false;
+	*lcdLight = false;
+	*clockLight = false;
+	*keypadLight = false;
 	*klWake = false;
 	*vrefEn = false;
 

@@ -46,9 +46,10 @@
 #include "E36IHKR.h"
 #include "E36Kombi.h"
 #include "E36MK4.h"
-#include <MAX4896.h>
 #include <Callback.h>
 #include <Watchdog.h>
+#include <I2C.h>
+#include <PCA95xx.h>
 #include "FuelConsumption.h"
 
 typedef enum
@@ -104,6 +105,7 @@ public:
 	void buttonSet();
 	
 	Callback* callback;
+	SPI* spi0;
 	SPI* spi1;
 	IO* lcdLight;
 	IO* clockLight;
@@ -117,8 +119,6 @@ public:
 	IO* ventilation;
 	IO* antitheftHorn;
 	IO* ews;
-	MAX4896* out0;
-	MAX4896* out1;
 	Input* run;
 	ObcKeypad* keypad;
 	Input* sdcardDetect;
@@ -132,6 +132,9 @@ public:
 	E36IHKR* ihkr;
 	E36Kombi* kombi;
 	E36MK4* mk4;
+	I2C* i2c0;
+	I2C* i2c1;
+	PCA95xx* io0;
 	
 
 protected:
@@ -151,6 +154,7 @@ protected:
 	ObcLcd* lcd;
 	CheckControlModule* ccm;
 	IO* lcdReset;
+	IO* lcdBiasEn;
 	volatile DisplayMode_Type& displayMode;
 // 	volatile DisplayMode_Type& displayModeNonvolatile;
 	ClockDisplayMode_Type clockDisplayMode;

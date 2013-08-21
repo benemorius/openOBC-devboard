@@ -39,7 +39,6 @@ extern "C" char* get_heap_end(void);
 #define SPI0_MISO_PIN (17)
 #define SPI0_SCK_PORT (0)
 #define SPI0_SCK_PIN (15)
-#define SPI0_CLOCKRATE (100000)
 
 #define SPI1_MOSI_PORT (0)
 #define SPI1_MOSI_PIN (9)
@@ -47,7 +46,6 @@ extern "C" char* get_heap_end(void);
 #define SPI1_MISO_PIN (8)
 #define SPI1_SCK_PORT (0)
 #define SPI1_SCK_PIN (7)
-#define SPI1_CLOCKRATE (100000)
 
 #define LCD_SELECT_PORT (2)
 #define LCD_SELECT_PIN (7)
@@ -93,13 +91,6 @@ extern "C" char* get_heap_end(void);
 
 #define KEYPAD_BACKLIGHT_PORT (3)
 #define KEYPAD_BACKLIGHT_PIN (26)
-
-#define OUT_RESET_PORT (0)
-#define OUT_RESET_PIN (19)
-#define OUT0_CS_PORT (2)
-#define OUT0_CS_PIN (0)
-#define OUT1_CS_PORT (2)
-#define OUT1_CS_PIN (1)
 
 #define RUN_PORT (2)
 #define RUN_PIN (11)
@@ -151,3 +142,30 @@ extern "C" char* get_heap_end(void);
 #define I2C0_SDA_PIN (27)
 #define I2C0_SCL_PORT (0)
 #define I2C0_SCL_PIN (28)
+
+#define PCA95XX_ADDRESS (0x40)
+#define PCA95XX_INTERRUPT_PORT (1)
+#define PCA95XX_INTERRUPT_PIN (0)
+
+#define CODE_LED_PORT (1)
+#define CODE_LED_PIN (0)
+#define LIMIT_LED_PORT (1)
+#define LIMIT_LED_PIN (1)
+#define TIMER_LED_PORT (1)
+#define TIMER_LED_PIN (2)
+#define CCM_LIGHT_PORT (0)
+#define CCM_LIGHT_PIN (2)
+#define CHIME0_PORT (1)
+#define CHIME0_PIN (4)
+#define CHIME1_PORT (1)
+#define CHIME1_PIN (3)
+#define VENTILATION_PORT (0)
+#define VENTILATION_PIN (1)
+#define ANTITHEFT_HORN_PORT (0)
+#define ANTITHEFT_HORN_PIN (0)
+#define EWS_PORT (1)
+#define EWS_PIN (5)
+
+#define LCD_BIAS_EN_PORT (1)
+#define LCD_BIAS_EN_PIN (6)
+

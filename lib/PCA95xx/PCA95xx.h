@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 <benemorius@gmail.com>
+    Copyright (c) 2013 <benemorius@gmail.com>
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -23,34 +23,57 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#ifndef PCA95XX_H
+#define PCA95XX_H
+
+#include <I2C.h>
+#include <Input.h>
+#include <InterruptManager.h>
+#include <stdint.h>
 
 
-#ifndef MAX4896PIN_H
-#define MAX4896PIN_H
+#define PCA95XX_REG_I0 (0)
+#define PCA95XX_REG_I1 (1)
+#define PCA95XX_REG_O0 (2)
+#define PCA95XX_REG_O1 (3)
+#define PCA95XX_REG_N0 (4)
+#define PCA95XX_REG_N1 (5)
+#define PCA95XX_REG_C0 (6)
+#define PCA95XX_REG_C1 (7)
 
-#include <IO.h>
-
-class MAX4896;
-
-class MAX4896Pin : public IO
+class PCA95xx
 {
-
 public:
-	MAX4896Pin(MAX4896& max, uint8_t bitmask, bool isOn = false, bool onIsHigh = false);
-	void setState(bool state);
-	bool getState() const;
-	void setOpenDrain(bool isOpenDrain) {};
-	void setInput() {};
-	void setOutput() {};
-	void setPullup() {};
-	void setPulldown() {};
-	void setTristate() {};
+	PCA95xx(I2C& i2c, uint8_t address, Input& interrupt, uint32_t hz = 400000);
+	~PCA95xx();
+	
+	uint16_t readBits();
+	PCA95xx& writeBits(uint16_t outputBits);
+	uint16_t getCurrentOutputBits() {return outputBits;}
+	
+	void setInput(uint8_t port, uint8_t pin);
+	void setOutput(uint8_t port, uint8_t pin);
+	
+	PCA95xx& setFrequency(uint32_t hz);
+	
 	
 private:
+	uint16_t readRegister(uint8_t reg);
+	void writeRegister(uint8_t reg, uint8_t data);
 	
-	MAX4896& max;
-	uint8_t bitmask;
-	bool state;
+	I2C& i2c;
+	uint8_t address;
+	Input& interrupt;
+	uint16_t outputBits;
+	uint32_t hz;
+	uint16_t currentOutputBits;
+	InterruptManager& interruptManager;
+	uint8_t regO0;
+	uint8_t regO1;
+	uint8_t regN0;
+	uint8_t regN1;
+	uint8_t regC0;
+	uint8_t regC1;
 };
 
-#endif // MAX4896PIN_H
+#endif // PCA95XX_H
