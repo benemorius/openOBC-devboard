@@ -36,7 +36,7 @@
 class SDFS : public FatFSDisk
 {
 public:
-	SDFS(SPI& spi, IO& cs);
+	SDFS(SPI& spi, IO& cs, uint32_t spiClockrateHz = 10000000);
 	~SDFS();
 
 	int32_t mount(const char* mountpath);
@@ -73,6 +73,7 @@ private:
 	std::string mountpath;
 	int cdv;
 	bool isMounted;
+	uint32_t spiClockrate;
 };
 
 

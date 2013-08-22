@@ -25,6 +25,7 @@
 
 #include "SPI.h"
 #include <lpc17xx_pinsel.h>
+#include <lpc17xx_clkpwr.h>
 
 SPI::SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, uint8_t sckPort, uint8_t sckPin, uint32_t clockRate)
 {
@@ -94,7 +95,12 @@ SPI::SPI(uint8_t mosiPort, uint8_t mosiPin, uint8_t misoPort, uint8_t misoPin, u
 
 void SPI::setClockRate(uint32_t hz)
 {
+	if(hz == this->clockRate)
+		return;
+	
 	this->clockRate = hz;
+	
+	CLKPWR_SetPCLKDiv(CLKPWR_PCLKSEL_SSP1, CLKPWR_PCLKSEL_CCLK_DIV_1);
 	
 	SSP_CFG_Type SSP_ConfigStruct;
 	SSP_ConfigStructInit(&SSP_ConfigStruct);

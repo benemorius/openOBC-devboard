@@ -30,7 +30,7 @@
 #include "delay.h"
 #include <string.h>
 
-ObcLcd::ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1) : spi(spi), cs(cs), refresh(refresh), unk0(unk0), unk1(unk1)
+ObcLcd::ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1, uint32_t spiClockrateHz) : spi(spi), cs(cs), refresh(refresh), unk0(unk0), unk1(unk1), spiClockrate(spiClockrateHz)
 {
 	this->cs = true;
 	this->refresh = false;
@@ -70,6 +70,7 @@ void ObcLcd::clearClock()
 
 void ObcLcd::update()
 {
+	spi.setClockRate(spiClockrate);
 	cs = false;
 
 	//center the lcd text within LCD_MAX_CHARACTERS characters

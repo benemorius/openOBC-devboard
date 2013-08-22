@@ -34,12 +34,12 @@
 class ObcLcd
 {
 public:
-    ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1);
+	ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1, uint32_t spiClockrateHz = 1000000);
 
-	 void printf(char* format, ...);
-	 void printfClock(char* format, ...);
-	 void clear();
-	 void clearClock();
+	void printf(char* format, ...);
+	void printfClock(char* format, ...);
+	void clear();
+	void clearClock();
 	 
 
 private:
@@ -50,6 +50,7 @@ private:
 	IO& refresh;
 	IO& unk0;
 	IO& unk1;
+	uint32_t spiClockrate;
 	
 	char lcdBuffer[LCD_MAX_CHARACTERS+1];
 	char clockBuffer[CLOCK_MAX_CHARACTERS+1];

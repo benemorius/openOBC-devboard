@@ -125,7 +125,7 @@
 #include <cstdio>
 #include <delay.h>
 
-SDFS::SDFS(SPI& spi, IO& cs) : spi(spi), cs(cs)
+SDFS::SDFS(SPI& spi, IO& cs, uint32_t spiClockrateHz) : spi(spi), cs(cs), spiClockrate(spiClockrateHz)
 {
 	isMounted = false;
 }
@@ -276,12 +276,13 @@ int32_t SDFS::disk_initialise() {
 		return 1;
 	}
 	
-	spi.setClockRate(10000000); // Set to 10MHz for data transfer
 	return 0;
 }
 
 int32_t SDFS::disk_status()
 {
+	spi.setClockRate(spiClockrate);
+	
 	//FIXME use a different means of status checking that doesn't rely on a pullup on MISO
 	
 	// Set block length to 512 and check response to make sure a card is present
@@ -296,6 +297,7 @@ int32_t SDFS::disk_status()
 int32_t SDFS::disk_write(const uint8_t* data, uint32_t startSector, uint32_t count)
 {
 // 	fprintf(stderr, "SDFS::disk_write(%x %x %x)\r\n", data, startSector, count);
+	spi.setClockRate(spiClockrate);
 	int32_t sectorsWritten = 0;
 	while(count--)
 	{
@@ -323,6 +325,7 @@ int32_t SDFS::disk_write(const uint8_t* data, uint32_t startSector, uint32_t cou
 int32_t SDFS::disk_read(uint8_t* buffer, uint32_t startSector,	 uint32_t count)
 {
 // 	fprintf(stderr, "SDFS::disk_read(%x %x %x)\r\n", buffer, startSector, count);
+	spi.setClockRate(spiClockrate);
 	int32_t sectorsRead = 0;
 	while(count--)
 	{
