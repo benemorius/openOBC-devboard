@@ -163,6 +163,8 @@ protected:
 	ClockDisplayMode_Type clockDisplayMode;
 	AnalogIn* batteryVoltage;
 	AnalogIn* temperature;
+	AnalogIn* analogIn1;
+	AnalogIn* analogIn2;
 	SpeedInput* speed;
 	FuelConsumption* fuelCons;
 	bool useMetricSystem;

@@ -457,6 +457,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	//analog input configuration
 	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
 	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
+	analogIn1 = new AnalogIn(ANALOG_IN1_PORT, ANALOG_IN1_PIN);
+	analogIn2 = new AnalogIn(ANALOG_IN2_PORT, ANALOG_IN2_PIN);
 	
 // 	averageFuelConsumptionSeconds = 0;
 // 	averageLitresPer100km = 0;

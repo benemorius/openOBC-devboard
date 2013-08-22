@@ -172,3 +172,9 @@ extern "C" char* get_heap_end(void);
 #define ACCEL_ADDRESS (0x38)
 #define ACCEL_INTERRUPT_PORT (2)
 #define ACCEL_INTERRUPT_PIN (13)
+
+#define ANALOG_IN1_PORT (1)
+#define ANALOG_IN1_PIN (31)
+#define ANALOG_IN2_PORT (1)
+#define ANALOG_IN2_PIN (30)
+

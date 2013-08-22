@@ -60,13 +60,13 @@ AnalogIn::AnalogIn(uint8_t port, uint8_t pin, float referenceVoltage, float scal
 	}
 	else if(port == 1 && pin == 30)
 	{
-		funcnum = 1;
+		funcnum = 3;
 		channel = ADC_CHANNEL_4;
 		interrupt = ADC_ADINTEN4;
 	}
 	else if(port == 1 && pin == 31)
 	{
-		funcnum = 1;
+		funcnum = 3;
 		channel = ADC_CHANNEL_5;
 		interrupt = ADC_ADINTEN5;
 	}
