@@ -493,12 +493,14 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	}
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 	lcd->printf("openOBC %s", GIT_VERSION);
-	lcd->printfClock(" r01");;
+	lcd->printfClock("  r2");;
 	delay(1500);
 	ccmLight->off();
 	codeLed->off();
 	limitLed->off();
 	timerLed->off();
+	
+	coolantTemperature = 0;
 	
 	go = true;
 }
@@ -712,7 +714,7 @@ void OpenOBC::mainloop()
 				case DISPLAY_TEMP:
 				{
 					float voltage = temperature->read();
-					float resistance = (10000 * voltage) / (3.3 - voltage);
+					float resistance = (10000 * voltage) / (REFERENCE_VOLTAGE - voltage);
 					float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15f;
 					if(useMetricSystemBoth)
 						lcd->printf("EXT %.1fC  %.0fF", temperature, temperature * 1.78 + 32);
@@ -822,7 +824,7 @@ void OpenOBC::mainloop()
 					float x = accel->getX();
 					float y = accel->getY();
 					float z = accel->getZ();
-					lcd->printf("x:% 2.2f y:% 2.2f z:% 2.2f", x, y, z);
+					lcd->printf("x% 2.2f y% 2.2f z% 2.2f", x, y, z);
 // 					printf("accelerometer x:% 2.2f y:% 2.2f z:% 2.2f\r\n", x, y, z);
 					break;
 				}
