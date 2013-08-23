@@ -455,10 +455,14 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 
 	//analog input configuration
-	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()), (10 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
-	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE + atof(config->getValueByName("VoltageReferenceCalibration").c_str()));
+	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE, (10 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
+	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE);
 	analogIn1 = new AnalogIn(ANALOG_IN1_PORT, ANALOG_IN1_PIN);
 	analogIn2 = new AnalogIn(ANALOG_IN2_PORT, ANALOG_IN2_PIN);
+	
+	//analog output configuration
+	analogOut = new AnalogOut(ANALOG_OUT_PORT, ANALOG_OUT_PIN, REFERENCE_VOLTAGE);
+	analogOut->writeVoltage(1.0);
 	
 // 	averageFuelConsumptionSeconds = 0;
 // 	averageLitresPer100km = 0;
@@ -691,7 +695,7 @@ void OpenOBC::mainloop()
 			{
 				case DISPLAY_VOLTAGE:
 				{
-					lcd->printf("%.2fV", batteryVoltage->read());
+					lcd->printf("%.2fV %.2fV %.2fV", batteryVoltage->read(), analogIn1->read(), analogIn2->read());
 					break;
 				}
 				case DISPLAY_CALIBRATE:

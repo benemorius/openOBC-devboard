@@ -178,3 +178,5 @@ extern "C" char* get_heap_end(void);
 #define ANALOG_IN2_PORT (1)
 #define ANALOG_IN2_PIN (30)
 
+#define ANALOG_OUT_PORT (0)
+#define ANALOG_OUT_PIN (26)

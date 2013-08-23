@@ -51,6 +51,7 @@
 #include <I2C.h>
 #include <PCA95xx.h>
 #include <MMA845x.h>
+#include <AnalogOut.h>
 #include "FuelConsumption.h"
 
 typedef enum
@@ -165,6 +166,7 @@ protected:
 	AnalogIn* temperature;
 	AnalogIn* analogIn1;
 	AnalogIn* analogIn2;
+	AnalogOut* analogOut;
 	SpeedInput* speed;
 	FuelConsumption* fuelCons;
 	bool useMetricSystem;
