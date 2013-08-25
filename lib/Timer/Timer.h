@@ -42,7 +42,8 @@ public:
 	Timer(InterruptManager& interruptManager); //required to use timer past 171 second overflow
 	~Timer();
 	void start();
-	uint32_t read();
+	float read();
+	uint32_t read_raw();
 	uint32_t read_ms();
 	uint32_t read_us();
 	void interruptHandler();

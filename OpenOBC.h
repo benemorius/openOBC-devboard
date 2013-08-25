@@ -54,6 +54,8 @@
 #include <AnalogOut.h>
 #include "FuelConsumption.h"
 
+class ObcUI;
+
 typedef enum
 {
 	DISPLAY_CONSUM1,
@@ -140,6 +142,7 @@ public:
 	I2C* i2c1;
 	PCA95xx* io0;
 	MMA845x* accel;
+	ObcUI* ui;
 
 protected:
 	void sleep();

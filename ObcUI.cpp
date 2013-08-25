@@ -25,8 +25,9 @@
 
 
 #include "ObcUI.h"
+#include "ObcUITask.h"
 
-ObcUI::ObcUI(ObcLcd& lcd) : lcd(lcd)
+ObcUI::ObcUI(ObcLcd& lcd, ObcKeypad& keypad) : lcd(lcd), keypad(keypad)
 {
 	activeTask = NULL;
 }
@@ -39,28 +40,28 @@ ObcUI::~ObcUI()
 void ObcUI::task()
 {
 	
-	//run all queued button events
-	FunctionPointer<void>* event = NULL;
-	while(event = buttonEvents.back())
-	{
-		event->call();
-	}
+// 	//run all queued button events
+// 	FunctionPointer<void>* event = NULL;
+// 	while(event = buttonEvents.back())
+// 	{
+// 		event->call();
+// 	}
 
 	
-	//run all tasks
-	ObcUITask* task = NULL;
-	while(task = tasks.back())
+	//run all tasks and queued button events
+	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
 	{
-		task->runTask();
-		
-		//...or run all queued button events here
-		task->runEvents();
+		DEBUG("running %i tasks\r\n", tasks.size());
+		(*task)->runTask();
+// 		(*task)->runEvents();
 	}
 	
 	//update display
-	if(activeTask)
+	static Timer displayUpdateTimer;
+	if(activeTask && (displayUpdateTimer.read() >= activeTask->getDisplayRefreshPeriod()))
 	{
-		lcd.printf("%s", activeTask->getDisplay().c_str());
+		displayUpdateTimer.start();
+		lcd.printf("%s", activeTask->getDisplay());
 	}
 }
 
@@ -68,4 +69,23 @@ void ObcUI::handleButtonEvent()
 {
 	//determine if any tasks are hooked to the pushed button
 	//and whether the hook is active or background
+}
+
+void ObcUI::addTask(ObcUITask* task)
+{
+
+}
+
+void ObcUI::removeTask(ObcUITask* task)
+{
+
+}
+
+void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
+{
+	if(task == NULL)
+		return;
+	task->setActive(true);
+	activeTask->setActive(false);
+	activeTask = task;
 }

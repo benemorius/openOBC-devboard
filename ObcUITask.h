@@ -27,8 +27,16 @@
 #define OBCUITASK_H
 
 #include <stdint.h>
-#include <string>
+#include <vector>
+#include <FunctionPointer.h>
 #include "OpenOBC.h"
+#include <stdarg.h>
+
+class OpenOBC;
+
+namespace ObcUITaskFocus {
+	enum type {active, background};
+}
 
 class ObcUITask
 {
@@ -37,14 +45,31 @@ public:
 	ObcUITask(OpenOBC& obc);
 	~ObcUITask();
 	
-	virtual void runTask();
+	virtual void runTask() = 0;
+	virtual void buttonHandler(uint32_t buttonMask) = 0;
 	
-	std::string getDisplay() {return currentDisplay;}
-	void runEvents();
+	virtual void wake() {};
+	virtual void sleep() {};
 	
-private:
+	char* getDisplay() {return displayBuffer;}
+	float getDisplayRefreshPeriod() {return displayRefreshPeriod;}
+	void setActive(bool isActive) {_isActive = isActive;}
+	
+protected:
+	void registerButton(ObcUITaskFocus::type focus, uint32_t buttonMask);
+	void unregisterButton(ObcUITaskFocus::type focus, uint32_t buttonMask);
+	void setDisplay(char* format, ...);
+	bool isActive() {return _isActive;}
+	void setDisplayRefreshPeriod(float seconds) {displayRefreshPeriod = seconds;}
+
 	OpenOBC& obc;
-	std::string currentDisplay;
+
+private:
+	std::vector<FunctionPointer<void>*> buttonEvents;
+	char displayBuffer[21];
+	bool _isActive;
+    float displayRefreshPeriod;
+	
 };
 
 #endif // OBCUITASK_H

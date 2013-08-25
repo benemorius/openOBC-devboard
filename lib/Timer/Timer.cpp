@@ -194,7 +194,12 @@ void Timer::start()
 	__enable_irq();
 }
 
-uint32_t Timer::read()
+float Timer::read()
+{
+	return (float)read_ms() / 1000;
+}
+
+uint32_t Timer::read_raw()
 {
 	uint32_t counter = TIMER_PERIPHERAL->TC;
 	uint32_t ret;
@@ -214,7 +219,7 @@ uint32_t Timer::read()
 
 uint32_t Timer::read_ms()
 {
-	uint32_t ms = read() / 25000;
+	uint32_t ms = read_raw() / 25000;
 	
 	if((overflows > 0) && (overflowed == true))
 		return ms + (((uint32_t)0xffffffff / 25000) * (overflows - 1));
@@ -226,7 +231,7 @@ uint32_t Timer::read_ms()
 
 uint32_t Timer::read_us()
 {
-	uint32_t us = read() / 25;
+	uint32_t us = read_raw() / 25;
 	
 	if((overflows > 0) && (overflowed == true))
 		return us + (((uint32_t)0xffffffff / 25) * (overflows - 1));

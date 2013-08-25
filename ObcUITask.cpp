@@ -28,7 +28,7 @@
 
 ObcUITask::ObcUITask(OpenOBC& obc) : obc(obc)
 {
-
+	setDisplayRefreshPeriod(0.200);
 }
 
 ObcUITask::~ObcUITask()
@@ -36,3 +36,20 @@ ObcUITask::~ObcUITask()
 
 }
 
+void ObcUITask::registerButton(ObcUITaskFocus::type focus, uint32_t buttonMask)
+{
+
+}
+
+void ObcUITask::unregisterButton(ObcUITaskFocus::type focus, uint32_t buttonMask)
+{
+
+}
+
+void ObcUITask::setDisplay(char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vsnprintf(displayBuffer, sizeof(displayBuffer), format, args);
+	va_end(args);
+}

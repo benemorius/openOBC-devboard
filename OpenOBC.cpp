@@ -39,6 +39,8 @@
 #include <stdlib.h>
 #include <Bus.h>
 #include <PCA95xxPin.h>
+#include <ObcCode.h>
+#include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
 OpenOBC* obcS;
@@ -506,6 +508,10 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	coolantTemperature = 0;
 	
+	ui = new ObcUI(*lcd, *keypad);
+	ObcUITask* task = new ObcCode(*this);
+	ui->addTask(task);
+	
 	go = true;
 }
 
@@ -653,6 +659,7 @@ void OpenOBC::mainloop()
 			hasWarned = false;
 		}
 		
+		ui->task();
 		ccm->task();
 		diag->task();
 		callback->task();
