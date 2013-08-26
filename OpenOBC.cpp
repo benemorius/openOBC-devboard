@@ -511,6 +511,9 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	ui = new ObcUI(*lcd, *keypad);
 	ObcUITask* task = new ObcCode(*this);
 	ui->addTask(task);
+	ui->setActiveTask(task);
+	
+	ui->wake();
 	
 	go = true;
 }
@@ -698,6 +701,7 @@ void OpenOBC::mainloop()
 				}
 			}
 			
+			if(0) //FIXME REMOVE
 			switch(displayMode)
 			{
 				case DISPLAY_VOLTAGE:
@@ -903,6 +907,7 @@ void OpenOBC::mainloop()
 
 void OpenOBC::sleep()
 {
+	ui->sleep();
 	DEBUG("writing config file...\r\n");
 	lcd->printf("write config file...");
 	writeConfigData();

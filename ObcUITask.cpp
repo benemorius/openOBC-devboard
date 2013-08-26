@@ -29,6 +29,7 @@
 ObcUITask::ObcUITask(OpenOBC& obc) : obc(obc)
 {
 	setDisplayRefreshPeriod(0.200);
+	_isActive = false;
 }
 
 ObcUITask::~ObcUITask()
@@ -38,12 +39,12 @@ ObcUITask::~ObcUITask()
 
 void ObcUITask::registerButton(ObcUITaskFocus::type focus, uint32_t buttonMask)
 {
-
+	//FIXME TODO
 }
 
 void ObcUITask::unregisterButton(ObcUITaskFocus::type focus, uint32_t buttonMask)
 {
-
+	//FIXME TODO
 }
 
 void ObcUITask::setDisplay(char* format, ...)
@@ -52,4 +53,24 @@ void ObcUITask::setDisplay(char* format, ...)
 	va_start(args, format);
 	vsnprintf(displayBuffer, sizeof(displayBuffer), format, args);
 	va_end(args);
+}
+
+void ObcUITask::createButtonEvent(ObcUITaskFocus::type focus, uint32_t buttonMask)
+{
+	if(focus == ObcUITaskFocus::active)
+		buttonEventsActive.push_back(buttonMask);
+	else if(focus == ObcUITaskFocus::background)
+		buttonEventsBackground.push_back(buttonMask);
+}
+
+void ObcUITask::runButtonEvents()
+{
+	for(std::vector<uint32_t>::iterator buttonMask = buttonEventsActive.begin(); buttonMask != buttonEventsActive.end(); ++buttonMask)
+	{
+		buttonHandler(ObcUITaskFocus::active, *buttonMask);
+	}
+	for(std::vector<uint32_t>::iterator buttonMask = buttonEventsBackground.begin(); buttonMask != buttonEventsBackground.end(); ++buttonMask)
+	{
+		buttonHandler(ObcUITaskFocus::background, *buttonMask);
+	}
 }

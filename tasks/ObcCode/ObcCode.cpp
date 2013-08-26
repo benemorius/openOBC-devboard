@@ -32,6 +32,7 @@ ObcCode::ObcCode(OpenOBC& obc) : ObcUITask(obc)
 {
 	registerButton(ObcUITaskFocus::background, BUTTON_CODE_MASK);
 	setDisplayRefreshPeriod(0.100);
+	setDisplay("ObcCode");
 }
 
 ObcCode::~ObcCode()
@@ -41,11 +42,19 @@ ObcCode::~ObcCode()
 
 void ObcCode::runTask()
 {
-
+	if(isActive())
+	{
+		DEBUG("running, ACTIVE\r\n");
+	}
+	else
+	{
+		DEBUG("running, INACTIVE\r\n");
+	}
 }
 
 void ObcCode::wake()
 {
+	DEBUG("wake\r\n");
     if((state == CodeArmed) || (state == CodePrompt))
 	{
 		state = CodePrompt;
@@ -57,6 +66,7 @@ void ObcCode::wake()
 
 void ObcCode::sleep()
 {
+	DEBUG("sleep\r\n");
 	if((state == CodeArmed) || (state == CodePrompt))
 	{
 		state = CodeArmed;
@@ -64,9 +74,10 @@ void ObcCode::sleep()
 	}
 }
 
-void ObcCode::buttonHandler(uint32_t buttonMask)
+void ObcCode::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 {
-	if(!isActive())
+	DEBUG("buttonHandler\r\n");
+	if(focus == ObcUITaskFocus::background)
 	{
 		if(buttonMask == BUTTON_CODE_MASK)
 			obc.ui->setActiveTask(this);

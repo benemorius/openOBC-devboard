@@ -28,7 +28,6 @@
 
 #include <stdint.h>
 #include <vector>
-#include <FunctionPointer.h>
 #include "OpenOBC.h"
 #include <stdarg.h>
 
@@ -45,15 +44,20 @@ public:
 	ObcUITask(OpenOBC& obc);
 	~ObcUITask();
 	
-	virtual void runTask() = 0;
-	virtual void buttonHandler(uint32_t buttonMask) = 0;
+	//required methods
+	virtual void runTask() = 0; //mainloop code goes here
+	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask) = 0; //this is called once for each button press
 	
-	virtual void wake() {};
-	virtual void sleep() {};
+	//optional methods
+	virtual void wake() {}; //run once on startup before entering main loop
+	virtual void sleep() {}; //run once just before switching to sleep state
 	
 	char* getDisplay() {return displayBuffer;}
 	float getDisplayRefreshPeriod() {return displayRefreshPeriod;}
 	void setActive(bool isActive) {_isActive = isActive;}
+	void runButtonEvents();
+	
+	void createButtonEvent(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
 protected:
 	void registerButton(ObcUITaskFocus::type focus, uint32_t buttonMask);
@@ -65,7 +69,8 @@ protected:
 	OpenOBC& obc;
 
 private:
-	std::vector<FunctionPointer<void>*> buttonEvents;
+	std::vector<uint32_t> buttonEventsActive;
+	std::vector<uint32_t> buttonEventsBackground;
 	char displayBuffer[21];
 	bool _isActive;
     float displayRefreshPeriod;

@@ -39,22 +39,16 @@ ObcUI::~ObcUI()
 
 void ObcUI::task()
 {
-	
-// 	//run all queued button events
-// 	FunctionPointer<void>* event = NULL;
-// 	while(event = buttonEvents.back())
-// 	{
-// 		event->call();
-// 	}
-
-	
 	//run all tasks and queued button events
 	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
 	{
 		DEBUG("running %i tasks\r\n", tasks.size());
+		
+		(*task)->runButtonEvents();
 		(*task)->runTask();
-// 		(*task)->runEvents();
 	}
+	
+	//FIXME TODO check active task timeout and update activeTask accordingly
 	
 	//update display
 	static Timer displayUpdateTimer;
@@ -65,20 +59,20 @@ void ObcUI::task()
 	}
 }
 
-void ObcUI::handleButtonEvent()
-{
-	//determine if any tasks are hooked to the pushed button
-	//and whether the hook is active or background
-}
-
 void ObcUI::addTask(ObcUITask* task)
 {
-
+	if(task == NULL)
+		return;
+	tasks.push_back(task);
 }
 
 void ObcUI::removeTask(ObcUITask* task)
 {
-
+	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
+	{
+		task = tasks.erase(task);
+		break;
+	}
 }
 
 void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
@@ -86,6 +80,52 @@ void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
 	if(task == NULL)
 		return;
 	task->setActive(true);
-	activeTask->setActive(false);
+	if(activeTask != NULL)
+		activeTask->setActive(false);
 	activeTask = task;
+	
+	//FIXME TODO do something with forSeconds
+}
+
+void ObcUI::wake()
+{
+	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
+	{
+		(*task)->wake();
+	}
+}
+
+void ObcUI::sleep()
+{
+	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
+	{
+		(*task)->sleep();
+	}
+}
+
+void ObcUI::handleButtonEvent(uint32_t buttonMask)
+{
+	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
+	{
+		if(*task == activeTask)
+		{
+			//FIXME TODO check whether the button has been unregistered before creating the event
+			(*task)->createButtonEvent(ObcUITaskFocus::active, buttonMask);
+		}
+		else
+		{
+			//FIXME TODO check whether the button is registered before creating the event
+			(*task)->createButtonEvent(ObcUITaskFocus::background, buttonMask);
+		}
+	}
+}
+
+void ObcUI::registerButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask)
+{
+	//FIXME TODO
+}
+
+void ObcUI::unregisterButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask)
+{
+	//FIXME TODO
 }

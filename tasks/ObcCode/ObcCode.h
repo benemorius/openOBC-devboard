@@ -40,7 +40,8 @@ public:
 	~ObcCode();
 	
 	virtual void runTask();
-	virtual void buttonHandler(uint32_t buttonMask);
+	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
+	
 	virtual void wake();
 	virtual void sleep();
 	

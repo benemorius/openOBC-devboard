@@ -38,7 +38,7 @@ public:
 	ObcUI(ObcLcd& lcd, ObcKeypad& keypad);
 	~ObcUI();
 	
-	void handleButtonEvent();
+	void handleButtonEvent(uint32_t buttonMask);
 	
 	void task();
 	
@@ -50,6 +50,9 @@ public:
 	
 	void registerButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask);
 	void unregisterButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask);
+	
+	void wake();
+	void sleep();
 	
 private:
 	ObcLcd& lcd;
