@@ -27,9 +27,19 @@
 #include "ObcUI.h"
 #include "ObcUITask.h"
 
-ObcUI::ObcUI(ObcLcd& lcd, ObcKeypad& keypad) : lcd(lcd), keypad(keypad)
+ObcUI::ObcUI(ObcLcd& lcd, ObcKeypad& keypad, ConfigFile& config) : lcd(lcd), keypad(keypad), config(config)
 {
 	activeTask = NULL;
+	
+	if(config.getValueByName("MeasurementSystem") == "Metric")
+		measurementSystem = ObcUIMeasurementSystem::Metric;
+	else if(config.getValueByName("MeasurementSystem") == "Imperial")
+		measurementSystem = ObcUIMeasurementSystem::Imperial;
+	else
+	{
+		config.setValueByName("MeasurementSystem", "Both");
+		measurementSystem = ObcUIMeasurementSystem::Both;
+	}
 }
 
 ObcUI::~ObcUI()
@@ -103,6 +113,13 @@ void ObcUI::sleep()
 	{
 		(*task)->sleep();
 	}
+	
+	if(measurementSystem == ObcUIMeasurementSystem::Metric)
+		config.setValueByName("MeasurementSystem", "Metric");
+	else if(measurementSystem == ObcUIMeasurementSystem::Imperial)
+		config.setValueByName("MeasurementSystem", "Imperial");
+	else if(measurementSystem == ObcUIMeasurementSystem::Both)
+		config.setValueByName("MeasurementSystem", "Both");
 }
 
 void ObcUI::handleButtonEvent(uint32_t buttonMask)

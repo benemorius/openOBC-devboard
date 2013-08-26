@@ -41,6 +41,7 @@
 #include <PCA95xxPin.h>
 #include <ObcCode.h>
 #include <ObcCheck.h>
+#include <ObcLimit.h>
 #include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
@@ -509,11 +510,12 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	coolantTemperature = 0;
 	
-	ui = new ObcUI(*lcd, *keypad);
+	ui = new ObcUI(*lcd, *keypad, *config);
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
 	ui->addTask(new ObcCode(*this));
 	ui->addTask(new ObcCheck(*this));
-
+	ui->addTask(new ObcLimit(*this));
+	
 	
 	ui->wake();
 	
@@ -1108,7 +1110,7 @@ void OpenOBC::buttonSpeed()
 
 void OpenOBC::buttonLimit()
 {
-	*limitLed = !*limitLed;
+// 	*limitLed = !*limitLed;
 }
 
 void OpenOBC::buttonDist()

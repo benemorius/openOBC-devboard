@@ -144,6 +144,7 @@ public:
 	MMA845x* accel;
 	ObcUI* ui;
 	CheckControlModule* ccm;
+	SpeedInput* speed;
 
 protected:
 	void sleep();
@@ -170,7 +171,6 @@ protected:
 	AnalogIn* analogIn1;
 	AnalogIn* analogIn2;
 	AnalogOut* analogOut;
-	SpeedInput* speed;
 	FuelConsumption* fuelCons;
 	bool useMetricSystem;
 	bool useMetricSystemBoth; //both metric and imperial

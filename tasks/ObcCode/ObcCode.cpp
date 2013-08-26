@@ -84,6 +84,7 @@ void ObcCode::wake()
 		codeSet = 0;
 		setDisplay("input code: %04u", codeSet);
 		obc.ui->setActiveTask(this);
+		//TODO flash code LED
 	}
 }
 

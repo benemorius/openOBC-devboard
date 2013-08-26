@@ -23,55 +23,32 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef OBCUI_H
-#define OBCUI_H
+#ifndef OBCLIMIT_H
+#define OBCLIMIT_H
 
-#include "ObcUITask.h"
-#include "ObcLcd.h"
-#include "ObcKeypad.h"
-#include <vector>
+#include <ObcUITask.h>
 
-namespace ObcUIMeasurementSystem
-{
-	enum system {Metric, Imperial, Both};
+namespace ObcLimitState {
+	enum state {LimitInactive, LimitActive, LimitSet};
 }
 
-class ObcUI
+class ObcLimit : public ObcUITask
 {
 
 public:
-	ObcUI(ObcLcd& lcd, ObcKeypad& keypad, ConfigFile& config);
-	~ObcUI();
+	ObcLimit(OpenOBC& obc);
+	~ObcLimit();
 	
-	void handleButtonEvent(uint32_t buttonMask);
+	virtual void runTask();
+	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
-	void task();
-	
-	void addTask(ObcUITask* task);
-	void removeTask(ObcUITask* task);
-	
-	void setActiveTask(ObcUITask* task, float forSeconds = 0);
-	ObcUITask* getActiveTask() {return activeTask;}
-	
-	void registerButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask);
-	void unregisterButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask);
-	
-	void wake();
-	void sleep();
-	
-	void setMeasurementSystem(ObcUIMeasurementSystem::system system) {measurementSystem = system;}
-	ObcUIMeasurementSystem::system getMeasurementSystem() {return measurementSystem;}
-	
-	Callback callback;
-	ConfigFile& config;
+// 	virtual void wake();
+	virtual void sleep();
 	
 private:
-	ObcLcd& lcd;
-	ObcKeypad& keypad;
-	std::vector<ObcUITask*> tasks;
-	ObcUITask* activeTask;
-	ObcUIMeasurementSystem::system measurementSystem;
-	
+	ObcLimitState::state state;
+	float limitKmh;
+	float limitKmhSet;
 };
 
-#endif // OBCUI_H
+#endif // OBCLIMIT_H
