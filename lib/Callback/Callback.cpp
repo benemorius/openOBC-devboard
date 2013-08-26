@@ -33,7 +33,7 @@ Callback::Callback()
 
 Callback::~Callback()
 {
-	std::deque<FunctionPointer<void>*>::iterator function = functions.begin();
+	std::deque<FunctionPointer<void, void>*>::iterator function = functions.begin();
 	std::deque<Timer*>::iterator timer = timers.begin();
 	std::deque<uint32_t>::iterator time = times.begin();
 	
@@ -48,7 +48,7 @@ Callback::~Callback()
 
 void Callback::task()
 {
-	std::deque<FunctionPointer<void>*>::iterator function = functions.begin();
+	std::deque<FunctionPointer<void, void>*>::iterator function = functions.begin();
 	std::deque<Timer*>::iterator timer = timers.begin();
 	std::deque<uint32_t>::iterator time = times.begin();
 	
@@ -56,7 +56,7 @@ void Callback::task()
 	{
 		if((*timer)->read_ms() >= *time)
 		{
-			FunctionPointer<void>* f = *function;
+			FunctionPointer<void, void>* f = *function;
 			Timer* t = *timer;
 			functions.erase(function);
 			timers.erase(timer);

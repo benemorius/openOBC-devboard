@@ -79,7 +79,7 @@ private:
 	virtual void streamOut(char& c);
 	
 	Uart uart;
-	FunctionPointer<void> callback;
+	FunctionPointer<void, void> callback;
 	
 };
 

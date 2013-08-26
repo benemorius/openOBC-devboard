@@ -46,7 +46,7 @@ public:
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
-			functions.push_back(new FunctionPointer<void>);
+			functions.push_back(new FunctionPointer<void, void>);
 			functions.back()->attach(classPointer, methodPointer);
 			
 			timers.push_back(new Timer);
@@ -58,7 +58,7 @@ public:
 	{
 		if((methodPointer != 0) && (classPointer != 0))
 		{
-			functions.push_back(new FunctionPointer<void>);
+			functions.push_back(new FunctionPointer<void, void>);
 			functions.back()->attach(classPointer, methodPointer);
 			
 			timers.push_back(new Timer);
@@ -67,7 +67,7 @@ public:
 	}
 	uint32_t addCallback(void (*functionPointer)())
 	{
-		functions.push_back(new FunctionPointer<void>);
+		functions.push_back(new FunctionPointer<void, void>);
 		functions.back()->attach(functionPointer);
 	}
 	void deleteCallback(uint32_t pointer)
@@ -76,7 +76,7 @@ public:
 	}
 	
 private:
-	std::deque<FunctionPointer<void>*> functions;
+	std::deque<FunctionPointer<void, void>*> functions;
 	std::deque<Timer*> timers;
 	std::deque<uint32_t> times;
 };

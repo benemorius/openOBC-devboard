@@ -42,8 +42,7 @@ void ObcUI::task()
 	//run all tasks and queued button events
 	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
 	{
-		DEBUG("running %i tasks\r\n", tasks.size());
-		
+// 		DEBUG("running %i tasks\r\n", tasks.size());
 		(*task)->runButtonEvents();
 		(*task)->runTask();
 	}

@@ -511,7 +511,10 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	ui = new ObcUI(*lcd, *keypad);
 	ObcUITask* task = new ObcCode(*this);
 	ui->addTask(task);
-	ui->setActiveTask(task);
+// 	ui->setActiveTask(task);
+	
+	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
+	
 	
 	ui->wake();
 	
@@ -1096,7 +1099,7 @@ void OpenOBC::buttonTemp()
 
 void OpenOBC::buttonCode()
 {
-	*codeLed = !*codeLed;
+
 }
 
 void OpenOBC::buttonSpeed()

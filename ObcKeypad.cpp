@@ -106,6 +106,7 @@ void ObcKeypad::scan()
 		interruptTimer->start();
 		interruptTimer->setCallback(this, &ObcKeypad::scan, 50);
 		activeKeys = key;
+		callbackRaw.call(activeKeys);
 	}
 	else if(activeKeys != 0 && key != 0)
 	{
@@ -180,7 +181,6 @@ void ObcKeypad::scan()
 		case BUTTON_SET_MASK:
 			call(BUTTON_SET);
 			break;
-			
 	}
 }
 

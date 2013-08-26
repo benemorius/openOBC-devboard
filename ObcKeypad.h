@@ -83,23 +83,31 @@ public:
 	 void scan();
 
 
-	 template<typename T>
-	 void attach(ObcKeypadButton_Type button, T* classPointer, void (T::*methodPointer)())
+	 template<typename ClassType>
+	 void attach(ObcKeypadButton_Type button, ClassType* classPointer, void (ClassType::*methodPointer)())
 	 {
 		 if((methodPointer != 0) && (classPointer != 0))
 		 {
 			 if(!callbacks[button])
-				 callbacks[button] = new FunctionPointer<void>();
+				 callbacks[button] = new FunctionPointer<void, void>();
 			 callbacks[button]->attach(classPointer, methodPointer);
 		 }
 	 }
 	 void attach(ObcKeypadButton_Type button, void (*functionPointer)())
 	 {
 		 if(!callbacks[button])
-			 callbacks[button] = new FunctionPointer<void>;
+			 callbacks[button] = new FunctionPointer<void, void>;
 		 callbacks[button]->attach(functionPointer);
 	 }
-
+	 
+	 template<typename ClassType>
+	 void attachRaw(ClassType* classPointer, void (ClassType::*methodPointer)(uint32_t))
+	 {
+		 if((methodPointer != 0) && (classPointer != 0))
+		 {
+			 callbackRaw.attach(classPointer, methodPointer);
+		 }
+	 }
 	 
 
 private:
@@ -116,7 +124,8 @@ private:
 	Timer* debounce;
 	Timer* interruptTimer;
 	
-	FunctionPointer<void>* callbacks[BUTTON_NUM_VALUES];
+	FunctionPointer<void, void>* callbacks[BUTTON_NUM_VALUES];
+	FunctionPointer<void, uint32_t> callbackRaw;
 
 	void interruptHandler();
 	

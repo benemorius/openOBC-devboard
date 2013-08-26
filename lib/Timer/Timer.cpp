@@ -51,7 +51,7 @@ Timer::Timer(InterruptManager& interruptManager) : interruptManager(&interruptMa
 
 void Timer::initialize()
 {
-	callbackFunction = new FunctionPointer<void>;
+	callbackFunction = new FunctionPointer<void, void>;
 	callbackActive = false;
 	
 	if(!timerInitialized)

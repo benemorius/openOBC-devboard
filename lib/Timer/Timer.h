@@ -102,7 +102,7 @@ protected:
 	volatile uint32_t overflows;
 	InterruptManager* interruptManager;
 	bool overflowed; //FIXME this is really dirty
-	FunctionPointer<void>* callbackFunction;
+	FunctionPointer<void, void>* callbackFunction;
 	uint32_t callbackDelay;
 	uint32_t matchValue;
 	static std::list<uint32_t> matchValues;

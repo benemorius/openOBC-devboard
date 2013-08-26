@@ -65,11 +65,11 @@ void ObcUITask::createButtonEvent(ObcUITaskFocus::type focus, uint32_t buttonMas
 
 void ObcUITask::runButtonEvents()
 {
-	for(std::vector<uint32_t>::iterator buttonMask = buttonEventsActive.begin(); buttonMask != buttonEventsActive.end(); ++buttonMask)
+	for(std::vector<uint32_t>::iterator buttonMask = buttonEventsActive.begin(); buttonMask != buttonEventsActive.end(); buttonEventsActive.erase(buttonMask))
 	{
 		buttonHandler(ObcUITaskFocus::active, *buttonMask);
 	}
-	for(std::vector<uint32_t>::iterator buttonMask = buttonEventsBackground.begin(); buttonMask != buttonEventsBackground.end(); ++buttonMask)
+	for(std::vector<uint32_t>::iterator buttonMask = buttonEventsBackground.begin(); buttonMask != buttonEventsBackground.end(); buttonEventsBackground.erase(buttonMask))
 	{
 		buttonHandler(ObcUITaskFocus::background, *buttonMask);
 	}
