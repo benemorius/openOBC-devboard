@@ -350,12 +350,19 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	//accelerometer configuration
 	Input* accelInterrupt = new Input(ACCEL_INTERRUPT_PORT, ACCEL_INTERRUPT_PIN);
 	accel = new MMA845x(*i2c0, ACCEL_ADDRESS, *accelInterrupt, interruptManager);
-
+	
 	//ccm configuration
 	Input* ccmData = new Input(CCM_DATA_PORT, CCM_DATA_PIN);
 	IO* ccmClock = new IO(CCM_CLOCK_PORT, CCM_CLOCK_PIN);
 	IO* ccmLatch = new IO(CCM_LATCH_PORT, CCM_LATCH_PIN);
-	ccm = new CheckControlModule(*ccmData, *ccmClock, *ccmLatch);
+	uint8_t ccmDisableMask = strtoul(config->getValueByName("ObcCheckDisableMask").c_str(), NULL, 0);
+	if(ccmDisableMask == 0)
+		config->setValueByName("ObcCheckDisableMask", "0x%02x", DEFAULT_CCM_DISABLE_MASK);
+	uint8_t ccmInvertMask = strtoul(config->getValueByName("ObcCheckInvertMask").c_str(), NULL, 0);
+	if(ccmInvertMask == 0)
+		config->setValueByName("ObcCheckInvertMask", "0x%02x", DEFAULT_CCM_INVERT_MASK);
+	
+	ccm = new CheckControlModule(*ccmData, *ccmClock, *ccmLatch, ccmDisableMask, ccmInvertMask);
 
 	//fuel level configuration
 	Input* fuelLevelInput = new Input(FUEL_LEVEL_PORT, FUEL_LEVEL_PIN);

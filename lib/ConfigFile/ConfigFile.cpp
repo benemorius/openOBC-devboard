@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 using namespace std;
 
@@ -179,4 +180,15 @@ void ConfigFile::setValueByName(const string& name, const string& value)
 		return;
 	}
 	return;
+}
+
+void ConfigFile::setValueByName(const string& name, const char* format, ...)
+{
+	char* buf = new char[16];
+	va_list args;
+	va_start(args, format);
+	vsnprintf(buf, 16, format, args);
+	setValueByName(name, string(buf));
+	delete[] buf;
+	va_end(args);
 }

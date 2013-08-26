@@ -53,7 +53,7 @@ void ObcCheck::runTask()
 	if(newErrors)
 	{
 		DEBUG("new errors: 0x%02x (old errors: 0x%02x)\r\n", newErrors, ccmErrorsSinceReset);
-		if(rawByte == 0xff)
+		if((rawByte == 0xff) && (checkByte != 0x00))
 			setDisplay("check module failure");
 		else if(newErrors & WasherFluid)
 			setDisplay("washer fluid low");

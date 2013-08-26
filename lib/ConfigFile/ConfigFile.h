@@ -37,6 +37,7 @@ public:
 
 	std::string getValueByName(const std::string& name);
 	void setValueByName(const std::string& name, const std::string& value);
+	void setValueByName(const std::string& name, const char* format, ...);
 	std::string getFilename() {return this->filename;}
 	int32_t readConfig();
 	int32_t writeConfig(bool overwriteExistingFile = false);

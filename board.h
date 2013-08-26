@@ -180,3 +180,6 @@ extern "C" char* get_heap_end(void);
 
 #define ANALOG_OUT_PORT (0)
 #define ANALOG_OUT_PIN (26)
+
+#define DEFAULT_CCM_DISABLE_MASK (0x00)
+#define DEFAULT_CCM_INVERT_MASK (ObcCCMBits::WasherFluid | ObcCCMBits::CoolantLevel | ObcCCMBits::BrakeLight1 | ObcCCMBits::BrakeLight2)
