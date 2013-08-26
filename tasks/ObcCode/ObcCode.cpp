@@ -25,6 +25,7 @@
 
 #include "ObcCode.h"
 #include <ObcUI.h>
+#include <cstdlib>
 
 using namespace ObcCodeState;
 
@@ -32,8 +33,29 @@ ObcCode::ObcCode(OpenOBC& obc) : ObcUITask(obc)
 {
 	registerButton(ObcUITaskFocus::background, BUTTON_CODE_MASK);
 	setDisplayRefreshPeriod(0.100);
-	setDisplay("ObcCode");
-	state = CodeInactive;
+	
+	//restore state from config //TODO relying on the sd card for this is bad
+	code = atof(obc.config->getValueByName("ObcCode").c_str());
+	std::string stateConfig = obc.config->getValueByName("ObcCodeState");
+	if(stateConfig == "CodeActive")
+	{
+		state = CodeActive;
+		setDisplay("code active");
+		obc.codeLed->on();
+	}
+	else if((stateConfig == "CodeArmed") || (stateConfig == "CodePrompt"))
+	{
+		state = CodeArmed;
+		obc.codeLed->on();
+		obc.ews->on();
+	}
+	else
+	{
+		state = CodeInactive;
+		setDisplay("code inactive");
+		obc.ews->off();
+		obc.codeLed->off();
+	}
 }
 
 ObcCode::~ObcCode()
@@ -55,24 +77,35 @@ void ObcCode::runTask()
 
 void ObcCode::wake()
 {
-	DEBUG("wake\r\n");
+// 	DEBUG("wake\r\n");
     if((state == CodeArmed) || (state == CodePrompt))
 	{
 		state = CodePrompt;
 		codeSet = 0;
-		setDisplay("input code: %04i", codeSet);
+		setDisplay("input code: %04u", codeSet);
 		obc.ui->setActiveTask(this);
 	}
 }
 
 void ObcCode::sleep()
 {
-	DEBUG("sleep\r\n");
-	if((state == CodeArmed) || (state == CodePrompt))
+// 	DEBUG("sleep\r\n");
+	if((state == CodeArmed) || (state == CodePrompt) || (state == CodeActive))
 	{
 		state = CodeArmed;
+		obc.codeLed->on();
 		obc.ews->on();
 	}
+	
+	//store state to config
+	char* codeBuffer = new char[5];
+	snprintf(codeBuffer, 5, "%04u", code);
+	obc.config->setValueByName("ObcCode", codeBuffer);
+	delete[] codeBuffer;
+	if((state == CodeInactive) || (state == CodeSet))
+		obc.config->setValueByName("ObcCodeState", "CodeInactive");
+	else if((state == CodeActive) || (state == CodeArmed) || (state == CodePrompt))
+		obc.config->setValueByName("ObcCodeState", "CodeArmed");
 }
 
 void ObcCode::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
@@ -108,7 +141,7 @@ void ObcCode::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		{
 			state = CodeSet;
 			codeSet = code;
-			setDisplay("set code: %04i", codeSet);
+			setDisplay("set code: %04u", codeSet);
 		}
 	}
 	
@@ -117,8 +150,8 @@ void ObcCode::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		if(buttonMask == BUTTON_SET_MASK)
 		{
 			state = CodeSet;
-			codeSet = code;
-			setDisplay("set code: %04i", codeSet);
+			codeSet = 0;
+			setDisplay("set code: %04u", codeSet);
 		}
 	}
 	
@@ -134,13 +167,13 @@ void ObcCode::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 			}
 			else
 			{
-				setDisplay("code invalid: %04i", codeSet);
+				setDisplay("code invalid: %04u", codeSet);
 				codeSet = 0;
 			}
 		}
 	}
 	
-	if((state == CodeSet) || (state == CodePrompt))
+	if(((state == CodeSet) || (state == CodePrompt)) && (buttonMask & (BUTTON_1000_MASK | BUTTON_100_MASK | BUTTON_10_MASK | BUTTON_1_MASK)))
 	{
 		if(buttonMask == BUTTON_1000_MASK)
 		{
@@ -160,6 +193,9 @@ void ObcCode::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		}
 		
 		codeSet %= 10000;
-		setDisplay("input code: %04i", codeSet);
+		if(state == CodeSet)
+			setDisplay("set code: %04u", codeSet);
+		else if(state == CodePrompt)
+			setDisplay("input code: %04u", codeSet);
 	}
 }
