@@ -143,6 +143,7 @@ public:
 	PCA95xx* io0;
 	MMA845x* accel;
 	ObcUI* ui;
+	CheckControlModule* ccm;
 
 protected:
 	void sleep();
@@ -159,7 +160,6 @@ protected:
 	PWM* keypadBacklight;
 	PWM* lcdBiasClock;
 	ObcLcd* lcd;
-	CheckControlModule* ccm;
 	IO* lcdReset;
 	IO* lcdBiasEn;
 	volatile DisplayMode_Type& displayMode;

@@ -39,6 +39,8 @@ ObcUI::~ObcUI()
 
 void ObcUI::task()
 {
+	callback.task();
+	
 	//run all tasks and queued button events
 	for(std::vector<ObcUITask*>::iterator task = tasks.begin(); task != tasks.end(); ++task)
 	{
@@ -82,6 +84,7 @@ void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
 	if(activeTask != NULL)
 		activeTask->setActive(false);
 	activeTask = task;
+	lcd.printf("%s", activeTask->getDisplay());
 	
 	//FIXME TODO do something with forSeconds
 }

@@ -26,7 +26,7 @@
 #include "CheckControlModule.h"
 #include "delay.h"
 
-CheckControlModule::CheckControlModule(Input& data, IO& clock, IO& latch) : data(data), clock(clock), latch(latch)
+CheckControlModule::CheckControlModule(Input& data, IO& clock, IO& latch, uint8_t disableMask, uint8_t invertMask) : data(data), clock(clock), latch(latch), invertMask(disableMask), disableMask(disableMask)
 {
 	clock = false;
 	latch = false;
@@ -56,4 +56,14 @@ void CheckControlModule::updateStatus()
 	latch = false;
 	clock = false;
 	rawByte = status;
+}
+
+uint8_t CheckControlModule::getRawByte()
+{
+	return rawByte;
+}
+
+uint8_t CheckControlModule::getCCMByte()
+{
+	return (getRawByte() ^ invertMask) & ~disableMask;
 }

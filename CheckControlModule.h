@@ -40,15 +40,30 @@ bit 1 L Washer Fluid
 bit 0 H Pulldown
 */
 
+namespace ObcCCMBits
+{
+	enum {
+		Pulldown = 0x1,
+		WasherFluid = 0x2,
+		CoolantLevel = 0x4,
+		LowBeam = 0x8,
+		LicensePlateLight = 0x10,
+		TailLight = 0x20,
+		BrakeLight1 = 0x40,
+		BrakeLight2 = 0x80
+	};
+}
+
 class CheckControlModule
 {
 
 public:
-    CheckControlModule(Input& data, IO& clock, IO& latch);
+    CheckControlModule(Input& data, IO& clock, IO& latch, uint8_t disableMask = 0x0, uint8_t invertMask = (ObcCCMBits::WasherFluid | ObcCCMBits::CoolantLevel | ObcCCMBits::BrakeLight1 | ObcCCMBits::BrakeLight2));
 
 	 void task();
 
-	 uint8_t getRawByte() {return rawByte;}
+	 uint8_t getCCMByte();
+	 uint8_t getRawByte();
 
 private:
 	void updateStatus();
@@ -57,6 +72,8 @@ private:
 	IO& clock;
 	IO& latch;
 	uint8_t rawByte;
+	uint8_t invertMask;
+	uint8_t disableMask;
 };
 
 #endif // CHECKCONTROLMODULE_H

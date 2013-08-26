@@ -40,6 +40,7 @@
 #include <Bus.h>
 #include <PCA95xxPin.h>
 #include <ObcCode.h>
+#include <ObcCheck.h>
 #include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
@@ -509,12 +510,10 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	coolantTemperature = 0;
 	
 	ui = new ObcUI(*lcd, *keypad);
-	ObcUITask* task = new ObcCode(*this);
-	ui->addTask(task);
-// 	ui->setActiveTask(task);
-	
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
-	
+	ui->addTask(new ObcCode(*this));
+	ui->addTask(new ObcCheck(*this));
+
 	
 	ui->wake();
 	

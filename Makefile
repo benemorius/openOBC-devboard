@@ -26,7 +26,7 @@ INCDIRS += lib/ConfigFile lib/Debug lib/FunctionPointer lib/IO lib/Input lib/Int
 INCDIRS += lib/PCA95xx lib/I2C
 INCDIRS += lib/MMA845x
 INCDIRS += lib/AnalogOut
-INCDIRS += tasks/ObcCode
+INCDIRS += tasks/ObcCode tasks/ObcCheck
 INCSTRING = $(patsubst %,-I%,$(INCDIRS)) -I.
 
 # Flags
@@ -65,6 +65,7 @@ CPPSRCS += $(wildcard lib/PCA95xx/*.cpp) $(wildcard lib/I2C/*.cpp)
 CPPSRCS += $(wildcard lib/MMA845x/*.cpp)
 CPPSRCS += $(wildcard lib/AnalogOut/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcCode/*.cpp)
+CPPSRCS += $(wildcard tasks/ObcCheck/*.cpp)
 CMSISCSRCS = $(wildcard cmsis/*.c)
 
 
@@ -108,7 +109,7 @@ clean:
 	@rm -f *.hex *.bin
 	@-rm -f *.elf
 	@-\
-for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2" "lib/ConfigFile" "lib/Debug" "lib/FunctionPointer" "lib/IO" "lib/Input" "lib/InterruptManager" "lib/PWM" "lib/RTC" "lib/SPI" "lib/Stream" "lib/Timer" "lib/Uart" "lib/Callback" "lib/Watchdog" "lib/PCA95xx" "lib/I2C" "lib/MMA845x" "lib/AnalogOut" "tasks/ObcCode"; do \
+for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2" "lib/ConfigFile" "lib/Debug" "lib/FunctionPointer" "lib/IO" "lib/Input" "lib/InterruptManager" "lib/PWM" "lib/RTC" "lib/SPI" "lib/Stream" "lib/Timer" "lib/Uart" "lib/Callback" "lib/Watchdog" "lib/PCA95xx" "lib/I2C" "lib/MMA845x" "lib/AnalogOut" "tasks/ObcCode" "tasks/ObcCheck"; do \
   rm -f $$D/*.o $$D/*.d $$D/*.lst $$D/*.dump $$D/*.map $$D/*.a; \
 done
 
