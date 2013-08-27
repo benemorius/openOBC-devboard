@@ -519,9 +519,9 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	ui = new ObcUI(*lcd, *keypad, *config);
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
-	ui->addTask(new ObcCode(*this));
 	ui->addTask(new ObcCheck(*this));
 	ui->addTask(new ObcLimit(*this));
+	ui->addTask(new ObcCode(*this));
 	
 	
 	ui->wake();

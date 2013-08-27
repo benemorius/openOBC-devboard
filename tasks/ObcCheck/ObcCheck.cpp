@@ -42,7 +42,7 @@ ObcCheck::~ObcCheck()
 
 void ObcCheck::wake()
 {
-    
+    runTask();
 }
 
 void ObcCheck::runTask()
