@@ -266,7 +266,12 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 			DEBUG("couldn't open file for writing: %s\r\n", config->getFilename().c_str());
 		}
 	}
-
+	
+	if(config->getValueByName("LogConsoleToFile") == "yes")
+		freopen("/sd/stdout.log", "a", stdout);
+	else
+		config->setValueByName("LogConsoleToFile", "no");
+	
 	//default config file parameters
 	if(config->getValueByName("DefaultDisplayMode") == "")
 		config->setValueByName("DefaultDisplayMode", "DISPLAY_LAST_DISPLAYMODE");
@@ -934,6 +939,8 @@ void OpenOBC::sleep()
 	*klWake = false;
 	*vrefEn = false;
 	accel->disable();
+
+	fclose(stdout);
 
 	NVIC_DisableIRQ(EINT3_IRQn);
 	GPIO_IntDisable(0, 0xffffffff, 0);

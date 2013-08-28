@@ -368,11 +368,15 @@ int _read(int fd, char* buffer, int count)
 
 int _write(int fd, char* data, int count)
 {
+	//workaround for stderr->stdout redirection until dup2 is implemented
+	if((fd == fileno(stderr)) && (fileno(stdout) != 1))
+		fd = fileno(stdout);
+	
+	
 	if(fd == fileno(stdout) || fd == fileno(stderr))
 	{
 		if(debugS != NULL)
 			debugS->puts((uint8_t*)data, count);
-		return count;
 	}
 	
 // 	char buf[128];
@@ -401,8 +405,16 @@ int _write(int fd, char* data, int count)
 		fprintf(stderr, "f_write failed: %s (%i)\r\n", strerror(errno), result);
 		return -1;
 	}
+	fd = fd + FILENO_OFFSET;
+	if((fd == fileno(stdout)) || (fd == fileno(stderr)))
+		fsync(fd);
 	return bytesWritten;
 }
+
+// int dup2(int oldFd, int newFd)
+// {
+// 	return newFd;
+// }
 
 #ifdef __cplusplus
 }
