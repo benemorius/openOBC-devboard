@@ -194,7 +194,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 // 	printf("-"); fflush(stdout); delay(250); printf("-"); fflush(stdout); delay(250); printf("-"); fflush(stdout); delay(250); printf(">\r\n"); delay(250);
 	printf("--->\r\n");
 	printf("clock speed: %i MHz\r\n", SystemCoreClock / 1000000);
-	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
+	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_mem_free());
 
 	vrefEn = new IO(VREF_EN_PORT, VREF_EN_PIN, true, false);
 	
@@ -600,7 +600,7 @@ void OpenOBC::mainloop()
 {
 	debug->attach(this, &OpenOBC::uartHandler);
 	
-	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_stack_top() - get_heap_end());
+	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_mem_free());
 	printf("starting mainloop...\r\n");
 	wdt.start(5);
 
@@ -692,7 +692,7 @@ void OpenOBC::mainloop()
 				}
 				case DISPLAY_FREEMEM:
 				{
-					lcd->printf("free memory: %i", get_stack_top() - get_heap_end());
+					lcd->printf("free memory: %i", get_mem_free());
 					break;
 				}
 				case DISPLAY_CLOCKSET:

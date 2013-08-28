@@ -91,18 +91,39 @@ char* get_stack_top()
 	// return (char*) __get_PSP();
 }
 
+char* get_mem_free()
+{
+	if(get_heap_end() < (char*)0x20000000)
+		return get_stack_top() - get_heap_end() + (char*)0x8000;
+	else
+		return (char*)((char*)0x20084000 - get_heap_end());
+}
+
 caddr_t _sbrk(int incr)
 {
-	char* prev_heap_end;
 	if(heap_end == 0)
 	{
 		heap_end = &_end;
 	}
-	prev_heap_end = heap_end;
-	if(heap_end + incr > get_stack_top())
+	
+	if(heap_end < (char*)0x20000000)
 	{
-		allocate_failed();
+		if(heap_end + incr > get_stack_top())
+		{
+			if(heap_end + incr > (char*)(0x2007C000 + 0x8000))
+			{
+				allocate_failed();
+			}
+			heap_end = (char*)0x2007C000;
+		}
 	}
+	else
+	{
+		if(heap_end + incr > (char*)(0x2007C000 + 0x8000))
+			allocate_failed();
+	}
+
+	char* prev_heap_end = heap_end;
 	heap_end += incr;
 	return (caddr_t)prev_heap_end;
 }

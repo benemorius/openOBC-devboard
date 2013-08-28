@@ -32,6 +32,7 @@
 
 extern "C" char* get_stack_top(void);
 extern "C" char* get_heap_end(void);
+extern "C" char* get_mem_free(void);
 
 #define SPI0_MOSI_PORT (0)
 #define SPI0_MOSI_PIN (18)
