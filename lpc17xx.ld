@@ -128,7 +128,7 @@ SECTIONS
           . = ALIGN (4);
           _efastcode = . ;
           _sidata = .;
-        } >IRAM0 AT>IROM
+        } >IRAM2 AT>IROM
 
 	/******************************************/
 	/* This used for USB RAM section */
@@ -151,7 +151,7 @@ SECTIONS
 
 		. = ALIGN(4);
 		_edata = . ;
-	} >IRAM0 AT>IROM
+	} >IRAM2 AT>IROM
 
 	/******************************************/
 	/* For no-init variables section */
@@ -166,7 +166,7 @@ SECTIONS
 
 		. = ALIGN(4);
 		_ebss = . ;
-	} >IRAM0
+	} >IRAM2
 
 	/******************************************/
 	/* For stack section */
