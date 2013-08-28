@@ -362,10 +362,16 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	IO* ccmLatch = new IO(CCM_LATCH_PORT, CCM_LATCH_PIN);
 	uint8_t ccmDisableMask = strtoul(config->getValueByName("ObcCheckDisableMask").c_str(), NULL, 0);
 	if(ccmDisableMask == 0)
+	{
 		config->setValueByName("ObcCheckDisableMask", "0x%02x", DEFAULT_CCM_DISABLE_MASK);
+		ccmDisableMask = DEFAULT_CCM_DISABLE_MASK;
+	}
 	uint8_t ccmInvertMask = strtoul(config->getValueByName("ObcCheckInvertMask").c_str(), NULL, 0);
 	if(ccmInvertMask == 0)
+	{
 		config->setValueByName("ObcCheckInvertMask", "0x%02x", DEFAULT_CCM_INVERT_MASK);
+		ccmInvertMask = DEFAULT_CCM_INVERT_MASK;
+	}
 	
 	ccm = new CheckControlModule(*ccmData, *ccmClock, *ccmLatch, ccmDisableMask, ccmInvertMask);
 

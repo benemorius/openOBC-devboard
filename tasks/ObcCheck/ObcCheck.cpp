@@ -52,7 +52,7 @@ void ObcCheck::runTask()
 	uint8_t newErrors = checkByte & ~ccmErrorsSinceReset;
 	if(newErrors)
 	{
-		DEBUG("new errors: 0x%02x (old errors: 0x%02x)\r\n", newErrors, ccmErrorsSinceReset);
+		DEBUG("CCM raw byte: 0x%02x new errors: 0x%02x (old errors: 0x%02x)\r\n", rawByte, newErrors, ccmErrorsSinceReset);
 		if((rawByte == 0xff) && (checkByte != 0x00))
 			setDisplay("check module failure");
 		else if(newErrors & WasherFluid)

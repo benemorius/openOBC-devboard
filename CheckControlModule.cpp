@@ -26,7 +26,7 @@
 #include "CheckControlModule.h"
 #include "delay.h"
 
-CheckControlModule::CheckControlModule(Input& data, IO& clock, IO& latch, uint8_t disableMask, uint8_t invertMask) : data(data), clock(clock), latch(latch), invertMask(disableMask), disableMask(disableMask)
+CheckControlModule::CheckControlModule(Input& data, IO& clock, IO& latch, uint8_t disableMask, uint8_t invertMask) : data(data), clock(clock), latch(latch), invertMask(invertMask), disableMask(disableMask)
 {
 	clock = false;
 	latch = false;
