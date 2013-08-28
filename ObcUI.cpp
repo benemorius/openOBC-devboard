@@ -26,6 +26,7 @@
 
 #include "ObcUI.h"
 #include "ObcUITask.h"
+#include <algorithm>
 
 ObcUI::ObcUI(ObcLcd& lcd, ObcKeypad& keypad, ConfigFile& config) : lcd(lcd), keypad(keypad), config(config)
 {
@@ -59,7 +60,22 @@ void ObcUI::task()
 		(*task)->runTask();
 	}
 	
-	//FIXME TODO check active task timeout and update activeTask accordingly
+	if(activeTask && activeTask->getActiveTaskTimeout() && (activeTaskTimeout.read() >= activeTask->getActiveTaskTimeout()))
+	{
+// 		DEBUG("task timed out after %.1f seconds\r\n", activeTask->getActiveTaskTimeout());
+		activeTask->setActive(false);
+		activeTaskList.pop_back();
+		if(!activeTaskList.empty())
+		{
+			activeTask = activeTaskList.back();
+			activeTask->setActive(true);
+		}
+		else
+		{
+			activeTask = NULL;
+			lcd.printf("");
+		}
+	}
 	
 	//update display
 	static Timer displayUpdateTimer;
@@ -84,19 +100,29 @@ void ObcUI::removeTask(ObcUITask* task)
 		task = tasks.erase(task);
 		break;
 	}
+
+	std::deque<ObcUITask*>::iterator found;
+	while((found = std::find(activeTaskList.begin(), activeTaskList.end(), task)) != activeTaskList.end())
+		activeTaskList.erase(found);
 }
 
 void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
 {
 	if(task == NULL)
 		return;
+// 	DEBUG("setting active task\r\n");
 	task->setActive(true);
 	if(activeTask != NULL)
 		activeTask->setActive(false);
 	activeTask = task;
 	lcd.printf("%s", activeTask->getDisplay());
 	
-	//FIXME TODO do something with forSeconds
+	std::deque<ObcUITask*>::iterator found;
+	while((found = std::find(activeTaskList.begin(), activeTaskList.end(), task)) != activeTaskList.end())
+		activeTaskList.erase(found);
+	activeTaskList.push_back(task);
+	activeTask->setActiveTaskTimeout(forSeconds);
+	activeTaskTimeout.start();
 }
 
 void ObcUI::wake()

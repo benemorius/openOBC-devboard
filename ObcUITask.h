@@ -58,6 +58,8 @@ public:
 	void runButtonEvents();
 	
 	void createButtonEvent(ObcUITaskFocus::type focus, uint32_t buttonMask);
+	void setActiveTaskTimeout(float seconds) {activeTaskTimeout = seconds;}
+	float getActiveTaskTimeout() {return activeTaskTimeout;}
 	
 protected:
 	void registerButton(ObcUITaskFocus::type focus, uint32_t buttonMask);
@@ -74,7 +76,7 @@ private:
 	char displayBuffer[21];
 	bool _isActive;
     float displayRefreshPeriod;
-	
+	float activeTaskTimeout;
 };
 
 #endif // OBCUITASK_H

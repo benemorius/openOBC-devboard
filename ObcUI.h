@@ -31,6 +31,7 @@
 #include "ObcKeypad.h"
 #include <vector>
 #include <board.h>
+#include <Timer.h>
 
 namespace ObcUIMeasurementSystem
 {
@@ -72,7 +73,8 @@ private:
 	std::vector<ObcUITask*> tasks;
 	ObcUITask* activeTask;
 	ObcUIMeasurementSystem::system measurementSystem;
-	
+	Timer activeTaskTimeout;
+	std::deque<ObcUITask*> activeTaskList;
 };
 
 #endif // OBCUI_H

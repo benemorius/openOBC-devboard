@@ -56,7 +56,7 @@ void ObcKmmls::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 {
 	if(buttonMask == BUTTON_KMMLS_MASK)
 	{
-		obc.ui->setActiveTask(this, 2);
+		obc.ui->setActiveTask(this, 1);
 		if(focus == ObcUITaskFocus::active)
 		{
 			ObcUIMeasurementSystem::system measurementSystem = obc.ui->getMeasurementSystem();

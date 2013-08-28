@@ -30,6 +30,7 @@ ObcUITask::ObcUITask(OpenOBC& obc) : obc(obc)
 {
 	setDisplayRefreshPeriod(0.100);
 	_isActive = false;
+	activeTaskTimeout = 0;
 }
 
 ObcUITask::~ObcUITask()
