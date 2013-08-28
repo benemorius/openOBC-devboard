@@ -42,6 +42,12 @@
 #include <ObcCode.h>
 #include <ObcCheck.h>
 #include <ObcLimit.h>
+#include <ObcSpeed.h>
+#include <ObcConsum.h>
+#include <ObcDist.h>
+#include <ObcRange.h>
+#include <ObcTemp.h>
+#include <ObcTimer.h>
 #include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
@@ -533,7 +539,12 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	ui->addTask(new ObcCheck(*this));
 	ui->addTask(new ObcLimit(*this));
 	ui->addTask(new ObcCode(*this));
-	
+	ui->addTask(new ObcSpeed(*this));
+	ui->addTask(new ObcConsum(*this));
+	ui->addTask(new ObcDist(*this));
+	ui->addTask(new ObcRange(*this));
+	ui->addTask(new ObcTemp(*this));
+	ui->addTask(new ObcTimer(*this));
 	
 	ui->wake();
 	
