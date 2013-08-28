@@ -36,9 +36,23 @@ ObcRange::~ObcRange()
 
 }
 
+void ObcRange::wake()
+{
+	runTask();
+}
+
 void ObcRange::runTask()
 {
-
+	float fuelLevelLitres = obc.fuelLevel->getLitres();
+	float fuelLevelGallons = obc.fuelLevel->getGallons();
+	float rangeKm = fuelLevelLitres / obc.averageLitresPer100km * 100;
+			
+	if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
+		setDisplay("%.0f km %.0f miles", rangeKm, rangeKm * 0.621371f);
+	if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
+		setDisplay("%.0f km  %.1f L", rangeKm, fuelLevelLitres);
+	if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+		setDisplay("%.0f miles  %.2f gal", rangeKm * 0.621371f, fuelLevelGallons);
 }
 
 void ObcRange::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)

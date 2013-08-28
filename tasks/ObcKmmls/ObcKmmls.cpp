@@ -23,58 +23,50 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "ObcSpeed.h"
+#include "ObcKmmls.h"
 #include <ObcUI.h>
-#include <cstdlib>
 
-ObcSpeed::ObcSpeed(OpenOBC& obc) : ObcUITask(obc)
-{
-	averageSpeedKph = strtof(obc.config->getValueByName("ObcSpeedAverageKph").c_str(), NULL);
-}
-
-ObcSpeed::~ObcSpeed()
+ObcKmmls::ObcKmmls(OpenOBC& obc) : ObcUITask(obc)
 {
 
 }
 
-void ObcSpeed::wake()
+ObcKmmls::~ObcKmmls()
+{
+
+}
+
+void ObcKmmls::wake()
 {
 	runTask();
 }
 
-void ObcSpeed::runTask()
+void ObcKmmls::runTask()
 {
-	uint32_t currentSpeedKmh = obc.speed->getKmh();
-	
-	
-	
-	
-	
-	
-	
-	if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
-		setDisplay("% 3u km/h % 3u avg", currentSpeedKmh, averageSpeedKph);
-	else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-		setDisplay("% 3u mph % 3u avg", currentSpeedKmh * 0.621371, averageSpeedKph * 0.621371);
-	else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
-		setDisplay("avg: % 3u kmh % 3u mph", averageSpeedKph, averageSpeedKph * 0.621371);
-	
+	ObcUIMeasurementSystem::system measurementSystem = obc.ui->getMeasurementSystem();
+	if(measurementSystem == ObcUIMeasurementSystem::Metric)
+		setDisplay("metric");
+	else if(measurementSystem == ObcUIMeasurementSystem::Imperial)
+		setDisplay("imperial");
+	else if(measurementSystem == ObcUIMeasurementSystem::Both)
+		setDisplay("metric / imperial");
 }
 
-void ObcSpeed::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
+void ObcKmmls::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 {
-	if(focus == ObcUITaskFocus::background)
+	if(buttonMask == BUTTON_KMMLS_MASK)
 	{
-		if(buttonMask == BUTTON_SPEED_MASK)
-			obc.ui->setActiveTask(this);
-		return;
+		obc.ui->setActiveTask(this, 2);
+		if(focus == ObcUITaskFocus::active)
+		{
+			ObcUIMeasurementSystem::system measurementSystem = obc.ui->getMeasurementSystem();
+			if(measurementSystem == ObcUIMeasurementSystem::Both)
+				measurementSystem = ObcUIMeasurementSystem::Metric;
+			else if(measurementSystem == ObcUIMeasurementSystem::Metric)
+				measurementSystem = ObcUIMeasurementSystem::Imperial;
+			else if(measurementSystem == ObcUIMeasurementSystem::Imperial)
+				measurementSystem = ObcUIMeasurementSystem::Both;
+			obc.ui->setMeasurementSystem(measurementSystem);
+		}
 	}
-	
-	
-	
-}
-
-void ObcSpeed::sleep()
-{
-    obc.config->setValueByName("ObcSpeedAverageKph", "%.4f", averageSpeedKph);
 }

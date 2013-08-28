@@ -32,6 +32,7 @@ INCDIRS += tasks/ObcDist
 INCDIRS += tasks/ObcRange
 INCDIRS += tasks/ObcTemp
 INCDIRS += tasks/ObcTimer
+INCDIRS += tasks/ObcKmmls
 INCSTRING = $(patsubst %,-I%,$(INCDIRS)) -I.
 
 # Flags
@@ -78,6 +79,7 @@ CPPSRCS += $(wildcard tasks/ObcDist/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcRange/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcTemp/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcTimer/*.cpp)
+CPPSRCS += $(wildcard tasks/ObcKmmls/*.cpp)
 CMSISCSRCS = $(wildcard cmsis/*.c)
 
 
@@ -121,7 +123,7 @@ clean:
 	@rm -f *.hex *.bin
 	@-rm -f *.elf
 	@-\
-for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2" "lib/ConfigFile" "lib/Debug" "lib/FunctionPointer" "lib/IO" "lib/Input" "lib/InterruptManager" "lib/PWM" "lib/RTC" "lib/SPI" "lib/Stream" "lib/Timer" "lib/Uart" "lib/Callback" "lib/Watchdog" "lib/PCA95xx" "lib/I2C" "lib/MMA845x" "lib/AnalogOut" "tasks/ObcCode" "tasks/ObcCheck" "tasks/ObcLimit" "tasks/ObcSpeed" "tasks/ObcConsum" "tasks/Dist" "tasks/Range" "tasks/Temp" "tasks/Timer"; do \
+for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2" "lib/ConfigFile" "lib/Debug" "lib/FunctionPointer" "lib/IO" "lib/Input" "lib/InterruptManager" "lib/PWM" "lib/RTC" "lib/SPI" "lib/Stream" "lib/Timer" "lib/Uart" "lib/Callback" "lib/Watchdog" "lib/PCA95xx" "lib/I2C" "lib/MMA845x" "lib/AnalogOut" "tasks/ObcCode" "tasks/ObcCheck" "tasks/ObcLimit" "tasks/ObcSpeed" "tasks/ObcConsum" "tasks/ObcDist" "tasks/ObcRange" "tasks/ObcTemp" "tasks/ObcTimer" "tasks/ObcKmmls"; do \
   rm -f $$D/*.o $$D/*.d $$D/*.lst $$D/*.dump $$D/*.map $$D/*.a; \
 done
 

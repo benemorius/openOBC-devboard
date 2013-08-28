@@ -165,7 +165,7 @@ void ConfigFile::setValueByName(const string& name, const string& value)
 		fprintf(newfile, "%s = %s\n", name.c_str(), value.c_str());
 	}
 
-	delete line;
+	delete[] line;
 	fclose(originalFile);
 	fclose(newfile);
 
@@ -184,11 +184,16 @@ void ConfigFile::setValueByName(const string& name, const string& value)
 
 void ConfigFile::setValueByName(const string& name, const char* format, ...)
 {
-	char* buf = new char[16];
+	char* buf = new char[128];
 	va_list args;
 	va_start(args, format);
-	vsnprintf(buf, 16, format, args);
+	vsnprintf(buf, 128, format, args);
 	setValueByName(name, string(buf));
 	delete[] buf;
 	va_end(args);
+}
+
+bool ConfigFile::isSet(const string& name)
+{
+	return(getValueByName(name) != "");
 }

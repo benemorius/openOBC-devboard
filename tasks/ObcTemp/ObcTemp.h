@@ -28,6 +28,10 @@
 
 #include <ObcUITask.h>
 
+namespace ObcTempState {
+	enum state {TempExt, TempCoolant, TempCoolantWarningSet};
+}
+
 class ObcTemp : public ObcUITask
 {
 
@@ -38,9 +42,13 @@ public:
 	virtual void runTask();
 	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
-// 	virtual void wake();
-// 	virtual void sleep();
+	virtual void wake();
+	virtual void sleep();
 	
+private:
+	ObcTempState::state state;
+	uint32_t coolantWarningTemp;
+	uint32_t coolantWarningTempSet;
 };
 
 #endif // OBCTEMP_H

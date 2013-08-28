@@ -36,9 +36,14 @@ ObcDist::~ObcDist()
 
 }
 
+void ObcDist::wake()
+{
+	runTask();
+}
+
 void ObcDist::runTask()
 {
-
+	setDisplay("%.2fV %.2fV %.2fV", obc.batteryVoltage->read(), obc.analogIn1->read(), obc.analogIn2->read());
 }
 
 void ObcDist::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)

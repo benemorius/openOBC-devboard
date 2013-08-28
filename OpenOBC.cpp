@@ -48,6 +48,7 @@
 #include <ObcRange.h>
 #include <ObcTemp.h>
 #include <ObcTimer.h>
+#include <ObcKmmls.h>
 #include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
@@ -159,19 +160,6 @@ void OpenOBC::printDS2Packet()
 
 void OpenOBC::writeConfigData()
 {
-	if(this->useMetricSystemBoth && (config->getValueByName("MeasurementSystem") != "BOTH"))
-		config->setValueByName("MeasurementSystem", "BOTH");
-	if(!this->useMetricSystemBoth && this->useMetricSystem && (config->getValueByName("MeasurementSystem") != "METRIC"))
-		config->setValueByName("MeasurementSystem", "METRIC");
-	if(!this->useMetricSystemBoth && !this->useMetricSystem && (config->getValueByName("MeasurementSystem") != "IMPERIAL"))
-		config->setValueByName("MeasurementSystem", "IMPERIAL");
-	if(this->coolantWarningTemp != atof(config->getValueByName("CoolantWarningTemperature").c_str()))
-	{
-		char* temp = new char[5];
-		snprintf(temp, 5, "%i", coolantWarningTemp);
-		config->setValueByName("CoolantWarningTemperature", temp);
-		delete[] temp;
-	}
 	if(this->batteryVoltageCalibration != (float)atof(config->getValueByName("BatteryVoltageCalibration").c_str()))
 	{
 		char* newValue = new char[8];
@@ -179,7 +167,6 @@ void OpenOBC::writeConfigData()
 		config->setValueByName("BatteryVoltageCalibration", newValue);
 		delete[] newValue;
 	}
-
 }
 
 OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LPC_RTC->GPREG0)), averageLitresPer100km(reinterpret_cast<volatile float&>(LPC_RTC->GPREG1)), averageFuelConsumptionSeconds(reinterpret_cast<volatile uint32_t&>(LPC_RTC->GPREG2))
@@ -281,12 +268,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	//default config file parameters
 	if(config->getValueByName("DefaultDisplayMode") == "")
 		config->setValueByName("DefaultDisplayMode", "DISPLAY_LAST_DISPLAYMODE");
-	if(config->getValueByName("VoltageReferenceCalibration") == "")
-		config->setValueByName("VoltageReferenceCalibration", "0.000");
 	if(config->getValueByName("BatteryVoltageCalibration") == "")
 		config->setValueByName("BatteryVoltageCalibration", "1.0000");	
-	if(config->getValueByName("MeasurementSystem") == "")
-		config->setValueByName("MeasurementSystem", "BOTH");
 	if(config->getValueByName("CoolantWarningTemperature") == "")
 		config->setValueByName("CoolantWarningTemperature", "100");
 
@@ -536,15 +519,16 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	ui = new ObcUI(*lcd, *keypad, *config);
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
+	ui->addTask(new ObcTemp(*this));
 	ui->addTask(new ObcCheck(*this));
 	ui->addTask(new ObcLimit(*this));
-	ui->addTask(new ObcCode(*this));
 	ui->addTask(new ObcSpeed(*this));
 	ui->addTask(new ObcConsum(*this));
 	ui->addTask(new ObcDist(*this));
 	ui->addTask(new ObcRange(*this));
-	ui->addTask(new ObcTemp(*this));
 	ui->addTask(new ObcTimer(*this));
+	ui->addTask(new ObcKmmls(*this));
+	ui->addTask(new ObcCode(*this));
 	
 	ui->wake();
 	
@@ -620,39 +604,12 @@ void OpenOBC::mainloop()
 	printf("starting mainloop...\r\n");
 	wdt.start(5);
 
-	Timer averageLitresPer100kmTimer(interruptManager);
 	Timer coolantTemperatureTimer(interruptManager);
 	Timer displayRefreshTimer(interruptManager);
-	
-	static uint8_t ccmByteLast = ccm->getRawByte();
 	
 	while(1)
 	{
 		wdt.feed();
-		
-// 		uint32_t keys = keypad->getKeys();
-// 		if((keys & BUTTON_1000_MASK) == BUTTON_1000_MASK)
-// 			chime0->on();
-// 		else
-// 			chime0->off();
-// 		if((keys & BUTTON_100_MASK) == BUTTON_100_MASK)
-// 			chime1->on();
-// 		else
-// 			chime1->off();
-		
-		float kilometresPerHour = speed->getKmh();
-		if(averageLitresPer100kmTimer.read_ms() >= 1000 && kilometresPerHour > 1)
-		{
-			averageLitresPer100kmTimer.start();
-			float litresPerHour = 0.2449 * 6 * 60 * fuelCons->getDutyCycle();
-			float litresPer100km = litresPerHour / kilometresPerHour * 100;
-			if(averageFuelConsumptionSeconds > 0)
-				averageLitresPer100km = (averageLitresPer100km * (averageFuelConsumptionSeconds - 1) + litresPer100km) / averageFuelConsumptionSeconds;
-			else
-				averageLitresPer100km = litresPer100km;
-			averageFuelConsumptionSeconds++;
-			DEBUG("new average fuel consumption is %.1fmpg (%.1fmpg %.1fmph %.1fkm/h) with %i seconds\r\n", 235.214f / averageLitresPer100km, 235.214f / litresPer100km, kilometresPerHour / 1.609f, kilometresPerHour, averageFuelConsumptionSeconds);
-		}
 		
 		if(!disableComms)
 		{
@@ -667,56 +624,11 @@ void OpenOBC::mainloop()
 			coolantTemperature = 0;
 		}
 		
-		static Timer coolantWarningTimer;
-		static bool hasWarned;
-		if(coolantTemperature >= coolantWarningTemp && !hasWarned)
-		{
-			coolantWarningTimer.start();
-			hasWarned = true;
-			displayMode = DISPLAY_TEMP1;
-			ccmLight->on();
-			callback->addCallback(ccmLight, &IO::off, 4000);
-			chime1->on();
-			callback->addCallback(chime1, &IO::off, 100);
-		}
-		else if(coolantTemperature >= coolantWarningTemp)
-		{
-			if(coolantWarningTimer.read_ms() >= 5000)
-			{
-				coolantWarningTimer.start();
-				ccmLight->on();
-				callback->addCallback(ccmLight, &IO::off, 4000);
-				chime1->on();
-				callback->addCallback(chime1, &IO::off, 100);
-			}
-		}
-		else
-		{
-			hasWarned = false;
-		}
-		
 		ui->task();
 		ccm->task();
 		diag->task();
 		callback->task();
 		
-		static Timer ccmTimer;
-		if(ccmTimer.read_ms() >= 500)
-		{
-			ccmTimer.start();
-			uint8_t ccmByte = ccm->getRawByte();
-			if(ccmByte != ccmByteLast)
-			{
-				if(ccmByte != 0xff && ccmByteLast != 0xff)
-				{
-					ccmLight->on();
-					callback->addCallback(ccmLight, &IO::off, 10000);
-// 					displayMode = DISPLAY_CHECK;
-				}
-			}
-			ccmByteLast = ccm->getRawByte();
-		}
-
 		if(displayRefreshTimer.read_ms() >= 100)
 		{
 			displayRefreshTimer.start();
@@ -734,7 +646,7 @@ void OpenOBC::mainloop()
 				}
 			}
 			
-			if(0) //FIXME REMOVE
+			if(0)
 			switch(displayMode)
 			{
 				case DISPLAY_VOLTAGE:
@@ -745,56 +657,6 @@ void OpenOBC::mainloop()
 				case DISPLAY_CALIBRATE:
 				{
 					lcd->printf("set %.2fV", batteryVoltage->read());
-					break;
-				}
-				case DISPLAY_SPEED:
-				{
-					float kmh = speed->getKmh();
-					float mph = speed->getMph();
-					if(useMetricSystemBoth)
-						lcd->printf("%3.1f km/h %3.1f mph", kmh, mph);
-					else if(useMetricSystem)
-						lcd->printf("%3.1f km/h", kmh);
-					else
-						lcd->printf("%3.1f mph", mph);
-					break;
-				}
-				case DISPLAY_TEMP:
-				{
-					float voltage = temperature->read();
-					float resistance = (10000 * voltage) / (REFERENCE_VOLTAGE - voltage);
-					float temperature = 1.0 / ((1.0 / 298.15) + (1.0/3950) * log(resistance / 4700)) - 273.15f;
-					if(useMetricSystemBoth)
-						lcd->printf("EXT %.1fC  %.0fF", temperature, temperature * 1.78 + 32);
-					else if(useMetricSystem)
-						lcd->printf("EXT %.1fC", temperature);
-					else
-						lcd->printf("EXT %.0fF", temperature * 1.78 + 32);
-					break;
-				}
-				case DISPLAY_TEMP1:
-				{
-					if(useMetricSystemBoth)
-						lcd->printf("coolant %.0fC %.0fF", coolantTemperature, coolantTemperature * 1.78 + 32);
-					else if(useMetricSystem)
-						lcd->printf("coolant temp %.0fC", coolantTemperature);
-					else
-						lcd->printf("coolant temp %.0fF", coolantTemperature * 1.78 + 32);
-					break;
-				}
-				case DISPLAY_TEMP1SET:
-				{
-					lcd->printf("set warning %03iC", coolantWarningTempSet);
-					break;
-				}
-				case DISPLAY_CONSUM1:
-				{
-					if(useMetricSystemBoth)
-						lcd->printf("%2.1fL/100km %2.1fmpg", averageLitresPer100km, 235.214f / averageLitresPer100km);
-					else if(useMetricSystem)
-						lcd->printf("AVG %2.1f L/100km", averageLitresPer100km);
-					else
-						lcd->printf("AVG %2.1f mpg", 235.214f / averageLitresPer100km);
 					break;
 				}
 				case DISPLAY_CONSUM2:
@@ -828,52 +690,9 @@ void OpenOBC::mainloop()
 					lcd->printf("%2.1f%% rpm: %4.0f", fuelCons->getDutyCycle() * 100, fuelCons->getRpm());
 					break;
 				}
-				case DISPLAY_OPENOBC:
-				{
-					if(doSnoop)
-						lcd->printf("DS2 snooping on");
-					else
-						lcd->printf("openOBC");
-					break;
-				}	
-				case DISPLAY_CHECK:
-				{
-					lcd->printf("CCM byte: %02x", ccm->getRawByte());
-					break;
-				}
 				case DISPLAY_FREEMEM:
 				{
 					lcd->printf("free memory: %i", get_stack_top() - get_heap_end());
-					break;
-				}
-				case DISPLAY_RANGE1:
-				{
-					float range = fuelLevel->getLitres() / averageLitresPer100km * 100;
-					if(useMetricSystemBoth)
-						lcd->printf("%.0f km %.0f miles", range, range * 0.621371f);
-					else if(useMetricSystem)
-						lcd->printf("%.0f km  %.1f L", range, fuelLevel->getLitres());
-					else
-						lcd->printf("%.0f miles  %.2f gal", range * 0.621371f, fuelLevel->getGallons());
-					break;
-				}
-				case DISPLAY_RANGE2:
-				{
-					if(useMetricSystemBoth)
-						lcd->printf("%.1f L %.2f gal", fuelLevel->getLitres(), fuelLevel->getGallons());
-					else if(useMetricSystem)
-						lcd->printf("%.1f litres", fuelLevel->getLitres());
-					else
-						lcd->printf("%.2f gallons", fuelLevel->getGallons());
-					break;
-				}
-				case DISPLAY_ACCELEROMETER:
-				{
-					float x = accel->getX();
-					float y = accel->getY();
-					float z = accel->getZ();
-					lcd->printf("x% 2.2f y% 2.2f z% 2.2f", x, y, z);
-// 					printf("accelerometer x:% 2.2f y:% 2.2f z:% 2.2f\r\n", x, y, z);
 					break;
 				}
 				case DISPLAY_CLOCKSET:
@@ -940,10 +759,10 @@ void OpenOBC::mainloop()
 
 void OpenOBC::sleep()
 {
-	ui->sleep();
 	DEBUG("writing config file...\r\n");
 	lcd->printf("write config file...");
 	writeConfigData();
+	ui->sleep();
 	if(!doSleep)
 		return;
 	printf("sleeping...\r\n");
@@ -1217,36 +1036,6 @@ void OpenOBC::buttonSet()
 	else if(displayMode == DISPLAY_DATESET)
 	{
 		displayMode = lastDisplayMode;
-	}
-	else if(displayMode == DISPLAY_OPENOBC)
-	{
-		if(doSnoop)
-		{
-			printf("not snooping\r\n");
-			diag->detach(this, &OpenOBC::printDS2Packet);
-			doSnoop = false;
-		}
-		else
-		{
-			printf("snooping...\r\n");
-			diag->attach(this, &OpenOBC::printDS2Packet);
-			doSnoop = true;
-		}
-	}
-	else if(displayMode == DISPLAY_CONSUM1)
-	{
-		averageFuelConsumptionSeconds = 0;
-		averageLitresPer100km = 0;
-	}
-	else if(displayMode == DISPLAY_TEMP1)
-	{
-		coolantWarningTempSet = coolantWarningTemp;
-		displayMode = DISPLAY_TEMP1SET;
-	}
-	else if(displayMode == DISPLAY_TEMP1SET)
-	{
-		coolantWarningTemp = coolantWarningTempSet;
-		displayMode = DISPLAY_TEMP1;
 	}
 	else if(displayMode == DISPLAY_VOLTAGE)
 	{

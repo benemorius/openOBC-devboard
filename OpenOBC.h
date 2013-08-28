@@ -145,7 +145,25 @@ public:
 	ObcUI* ui;
 	CheckControlModule* ccm;
 	SpeedInput* speed;
-
+	FuelConsumption* fuelCons;
+	float averageLitresPer100km;
+	AnalogIn* temperature;
+	AnalogIn* batteryVoltage;
+	Uart* kline;
+	Uart* lline;
+    IO* klWake;
+	RTC* rtc;
+	PWM* lcdBacklight;
+	PWM* clockBacklight;
+	PWM* keypadBacklight;
+	ObcLcd* lcd;
+	IO* lcdReset;
+	IO* lcdBiasEn;
+	AnalogIn* analogIn1;
+	AnalogIn* analogIn2;
+	AnalogOut* analogOut;
+	float coolantTemperature; //coolant temperature in degrees celsius from KOMBI via diagnostic bus
+	
 protected:
 	void sleep();
 	void wake();
@@ -153,37 +171,19 @@ protected:
 	void writeConfigData();
 	
 	Debug* debug;
-	RTC* rtc;
-	Uart* kline;
-	Uart* lline;
-	PWM* lcdBacklight;
-	PWM* clockBacklight;
-	PWM* keypadBacklight;
 	PWM* lcdBiasClock;
-	ObcLcd* lcd;
-	IO* lcdReset;
-	IO* lcdBiasEn;
 	volatile DisplayMode_Type& displayMode;
 // 	volatile DisplayMode_Type& displayModeNonvolatile;
 	ClockDisplayMode_Type clockDisplayMode;
-	AnalogIn* batteryVoltage;
-	AnalogIn* temperature;
-	AnalogIn* analogIn1;
-	AnalogIn* analogIn2;
-	AnalogOut* analogOut;
-	FuelConsumption* fuelCons;
 	bool useMetricSystem;
 	bool useMetricSystemBoth; //both metric and imperial
-	volatile float& averageLitresPer100km;
 	volatile uint32_t& averageFuelConsumptionSeconds;
     DisplayMode_Type lastDisplayMode;
-	float coolantTemperature; //coolant temperature in degrees celsius from KOMBI via diagnostic bus
 	uint32_t coolantWarningTemp;
 	uint32_t coolantWarningTempSet;
 	Watchdog wdt;
 	float batteryVoltageCalibration;
 	bool disableComms;
-    IO* klWake;
     IO* vrefEn;
 	
 };

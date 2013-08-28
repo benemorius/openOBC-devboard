@@ -23,28 +23,24 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef OBCCONSUM_H
-#define OBCCONSUM_H
+#ifndef OBCKMMLS_H
+#define OBCKMMLS_H
 
 #include <ObcUITask.h>
 
-class ObcConsum : public ObcUITask
+class ObcKmmls : public ObcUITask
 {
 
 public:
-	ObcConsum(OpenOBC& obc);
-	~ObcConsum();
+	ObcKmmls(OpenOBC& obc);
+	~ObcKmmls();
 	
 	virtual void runTask();
 	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
 	virtual void wake();
-	virtual void sleep();
-	
-private:
-	float averageLitresPer100km;
-	uint32_t averageFuelConsumptionSeconds;
+// 	virtual void sleep();
 	
 };
 
-#endif // OBCCONSUM_H
+#endif // OBCKMMLS_H

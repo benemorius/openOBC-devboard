@@ -30,6 +30,7 @@
 #include "ObcLcd.h"
 #include "ObcKeypad.h"
 #include <vector>
+#include <board.h>
 
 namespace ObcUIMeasurementSystem
 {

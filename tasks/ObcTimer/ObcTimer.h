@@ -38,7 +38,7 @@ public:
 	virtual void runTask();
 	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
-// 	virtual void wake();
+	virtual void wake();
 // 	virtual void sleep();
 	
 };

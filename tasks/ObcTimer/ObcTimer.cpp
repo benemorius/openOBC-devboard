@@ -36,9 +36,17 @@ ObcTimer::~ObcTimer()
 
 }
 
+void ObcTimer::wake()
+{
+	runTask();
+}
+
 void ObcTimer::runTask()
 {
-
+	float x = obc.accel->getX();
+	float y = obc.accel->getY();
+	float z = obc.accel->getZ();
+	setDisplay("x% 2.2f y% 2.2f z% 2.2f", x, y, z);
 }
 
 void ObcTimer::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
