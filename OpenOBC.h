@@ -179,8 +179,6 @@ protected:
 	bool useMetricSystemBoth; //both metric and imperial
 	volatile uint32_t& averageFuelConsumptionSeconds;
     DisplayMode_Type lastDisplayMode;
-	uint32_t coolantWarningTemp;
-	uint32_t coolantWarningTempSet;
 	Watchdog wdt;
 	float batteryVoltageCalibration;
 	bool disableComms;

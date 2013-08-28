@@ -270,8 +270,6 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 		config->setValueByName("DefaultDisplayMode", "DISPLAY_LAST_DISPLAYMODE");
 	if(config->getValueByName("BatteryVoltageCalibration") == "")
 		config->setValueByName("BatteryVoltageCalibration", "1.0000");	
-	if(config->getValueByName("CoolantWarningTemperature") == "")
-		config->setValueByName("CoolantWarningTemperature", "100");
 
 	//default display mode configuration
 	std::string defaultDisplayModeString = config->getValueByName("DefaultDisplayMode");
@@ -305,28 +303,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 		displayMode = DISPLAY_VOLTAGE;
 	else
 		displayMode = DISPLAY_OPENOBC;
-	if(config->getValueByName("MeasurementSystem") == "BOTH")
-	{
-		useMetricSystemBoth = true;
-	}
-	else if(config->getValueByName("MeasurementSystem") == "METRIC")
-	{
-		useMetricSystemBoth = false;
-		useMetricSystem = true;
-	}
-	else if(config->getValueByName("MeasurementSystem") == "IMPERIAL")
-	{
-		useMetricSystemBoth = false;
-		useMetricSystem = false;
-	}
-	else
-	{
-		useMetricSystemBoth = true;
-	}
+
 	clockDisplayMode = CLOCKDISPLAY_CLOCK;
-	
-	coolantWarningTemp = atof(config->getValueByName("CoolantWarningTemperature").c_str());
-	coolantWarningTempSet = coolantWarningTemp;
 	
 	batteryVoltageCalibration = atof(config->getValueByName("BatteryVoltageCalibration").c_str());
 	
@@ -649,11 +627,6 @@ void OpenOBC::mainloop()
 			if(0)
 			switch(displayMode)
 			{
-				case DISPLAY_VOLTAGE:
-				{
-					lcd->printf("%.2fV %.2fV %.2fV", batteryVoltage->read(), analogIn1->read(), analogIn2->read());
-					break;
-				}
 				case DISPLAY_CALIBRATE:
 				{
 					lcd->printf("set %.2fV", batteryVoltage->read());
@@ -688,11 +661,6 @@ void OpenOBC::mainloop()
 				case DISPLAY_CONSUM4:
 				{
 					lcd->printf("%2.1f%% rpm: %4.0f", fuelCons->getDutyCycle() * 100, fuelCons->getRpm());
-					break;
-				}
-				case DISPLAY_FREEMEM:
-				{
-					lcd->printf("free memory: %i", get_mem_free());
 					break;
 				}
 				case DISPLAY_CLOCKSET:
@@ -852,12 +820,6 @@ void OpenOBC::button100()
 	{
 		rtc->setMonth(rtc->getMonth() + 1);
 	}
-	else if(displayMode == DISPLAY_TEMP1SET)
-	{
-		coolantWarningTempSet += 100;
-		if((coolantWarningTempSet % 1000) < 100)
-			coolantWarningTempSet -= 1000;
-	}
 }
 
 void OpenOBC::button10()
@@ -880,12 +842,6 @@ void OpenOBC::button10()
 			day = 10;
 		rtc->setDay(day);
 	}
-	else if(displayMode == DISPLAY_TEMP1SET)
-	{
-		coolantWarningTempSet += 10;
-		if((coolantWarningTempSet % 100) < 10)
-			coolantWarningTempSet -= 100;
-	}
 	else if(displayMode == DISPLAY_CALIBRATE)
 	{
 		batteryVoltageCalibration += 0.0005;
@@ -903,20 +859,10 @@ void OpenOBC::button1()
 	{
 		rtc->setDay(rtc->getDay() + 1);
 	}
-	else if(displayMode == DISPLAY_TEMP1SET)
-	{
-		++coolantWarningTempSet;
-		if(coolantWarningTempSet % 10 == 0)
-			coolantWarningTempSet -= 10;
-	}
 	else if(displayMode == DISPLAY_CALIBRATE)
 	{
 		batteryVoltageCalibration -= 0.0005;
 		batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
-	}
-	else
-	{
-		displayMode = DISPLAY_OPENOBC;
 	}
 }
 

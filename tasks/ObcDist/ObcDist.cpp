@@ -26,9 +26,12 @@
 #include "ObcDist.h"
 #include <ObcUI.h>
 
+using namespace ObcDistState;
+
 ObcDist::ObcDist(OpenOBC& obc) : ObcUITask(obc)
 {
 	setDisplay("ObcDist");
+	state = Voltage;
 }
 
 ObcDist::~ObcDist()
@@ -43,7 +46,10 @@ void ObcDist::wake()
 
 void ObcDist::runTask()
 {
-	setDisplay("%.2fV %.2fV %.2fV", obc.batteryVoltage->read(), obc.analogIn1->read(), obc.analogIn2->read());
+	if(state == Voltage)
+		setDisplay("%.2fV %.2fV %.2fV", obc.batteryVoltage->read(), obc.analogIn1->read(), obc.analogIn2->read());
+	else if(state == FreeMem)
+		setDisplay("free memory: %i", get_mem_free());
 }
 
 void ObcDist::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
@@ -55,5 +61,11 @@ void ObcDist::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		return;
 	}
 	
-	
+	if(buttonMask == BUTTON_DIST_MASK)
+	{
+		if(state == Voltage)
+			state = FreeMem;
+		else if(state == FreeMem)
+			state = Voltage;
+	}
 }

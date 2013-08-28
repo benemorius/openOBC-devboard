@@ -28,6 +28,11 @@
 
 #include <ObcUITask.h>
 
+namespace ObcDistState
+{
+	enum state {Voltage, FreeMem};
+}
+
 class ObcDist : public ObcUITask
 {
 
@@ -41,6 +46,8 @@ public:
 	virtual void wake();
 // 	virtual void sleep();
 	
+private:
+	ObcDistState::state state;
 };
 
 #endif // OBCDIST_H
