@@ -25,10 +25,16 @@
 
 #include "ObcTimer.h"
 #include <ObcUI.h>
+#include <cstdlib>
 
-ObcTimer::ObcTimer(OpenOBC& obc) : ObcUITask(obc)
+using namespace ObcTimerState;
+
+ObcTimer::ObcTimer(OpenOBC& obc) : ObcUITask(obc), timer(obc.interruptManager)
 {
 	setDisplay("ObcTimer");
+	state = Inactive;
+	timedValue = strtof(obc.config->getValueByNameWithDefault("ObcTimerTimedValue", "%f", 0).c_str(), NULL);
+	setDisplayRefreshPeriod(0.100);
 }
 
 ObcTimer::~ObcTimer()
@@ -41,12 +47,57 @@ void ObcTimer::wake()
 	runTask();
 }
 
+void ObcTimer::sleep()
+{
+	obc.config->setValueByName("ObcTimerTimedValue", "%f", timedValue);
+}
+
 void ObcTimer::runTask()
 {
-	float x = obc.accel->getX();
-	float y = obc.accel->getY();
-	float z = obc.accel->getZ();
-	setDisplay("x% 2.2f y% 2.2f z% 2.2f", x, y, z);
+	if(state == Armed && obc.speed->getKmh() != 0)
+	{
+		timer.start();
+		state = Timing;
+	}
+	
+	if(state == Timing && obc.speed->getKmh() >= 100)
+	{
+		timedValue = timer.read();
+		state = Inactive;
+	}
+	
+	if(state == Timing && timer.read() >= 100)
+	{
+		state = Inactive;
+	}
+	
+	if(state == Inactive)
+	{
+// 		setDisplay("0-100 % 3u km/h % 2.1f", 0, timedValue);
+		//work around broken printf float implementation
+		uint32_t seconds = timedValue;
+		uint32_t tenths = (timedValue - seconds) * 10;
+		setDisplay("0-100 % 3u km/h % 2u.%u", 0, seconds, tenths);
+	}
+	else if(state == Armed)
+	{
+		setDisplay("0-100 % 3u km/h % 2.1f", 0, 0);
+	}
+	else if(state == Timing)
+	{
+// 		setDisplay("0-100 % 3u km/h % 2.1f", (uint32_t)(obc.speed->getKmh()), timer.read());
+		//work around broken printf float implementation
+		float currentTimerValue = timer.read();
+		uint32_t seconds = currentTimerValue;
+		uint32_t tenths = (currentTimerValue - seconds) * 10;
+		setDisplay("0-100 % 3u km/h % 2u.%u", (uint32_t)(obc.speed->getKmh()), seconds, tenths);
+	}
+	
+	if(state == Armed)
+		obc.timerLed->on();
+	else
+		obc.timerLed->off();
+	//TODO flash led while Timing
 }
 
 void ObcTimer::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
@@ -58,5 +109,19 @@ void ObcTimer::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		return;
 	}
 	
-	
+	if(buttonMask == BUTTON_SET_MASK)
+	{
+		if(state == Inactive && obc.speed->getKmh() < 10)
+		{
+			state = Armed;
+		}
+		else if(state == Armed)
+		{
+			state = Inactive;
+		}
+		else if(state == Timing)
+		{
+			state = Inactive;
+		}
+	}
 }

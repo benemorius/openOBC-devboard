@@ -36,6 +36,7 @@ public:
 	ConfigFile(const char* filename);
 
 	std::string getValueByName(const std::string& name);
+	std::string getValueByNameWithDefault(const std::string& name, const char* defaultValue, ...);
 	void setValueByName(const std::string& name, const std::string& value);
 	void setValueByName(const std::string& name, const char* format, ...);
 	bool isSet(const std::string& name);

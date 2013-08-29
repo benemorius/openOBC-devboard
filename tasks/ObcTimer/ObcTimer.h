@@ -28,6 +28,10 @@
 
 #include <ObcUITask.h>
 
+namespace ObcTimerState {
+	enum state {Inactive, Armed, Timing};
+}
+
 class ObcTimer : public ObcUITask
 {
 
@@ -39,7 +43,12 @@ public:
 	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
 	virtual void wake();
-// 	virtual void sleep();
+	virtual void sleep();
+	
+private:
+	ObcTimerState::state state;
+	Timer timer;
+	float timedValue;
 	
 };
 

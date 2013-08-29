@@ -111,6 +111,23 @@ string ConfigFile::getValueByName(const string& name)
 	return parameters[name];
 }
 
+string ConfigFile::getValueByNameWithDefault(const string& name, const char* defaultValue, ... )
+{
+	if(isSet(name))
+		return parameters[name];
+	
+	char* buf = new char[128];
+	va_list args;
+	va_start(args, defaultValue);
+	vsnprintf(buf, 128, defaultValue, args);
+	va_end(args);
+	string value = buf;
+	delete[] buf;
+
+	setValueByName(name, value);
+	return value;
+}
+
 void ConfigFile::setValueByName(const string& name, const string& value)
 {
 	parameters[name] = value;
