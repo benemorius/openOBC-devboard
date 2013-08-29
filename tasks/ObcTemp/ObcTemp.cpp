@@ -100,7 +100,7 @@ void ObcTemp::runTask()
 	{
 		coolantWarningTimer.start();
 		hasWarned = true;
-		obc.ui->setActiveTask(this);
+		obc.ui->setActiveTask(this, 5);
 		obc.ccmLight->on();
 		obc.ui->callback.addCallback(obc.ccmLight, &IO::off, 4000);
 		obc.chime1->on();

@@ -428,19 +428,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypad->attach(BUTTON_100, this, &OpenOBC::button100);
 	keypad->attach(BUTTON_10, this, &OpenOBC::button10);
 	keypad->attach(BUTTON_1, this, &OpenOBC::button1);
-	keypad->attach(BUTTON_CONSUM, this, &OpenOBC::buttonConsum);
-	keypad->attach(BUTTON_RANGE, this, &OpenOBC::buttonRange);
-	keypad->attach(BUTTON_TEMP, this, &OpenOBC::buttonTemp);
-	keypad->attach(BUTTON_CODE, this, &OpenOBC::buttonCode);
-	keypad->attach(BUTTON_SPEED, this, &OpenOBC::buttonSpeed);
-	keypad->attach(BUTTON_LIMIT, this, &OpenOBC::buttonLimit);
-	keypad->attach(BUTTON_DIST, this, &OpenOBC::buttonDist);
-	keypad->attach(BUTTON_TIMER, this, &OpenOBC::buttonTimer);
-	keypad->attach(BUTTON_CHECK, this, &OpenOBC::buttonCheck);
-	keypad->attach(BUTTON_KMMLS, this, &OpenOBC::buttonKMMLS);
 	keypad->attach(BUTTON_CLOCK, this, &OpenOBC::buttonClock);
 	keypad->attach(BUTTON_DATE, this, &OpenOBC::buttonDate);
-	keypad->attach(BUTTON_MEMO, this, &OpenOBC::buttonMemo);
 	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 
 	//analog input configuration
@@ -866,82 +855,6 @@ void OpenOBC::button1()
 	}
 }
 
-void OpenOBC::buttonConsum()
-{
-	if(displayMode == DISPLAY_CONSUM1)
-		displayMode = DISPLAY_CONSUM2;
-	else if(displayMode == DISPLAY_CONSUM2)
-		displayMode = DISPLAY_CONSUM3;
-	else if(displayMode == DISPLAY_CONSUM3)
-		displayMode = DISPLAY_CONSUM4;
-	else
-		displayMode = DISPLAY_CONSUM1;
-}
-
-void OpenOBC::buttonRange()
-{
-	if(displayMode == DISPLAY_RANGE1)
-		displayMode = DISPLAY_RANGE2;
-	else
-		displayMode = DISPLAY_RANGE1;
-}
-
-void OpenOBC::buttonTemp()
-{
-	if(displayMode == DISPLAY_TEMP)
-		displayMode = DISPLAY_TEMP1;
-	else
-		displayMode = DISPLAY_TEMP;
-}
-
-void OpenOBC::buttonCode()
-{
-
-}
-
-void OpenOBC::buttonSpeed()
-{
-	displayMode = DISPLAY_SPEED;
-}
-
-void OpenOBC::buttonLimit()
-{
-// 	*limitLed = !*limitLed;
-}
-
-void OpenOBC::buttonDist()
-{
-	displayMode = DISPLAY_VOLTAGE;
-}
-
-void OpenOBC::buttonTimer()
-{
-// 	*timerLed = !*timerLed;
-	displayMode = DISPLAY_ACCELEROMETER;
-}
-
-void OpenOBC::buttonCheck()
-{
-	displayMode = DISPLAY_CHECK;
-}
-
-void OpenOBC::buttonKMMLS()
-{
-	if(useMetricSystemBoth)
-	{
-		useMetricSystemBoth = false;
-		useMetricSystem = true;
-	}
-	else if(useMetricSystem)
-	{
-		useMetricSystem = false;
-	}
-	else
-	{
-		useMetricSystemBoth = true;
-	}
-}
-
 void OpenOBC::buttonClock()
 {
 	if(displayMode == DISPLAY_DATESET)
@@ -954,11 +867,6 @@ void OpenOBC::buttonDate()
 	if(displayMode == DISPLAY_CLOCKSET)
 		displayMode = DISPLAY_DATESET;
 	clockDisplayMode = CLOCKDISPLAY_DATE;
-}
-
-void OpenOBC::buttonMemo()
-{
-	displayMode = DISPLAY_FREEMEM;
 }
 
 void OpenOBC::buttonSet()

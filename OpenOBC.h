@@ -94,19 +94,8 @@ public:
 	void button100();
 	void button10();
 	void button1();
-	void buttonConsum();
-	void buttonRange();
-	void buttonTemp();
-	void buttonCode();
-	void buttonSpeed();
-	void buttonLimit();
-	void buttonDist();
-	void buttonTimer();
-	void buttonCheck();
-	void buttonKMMLS();
 	void buttonClock();
 	void buttonDate();
-	void buttonMemo();
 	void buttonSet();
 	void uartHandler();
 	

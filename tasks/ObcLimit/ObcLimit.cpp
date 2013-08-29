@@ -64,8 +64,9 @@ void ObcLimit::runTask()
 		if(kmh >= limitKmh)
 		{
 			DEBUG("over limit: % 3.0f Kmh (limit % 3.0f)\r\n", kmh, limitKmh);
-			obc.ui->setActiveTask(this, 10);
-			//TODO chime
+			obc.ui->setActiveTask(this, 5);
+			obc.chime0->on();
+			obc.ui->callback.addCallback(obc.chime1, &IO::off, 100);
 			//TODO flash Limit LED
 		}
 	}
