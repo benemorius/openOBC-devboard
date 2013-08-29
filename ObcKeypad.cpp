@@ -103,15 +103,15 @@ void ObcKeypad::scan()
 	if(activeKeys == 0 && key != 0)
 	{
 // 		DEBUG("new key press 0x%x\r\n", key);
-		interruptTimer->start();
 		interruptTimer->setCallback(this, &ObcKeypad::scan, 50);
+		interruptTimer->start();
 		activeKeys = key;
 		callbackRaw.call(activeKeys);
 	}
 	else if(activeKeys != 0 && key != 0)
 	{
-		interruptTimer->start();
 		interruptTimer->setCallback(this, &ObcKeypad::scan, 50);
+		interruptTimer->start();
 		key &= ~activeKeys;
 		activeKeys |= key;
 		if(key)
