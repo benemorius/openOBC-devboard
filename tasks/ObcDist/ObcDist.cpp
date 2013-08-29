@@ -25,13 +25,15 @@
 
 #include "ObcDist.h"
 #include <ObcUI.h>
+#include <cstdlib>
 
 using namespace ObcDistState;
 
 ObcDist::ObcDist(OpenOBC& obc) : ObcUITask(obc)
 {
 	setDisplay("ObcDist");
-	state = Voltage;
+	state = Run;
+	initialDistanceToTravelKm = distanceToTravelKm = strtof(obc.config->getValueByNameWithDefault("ObcDistDistanceKm", "%f", 0).c_str(), NULL);
 }
 
 ObcDist::~ObcDist()
@@ -41,15 +43,56 @@ ObcDist::~ObcDist()
 
 void ObcDist::wake()
 {
+	odometerStartKm = obc.currentKm;
 	runTask();
+}
+
+void ObcDist::sleep()
+{
+	obc.config->setValueByName("ObcDistDistanceKm", "%f", distanceToTravelKm);
 }
 
 void ObcDist::runTask()
 {
-	if(state == Voltage)
-		setDisplay("%.2fV %.2fV %.2fV", obc.batteryVoltage->read(), obc.analogIn1->read(), obc.analogIn2->read());
-	else if(state == FreeMem)
-		setDisplay("free memory: %i", get_mem_free());
+	distanceTraveledKm = obc.currentKm - odometerStartKm;
+	distanceToTravelKm = initialDistanceToTravelKm - distanceTraveledKm;
+	
+	if(state == Run)
+	{
+		float currentSpeedKmh = obc.averageKmh;
+		if(currentSpeedKmh < 1)
+			currentSpeedKmh = 100;
+		uint32_t seconds = distanceToTravelKm / (currentSpeedKmh / 60 / 60);
+		uint32_t minutes = seconds / 60;
+		uint32_t hours = minutes / 60;
+		if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
+		{
+			setDisplay("% 4ukm % 4umls % 2u:%02u", (uint32_t)distanceToTravelKm, (uint32_t)(distanceToTravelKm * 0.621371), hours, minutes % 60);
+		}
+		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
+		{
+			setDisplay("dist % 4u km % 2u:%02u", (uint32_t)distanceToTravelKm, hours, minutes % 60);
+		}
+		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+		{
+			setDisplay("dist % 4u mls % 2u:%02u", (uint32_t)(distanceToTravelKm * 0.621371), hours, minutes % 60);
+		}
+	}
+	else if(state == Set)
+	{
+		if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
+		{
+			setDisplay("set % 4u km % 4u mls", (uint32_t)distanceKmSet, (uint32_t)(distanceKmSet * 0.621371));
+		}
+		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
+		{
+			setDisplay("set % 4u km", (uint32_t)distanceKmSet);
+		}
+		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+		{
+			setDisplay("set % 4u miles", (uint32_t)(distanceKmSet * 0.621371));
+		}
+	}
 }
 
 void ObcDist::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
@@ -63,9 +106,65 @@ void ObcDist::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 	
 	if(buttonMask == BUTTON_DIST_MASK)
 	{
-		if(state == Voltage)
-			state = FreeMem;
-		else if(state == FreeMem)
-			state = Voltage;
+		if(state == Set)
+		{
+			initialDistanceToTravelKm = distanceToTravelKm = 0;
+			state = Run;
+		}
+	}
+	
+	if(buttonMask == BUTTON_SET_MASK)
+	{
+		if(state == Run)
+		{
+			state = Set;
+			distanceKmSet = distanceToTravelKm;
+			if(distanceKmSet < 0)
+				distanceKmSet = 0;
+		}
+		else if(state == Set)
+		{
+			state = Run;
+			initialDistanceToTravelKm = distanceToTravelKm = distanceKmSet;
+			odometerStartKm = obc.currentKm;
+		}
+	}
+	
+	//TODO fix very bad handling of miles and overflows
+	if((state == Set) && (buttonMask & (BUTTON_1000_MASK | BUTTON_100_MASK | BUTTON_10_MASK | BUTTON_1_MASK | BUTTON_SET_MASK)))
+	{
+		if(buttonMask == BUTTON_1000_MASK)
+		{
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				distanceKmSet += 1000 / 0.621371;
+			else
+				distanceKmSet += 1000;
+		}
+		if(buttonMask == BUTTON_100_MASK)
+		{
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				distanceKmSet += 100 / 0.621371;
+			else
+				distanceKmSet += 100;
+		}
+		if(buttonMask == BUTTON_10_MASK)
+		{
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				distanceKmSet += 10 / 0.621371;
+			else
+				distanceKmSet += 10;
+		}
+		if(buttonMask == BUTTON_1_MASK)
+		{
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				distanceKmSet += 1 / 0.621371;
+			else
+				distanceKmSet += 1;
+		}
+// 		if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+// 			distanceKmSet = (int32_t)distanceKmSet % (uint32_t)(10000 / 0.621371);
+// 		else
+// 			distanceKmSet = (int32_t)distanceKmSet % 10000;
+		
 	}
 }

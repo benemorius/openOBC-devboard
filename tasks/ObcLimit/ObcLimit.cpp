@@ -121,39 +121,39 @@ void ObcLimit::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		}
 	}
 	
-	
+	//TODO fix very bad handling of miles and overflows
 	if((state == LimitSet) && (buttonMask & (BUTTON_1000_MASK | BUTTON_100_MASK | BUTTON_10_MASK | BUTTON_1_MASK | BUTTON_SET_MASK)))
 	{
 		if(buttonMask == BUTTON_1000_MASK)
 		{
 			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-				limitKmhSet += 1000 * 0.621371;
+				limitKmhSet += 1000 / 0.621371;
 			else
 				limitKmhSet += 1000;
 		}
 		if(buttonMask == BUTTON_100_MASK)
 		{
 			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-				limitKmhSet += 100 * 0.621371;
+				limitKmhSet += 100 / 0.621371;
 			else
 				limitKmhSet += 100;
 		}
 		if(buttonMask == BUTTON_10_MASK)
 		{
 			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-				limitKmhSet += 10 * 0.621371;
+				limitKmhSet += 10 / 0.621371;
 			else
 				limitKmhSet += 10;
 		}
 		if(buttonMask == BUTTON_1_MASK)
 		{
 			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-				limitKmhSet += 1 * 0.621371;
+				limitKmhSet += 1 / 0.621371;
 			else
 				limitKmhSet += 1;
 		}
 		if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-			limitKmhSet = (int32_t)limitKmhSet % (uint32_t)(1000 * 0.621371);
+			limitKmhSet = (int32_t)limitKmhSet % (uint32_t)(1000 / 0.621371);
 		else
 			limitKmhSet = (int32_t)limitKmhSet % 1000;
 		

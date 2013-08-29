@@ -50,6 +50,7 @@
 #include <ObcTimer.h>
 #include <ObcKmmls.h>
 #include <ObcMemo.h>
+#include <ObcOdometer.h>
 #include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
@@ -487,11 +488,12 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	ui = new ObcUI(*lcd, *keypad, *config);
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
+	ui->addTask(new ObcOdometer(*this));
+	ui->addTask(new ObcSpeed(*this));
 	ui->addTask(new ObcMemo(*this));
 	ui->addTask(new ObcTemp(*this));
 	ui->addTask(new ObcCheck(*this));
 	ui->addTask(new ObcLimit(*this));
-	ui->addTask(new ObcSpeed(*this));
 	ui->addTask(new ObcConsum(*this));
 	ui->addTask(new ObcDist(*this));
 	ui->addTask(new ObcRange(*this));

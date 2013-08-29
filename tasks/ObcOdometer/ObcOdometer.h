@@ -23,28 +23,27 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef OBCSPEED_H
-#define OBCSPEED_H
+#ifndef OBCODOMETER_H
+#define OBCODOMETER_H
 
 #include <ObcUITask.h>
 
-class ObcSpeed : public ObcUITask
+class ObcOdometer : public ObcUITask
 {
 
 public:
-	ObcSpeed(OpenOBC& obc);
-	~ObcSpeed();
+	ObcOdometer(OpenOBC& obc);
+	~ObcOdometer();
 	
 	virtual void runTask();
 	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
-	
 	virtual void wake();
 	virtual void sleep();
 	
-	
 private:
-	float averageSpeedKmh;
-	float averageSeconds;
+	Timer timer;
+	float currentKm;
+	float ignitionOnKm;
 };
 
-#endif // OBCSPEED_H
+#endif // OBCODOMETER_H

@@ -152,6 +152,8 @@ public:
 	AnalogIn* analogIn2;
 	AnalogOut* analogOut;
 	float coolantTemperature; //coolant temperature in degrees celsius from KOMBI via diagnostic bus
+	float averageKmh;
+	float currentKm;
 	
 protected:
 	void sleep();

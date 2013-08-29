@@ -30,7 +30,7 @@
 
 namespace ObcDistState
 {
-	enum state {Voltage, FreeMem};
+	enum state {Run, Set};
 }
 
 class ObcDist : public ObcUITask
@@ -44,10 +44,15 @@ public:
 	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	
 	virtual void wake();
-// 	virtual void sleep();
+	virtual void sleep();
 	
 private:
 	ObcDistState::state state;
+	float initialDistanceToTravelKm;
+	float distanceToTravelKm;
+	float distanceKmSet;
+	float odometerStartKm;
+	float distanceTraveledKm;
 };
 
 #endif // OBCDIST_H

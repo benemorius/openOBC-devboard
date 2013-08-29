@@ -29,7 +29,8 @@
 
 ObcSpeed::ObcSpeed(OpenOBC& obc) : ObcUITask(obc)
 {
-	averageSpeedKph = strtof(obc.config->getValueByName("ObcSpeedAverageKph").c_str(), NULL);
+	averageSpeedKmh = strtof(obc.config->getValueByNameWithDefault("ObcSpeedAverageKmh", "%f", 0).c_str(), NULL);
+	averageSeconds = 300;
 }
 
 ObcSpeed::~ObcSpeed()
@@ -44,20 +45,25 @@ void ObcSpeed::wake()
 
 void ObcSpeed::runTask()
 {
-	uint32_t currentSpeedKmh = obc.speed->getKmh();
+	float currentSpeedKmh = obc.speed->getKmh();
+	if(averageSpeedKmh == 0)
+		averageSpeedKmh = currentSpeedKmh;
+	static Timer timer(obc.interruptManager);
+	if(timer.read() >= 1)
+	{
+		timer.start();
+		float alpha = 1.0 / averageSeconds;
+		averageSpeedKmh = alpha * currentSpeedKmh + (1.0 - alpha) * averageSpeedKmh;
+	}
 	
-	
-	
-	
-	
-	
+	obc.averageKmh = averageSpeedKmh;
 	
 	if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
-		setDisplay("% 3u km/h % 3u avg", currentSpeedKmh, averageSpeedKph);
+		setDisplay("% 3u km/h % 3u avg", (uint32_t)currentSpeedKmh, (uint32_t)averageSpeedKmh);
 	else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-		setDisplay("% 3u mph % 3u avg", currentSpeedKmh * 0.621371, averageSpeedKph * 0.621371);
+		setDisplay("% 3u mph % 3u avg", (uint32_t)(currentSpeedKmh * 0.621371), (uint32_t)(averageSpeedKmh * 0.621371));
 	else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
-		setDisplay("avg: % 3u kmh % 3u mph", averageSpeedKph, averageSpeedKph * 0.621371);
+		setDisplay("avg: % 3u kmh % 3u mph", (uint32_t)averageSpeedKmh, (uint32_t)(averageSpeedKmh * 0.621371));
 	
 }
 
@@ -70,11 +76,13 @@ void ObcSpeed::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 		return;
 	}
 	
-	
-	
+	if(buttonMask == BUTTON_SET_MASK)
+	{
+		averageSpeedKmh = obc.speed->getKmh();
+	}
 }
 
 void ObcSpeed::sleep()
 {
-    obc.config->setValueByName("ObcSpeedAverageKph", "%.4f", averageSpeedKph);
+    obc.config->setValueByName("ObcSpeedAverageKmh", "%f", averageSpeedKmh);
 }

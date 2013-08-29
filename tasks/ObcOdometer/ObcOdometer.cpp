@@ -23,28 +23,43 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef OBCSPEED_H
-#define OBCSPEED_H
+#include "ObcOdometer.h"
+#include <ObcUI.h>
+#include <cstdlib>
 
-#include <ObcUITask.h>
+ObcOdometer::ObcOdometer(OpenOBC& obc) : ObcUITask(obc), timer(obc.interruptManager)
+{
+	setDisplay("ObcOdometer");
+	currentKm = strtof(obc.config->getValueByNameWithDefault("ObcOdometerCurrentKm", "%f", 0).c_str(), NULL);
+}
 
-class ObcSpeed : public ObcUITask
+ObcOdometer::~ObcOdometer()
 {
 
-public:
-	ObcSpeed(OpenOBC& obc);
-	~ObcSpeed();
-	
-	virtual void runTask();
-	virtual void buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask);
-	
-	virtual void wake();
-	virtual void sleep();
-	
-	
-private:
-	float averageSpeedKmh;
-	float averageSeconds;
-};
+}
 
-#endif // OBCSPEED_H
+void ObcOdometer::wake()
+{
+	runTask();
+}
+
+void ObcOdometer::sleep()
+{
+	obc.config->setValueByName("ObcOdometerCurrentKm", "%f", currentKm);
+}
+
+
+void ObcOdometer::runTask()
+{
+	if(timer.read() >= 1)
+	{
+		timer.start();
+		currentKm += obc.speed->getKmh() / 60 / 60;
+	}
+	obc.currentKm = currentKm;
+}
+
+void ObcOdometer::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
+{
+
+}
