@@ -28,6 +28,10 @@
 
 #include <ObcUITask.h>
 
+namespace ObcConsumScreen {
+	enum screen {Screen1, Screen2, Screen3, Screen4};
+}
+
 class ObcConsum : public ObcUITask
 {
 
@@ -44,6 +48,7 @@ public:
 private:
 	float averageLitresPer100km;
 	uint32_t averageFuelConsumptionSeconds;
+	ObcConsumScreen::screen screen;
 	
 };
 

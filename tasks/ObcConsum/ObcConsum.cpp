@@ -27,11 +27,22 @@
 #include <ObcUI.h>
 #include <cstdlib>
 
+using namespace ObcConsumScreen;
+
 ObcConsum::ObcConsum(OpenOBC& obc) : ObcUITask(obc)
 {
 	setDisplay("ObcConsum");
 	averageLitresPer100km = strtof(obc.config->getValueByName("ObcConsumAverageLitresPer100km").c_str(), NULL);
 	averageFuelConsumptionSeconds = strtoul(obc.config->getValueByName("ObcConsumAverageFuelConsumptionSeconds").c_str(), NULL, 0);
+	std::string screenConfig = obc.config->getValueByNameWithDefault("ObcConsumScreen", "Screen1");
+	if(screenConfig == "Screen1")
+		screen = Screen1;
+	else if(screenConfig == "Screen2")
+		screen = Screen2;
+	else if(screenConfig == "Screen3")
+		screen = Screen3;
+	else if(screenConfig == "Screen4")
+		screen = Screen4;
 }
 
 ObcConsum::~ObcConsum()
@@ -46,8 +57,16 @@ void ObcConsum::wake()
 
 void ObcConsum::sleep()
 {
-	obc.config->setValueByName("ObcConsumAverageLitresPer100km", "%f", averageLitresPer100km);;
-	obc.config->setValueByName("ObcConsumAverageFuelConsumptionSeconds", "%u", averageFuelConsumptionSeconds);;
+	obc.config->setValueByName("ObcConsumAverageLitresPer100km", "%f", averageLitresPer100km);
+	obc.config->setValueByName("ObcConsumAverageFuelConsumptionSeconds", "%u", averageFuelConsumptionSeconds);
+	if(screen == Screen1)
+		obc.config->setValueByName("ObcConsumScreen", "Screen1");
+	else if(screen == Screen2)
+		obc.config->setValueByName("ObcConsumScreen", "Screen2");
+	else if(screen == Screen3)
+		obc.config->setValueByName("ObcConsumScreen", "Screen3");
+	else if(screen == Screen4)
+		obc.config->setValueByName("ObcConsumScreen", "Screen4");
 }
 
 void ObcConsum::runTask()
@@ -69,12 +88,50 @@ void ObcConsum::runTask()
 		obc.averageLitresPer100km = averageLitresPer100km;
 	}
 	
-	if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
-		setDisplay("avg %2.1f L/100km", averageLitresPer100km);
-	else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
-		setDisplay("avg %2.1f mpg", 235.214f / averageLitresPer100km);
-	else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
-		setDisplay("%2.1fL/100km %2.1fmpg", averageLitresPer100km, 235.214f / averageLitresPer100km);
+	switch(screen)
+	{
+		case Screen1:
+		{
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
+				setDisplay("avg %2.1f L/100km", averageLitresPer100km);
+			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				setDisplay("avg %2.1f mpg", 235.214f / averageLitresPer100km);
+			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
+				setDisplay("%2.1fL/100km %2.1fmpg", averageLitresPer100km, 235.214f / averageLitresPer100km);
+			break;
+		}
+		case Screen2:
+		{
+			float litresPerHour = 0.2449 * 6 * 60 * obc.fuelCons->getDutyCycle();
+			float gallonsPerHour = litresPerHour / 3.78514;
+			float kilometresPerHour = obc.speed->getKmh();
+			float milesPerHour = obc.speed->getMph();
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
+				setDisplay("%2.1f L/100km", litresPerHour / kilometresPerHour * 100);
+			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				setDisplay("%2.1f mpg", milesPerHour / gallonsPerHour);
+			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
+				setDisplay("%2.1fL/100km %2.1fmpg", litresPerHour / kilometresPerHour * 100, milesPerHour / gallonsPerHour);
+			break;
+		}
+		case Screen3:
+		{
+			float litresPerMinute = 0.2449 * 6.0 * obc.fuelCons->getDutyCycle();
+			float gallonsPerMinute = litresPerMinute / 3.78514;
+			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
+				setDisplay("%1.3f L/min", litresPerMinute);
+			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
+				setDisplay("%2.2f gal/hour", gallonsPerMinute * 60);
+			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
+				setDisplay("%1.3fL/min %2.2fgal/hr", litresPerMinute, gallonsPerMinute * 60);
+			break;
+		}
+		case Screen4:
+		{
+			setDisplay("%2.1f%%    RPM: %4.0f", obc.fuelCons->getDutyCycle() * 100, obc.fuelCons->getRpm());
+			break;
+		}
+	}
 }
 
 void ObcConsum::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
@@ -90,5 +147,17 @@ void ObcConsum::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 	{
 		averageFuelConsumptionSeconds = 0;
 		averageLitresPer100km = 0;
+	}
+	
+	if(buttonMask == BUTTON_CONSUM_MASK)
+	{
+		if(screen == Screen1)
+			screen = Screen2;
+		else if(screen == Screen2)
+			screen = Screen3;
+		else if(screen == Screen3)
+			screen = Screen4;
+		else if(screen == Screen4)
+			screen = Screen1;
 	}
 }

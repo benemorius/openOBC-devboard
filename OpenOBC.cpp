@@ -625,37 +625,6 @@ void OpenOBC::mainloop()
 					lcd->printf("set %.2fV", batteryVoltage->read());
 					break;
 				}
-				case DISPLAY_CONSUM2:
-				{
-					float litresPerHour = 0.2449 * 6 * 60 * fuelCons->getDutyCycle();
-					float gallonsPerHour = litresPerHour / 3.78514;
-					float kilometresPerHour = speed->getKmh();
-					float milesPerHour = speed->getMph();
-					if(useMetricSystemBoth)
-						lcd->printf("%2.1fL/100km %2.1fmpg", litresPerHour / kilometresPerHour * 100, milesPerHour / gallonsPerHour);
-					else if(useMetricSystem)
-						lcd->printf("%2.1f L/100km", litresPerHour / kilometresPerHour * 100);
-					else
-						lcd->printf("%2.1f mpg", milesPerHour / gallonsPerHour);
-					break;
-				}
-				case DISPLAY_CONSUM3:
-				{
-					float litresPerMinute = 0.2449 * 6 * fuelCons->getDutyCycle();
-					float gallonsPerMinute = litresPerMinute / 3.78514;
-					if(useMetricSystemBoth)
-						lcd->printf("%1.3fL/min %2.2fgal/hr", litresPerMinute, gallonsPerMinute * 60);
-					else if(useMetricSystem)
-						lcd->printf("%1.3f L/min", litresPerMinute);
-					else
-						lcd->printf("%2.2f gal/hour", gallonsPerMinute * 60);
-					break;
-				}
-				case DISPLAY_CONSUM4:
-				{
-					lcd->printf("%2.1f%% rpm: %4.0f", fuelCons->getDutyCycle() * 100, fuelCons->getRpm());
-					break;
-				}
 				case DISPLAY_CLOCKSET:
 				{
 					lcd->printf("set clock");
