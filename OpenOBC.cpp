@@ -59,7 +59,7 @@ Debug* debugS;
 RTC* rtcS;
 
 bool doSleep = false;
-bool go = false;
+bool doSleepCheck = false;
 IO* idle;
 IO* isr;
 bool doQuery = false;
@@ -408,7 +408,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	//speed configuration
 	Input* speedPin = new Input(SPEED_PORT, SPEED_PIN);
-	speedPin->setPullup();
+// 	speedPin->setPullup(); //for bench use only
 	speed = new SpeedInput(*speedPin, interruptManager);
 
 	//sd card configuration
@@ -503,7 +503,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	ui->wake();
 	
-	go = true;
+	doSleepCheck = true;
 }
 
 void OpenOBC::uartHandler()
@@ -980,24 +980,7 @@ extern "C" void SysTick_Handler()
 {
 	SysTickCnt++;
 
-// 	static bool blinky;
-// 	if(SysTickCnt % 500 == 0 && go)
-// 	{
-// 		if(blinky = !blinky)
-// 		{
-// 			out0Cs = false;
-// 			obcS->spi1->putc(0x04);
-// 			out0Cs = true;
-// 		}
-// 		else
-// 		{
-// 			out0Cs = false;
-// 			obcS->spi1->putc(0x00);
-// 			out0Cs = true;
-// 		}
-// 	}
-
-	if(go)
+	if(doSleepCheck)
 	{
 		if(*obcS->run)
 			doSleep = false;

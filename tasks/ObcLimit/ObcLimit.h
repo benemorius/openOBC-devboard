@@ -49,6 +49,7 @@ private:
 	ObcLimitState::state state;
 	float limitKmh;
 	float limitKmhSet;
+	bool hasWarned;
 };
 
 #endif // OBCLIMIT_H

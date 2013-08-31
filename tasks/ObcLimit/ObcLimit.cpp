@@ -31,17 +31,18 @@ using namespace ObcLimitState;
 
 ObcLimit::ObcLimit(OpenOBC& obc) : ObcUITask(obc)
 {
+	hasWarned = false;
 	limitKmh = atof(obc.config->getValueByName("ObcLimitKmh").c_str());
 	if(obc.config->getValueByName("ObcLimitState") == "LimitActive")
 	{
 		state = LimitActive;
 		obc.limitLed->on();
 		if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
-			setDisplay("limit % 3u Kmh", (uint32_t)limitKmh);
+			setDisplay("limit % 3u kmh", (uint32_t)limitKmh);
 		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
 			setDisplay("limit % 3u mph", (uint32_t)(limitKmh * 0.621371));
 		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
-			setDisplay("limit % 3uKmh % 3umph", (uint32_t)limitKmh, (uint32_t)(limitKmh * 0.621371));
+			setDisplay("limit % 3ukmh % 3umph", (uint32_t)limitKmh, (uint32_t)(limitKmh * 0.621371));
 	}
 	else
 	{
@@ -61,13 +62,20 @@ void ObcLimit::runTask()
 	if(state == LimitActive)
 	{
 		float kmh = obc.speed->getKmh();
-		if(kmh >= limitKmh)
+		if(kmh >= limitKmh && !hasWarned)
 		{
-			DEBUG("over limit: % 3.0f Kmh (limit % 3.0f)\r\n", kmh, limitKmh);
+			DEBUG("over limit: % 3.0f kmh (limit % 3.0f)\r\n", kmh, limitKmh);
 			obc.ui->setActiveTask(this, 5);
 			obc.chime0->on();
-			obc.ui->callback.addCallback(obc.chime1, &IO::off, 100);
+			obc.ui->callback.addCallback(obc.chime0, &IO::off, 100);
+			hasWarned = true;
 			//TODO flash Limit LED
+		}
+		else if(kmh < limitKmh && hasWarned)
+		{
+			hasWarned = false;
+			obc.chime0->off();
+			//TODO stop flashing limit LED
 		}
 	}
 }
@@ -98,11 +106,11 @@ void ObcLimit::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 			limitKmh = limitKmhSet;
 			obc.limitLed->on();
 			if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
-				setDisplay("limit % 3u Kmh", (uint32_t)limitKmh);
+				setDisplay("limit % 3u kmh", (uint32_t)limitKmh);
 			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
 				setDisplay("limit % 3u mph", (uint32_t)(limitKmh * 0.621371));
 			else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
-				setDisplay("limit % 3uKmh % 3umph", (uint32_t)limitKmh, (uint32_t)(limitKmh * 0.621371));
+				setDisplay("limit % 3ukmh % 3umph", (uint32_t)limitKmh, (uint32_t)(limitKmh * 0.621371));
 		}
 		else if(buttonMask == BUTTON_LIMIT_MASK)
 		{
@@ -158,11 +166,11 @@ void ObcLimit::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 			limitKmhSet = (int32_t)limitKmhSet % 1000;
 		
 		if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Metric)
-			setDisplay("set limit: % 3u Kmh", (uint32_t)limitKmhSet);
+			setDisplay("set limit: % 3u kmh", (uint32_t)limitKmhSet);
 		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Imperial)
 			setDisplay("set limit: % 3u mph", (uint32_t)(limitKmhSet * 0.621371));
 		else if(obc.ui->getMeasurementSystem() == ObcUIMeasurementSystem::Both)
-			setDisplay("set:  % 3uKmh % 3umph", (uint32_t)limitKmhSet, (uint32_t)(limitKmhSet * 0.621371));
+			setDisplay("set:  % 3ukmh % 3umph", (uint32_t)limitKmhSet, (uint32_t)(limitKmhSet * 0.621371));
 	}
 }
 
