@@ -189,7 +189,7 @@ void ObcKeypad::interruptHandler()
 // 	DEBUG("keypad irq\r\n");
 	if((GPIO_GetIntStatus(y0.getPort(), y0.getPin(), 1)) || (GPIO_GetIntStatus(y1.getPort(), y1.getPin(), 1)) || (GPIO_GetIntStatus(y2.getPort(), y2.getPin(), 1)) || (GPIO_GetIntStatus(y3.getPort(), y3.getPin(), 1)))
 	{
-		if(debounce->read_ms() >= 100)
+		if(debounce->read_ms() >= 20)
 			scan();
 		debounce->start();
 		GPIO_ClearInt(y0.getPort(), (1<<y0.getPin()));
