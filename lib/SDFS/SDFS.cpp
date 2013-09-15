@@ -124,6 +124,9 @@
 #include "SDFS.h"
 #include <cstdio>
 #include <delay.h>
+#include <debugpretty.h>
+
+// #define DEBUG_ENABLED
 
 SDFS::SDFS(SPI& spi, IO& cs, uint32_t spiClockrateHz) : spi(spi), cs(cs), spiClockrate(spiClockrateHz)
 {
@@ -143,7 +146,7 @@ int32_t SDFS::mount(const char* mountpath)
 	DSTATUS status = FatFS::disk_mount(this, mountpath);
 	if(status)
 	{
-		fprintf(stderr, "disk_mount failed (%i)\r\n", status);
+		DEBUG("disk_mount failed (%i)\r\n", status);
 		return -2;
 	}
 	isMounted = true;
@@ -158,14 +161,14 @@ int32_t SDFS::unmount()
 	DSTATUS status = FatFS::disk_umount(this);
 	if(status)
 	{
-		fprintf(stderr, "disk_umount failed (%i)\r\n", status);
+		DEBUG("disk_umount failed (%i)\r\n", status);
 		return -2;
 	}
 	isMounted = false;
 	return 0;
 }
 
-#define SD_COMMAND_TIMEOUT (5000)
+#define SD_COMMAND_TIMEOUT (600)
 #define SD_COMMAND_RETRY (100)
 
 #define R1_IDLE_STATE           (1 << 0)
@@ -197,15 +200,17 @@ int SDFS::initialise_card() {
 	}
 	
 	// send CMD0, should return with all zeros except IDLE STATE set (bit 0)
-	for(int timeout = 10; ; timeout--)
+	for(int timeout = 2; ; timeout--)
 	{
 		int ret = _cmd(0,0);
 		if(ret == R1_IDLE_STATE)
 			break;
-		fprintf(stderr, "cmd0 failed: 0x%x\r\n", ret);
+		#ifdef DEBUG_ENABLED
+		DEBUG("cmd0 failed: 0x%x\r\n", ret);
+		#endif
 		if(timeout == 0)
 		{
-			fprintf(stderr, "No disk, or could not put SD card in to SPI idle state\r\n");
+			DEBUG("No disk, or could not put SD card in to SPI idle state\r\n");
 			return SDCARD_FAIL;
 		}
 	}
@@ -217,7 +222,7 @@ int SDFS::initialise_card() {
 	} else if(r == (R1_IDLE_STATE | R1_ILLEGAL_COMMAND)) {
 		return initialise_card_v1();
 	} else {
-		fprintf(stderr, "Not in idle state after sending CMD8 (not an SD card?)\r\n");
+		DEBUG("Not in idle state after sending CMD8 (not an SD card?)\r\n");
 		return SDCARD_FAIL;
 	}
 }
@@ -227,14 +232,14 @@ int SDFS::initialise_card_v1() {
 		_cmd(55, 0);
 		if(_cmd(41, 0) == 0) {
 			cdv = 512;
-			#ifdef DEBUG
-			fprintf(stderr, "Init: SDCARD_V1\n\r");
+			#ifdef DEBUG_ENABLED
+			DEBUG("Init: SDCARD_V1\n\r");
 			#endif
 			return SDCARD_V1;
 		}
 	}
 	
-	fprintf(stderr, "Timeout waiting for v1.x card\r\n");
+	DEBUG("Timeout waiting for v1.x card\r\n");
 	return SDCARD_FAIL;
 }
 
@@ -246,23 +251,23 @@ int SDFS::initialise_card_v2() {
 		_cmd(55, 0);
 		if(_cmd(41, 0x40000000) == 0) {
 			_cmd58();
-			#ifdef DEBUG
-			fprintf(stderr, "Init: SDCARD_V2\n\r");
+			#ifdef DEBUG_ENABLED
+			DEBUG("Init: SDCARD_V2\n\r");
 			#endif
 			cdv = 1;
 			return SDCARD_V2;
 		}
 	}
 	
-	fprintf(stderr, "Timeout waiting for v2.x card\r\n");
+	DEBUG("Timeout waiting for v2.x card\r\n");
 	return SDCARD_FAIL;
 }
 
 int32_t SDFS::disk_initialise() {
 	
 	int i = initialise_card();
-	#ifdef DEBUG
-	fprintf(stderr, "init card = %d\r\n", i);
+	#ifdef DEBUG_ENABLED
+	DEBUG("init card = %d\r\n", i);
 	#endif
 
 	if(i == SDCARD_FAIL)
@@ -272,7 +277,7 @@ int32_t SDFS::disk_initialise() {
 	
 	// Set block length to 512 (CMD16)
 	if(_cmd(16, 512) != 0) {
-		fprintf(stderr, "Set 512-byte block timed out\r\n");
+		DEBUG("Set 512-byte block timed out\r\n");
 		return 1;
 	}
 	
@@ -296,7 +301,7 @@ int32_t SDFS::disk_status()
 
 int32_t SDFS::disk_write(const uint8_t* data, uint32_t startSector, uint32_t count)
 {
-// 	fprintf(stderr, "SDFS::disk_write(%x %x %x)\r\n", data, startSector, count);
+// 	DEBUG("SDFS::disk_write(%x %x %x)\r\n", data, startSector, count);
 	spi.setClockRate(spiClockrate);
 	int32_t sectorsWritten = 0;
 	while(count--)
@@ -324,7 +329,7 @@ int32_t SDFS::disk_write(const uint8_t* data, uint32_t startSector, uint32_t cou
 
 int32_t SDFS::disk_read(uint8_t* buffer, uint32_t startSector,	 uint32_t count)
 {
-// 	fprintf(stderr, "SDFS::disk_read(%x %x %x)\r\n", buffer, startSector, count);
+// 	DEBUG("SDFS::disk_read(%x %x %x)\r\n", buffer, startSector, count);
 	spi.setClockRate(spiClockrate);
 	int32_t sectorsRead = 0;
 	while(count--)
@@ -423,7 +428,7 @@ int SDFS::_cmd58() {
 			ocr |= spi.readWrite(0xFF) << 16;
 			ocr |= spi.readWrite(0xFF) << 8;
 			ocr |= spi.readWrite(0xFF) << 0;
-// 			fprintf(stderr, "OCR = 0x%08X\r\n", ocr);
+// 			DEBUG("OCR = 0x%08X\r\n", ocr);
 			cs = true;
 			spi.readWrite(0xFF);
 			return response;
@@ -547,13 +552,13 @@ int SDFS::_sd_sectors() {
 	
 	// CMD9, Response R2 (R1 byte + 16-byte block read)
 	if(_cmdx(9, 0) != 0) {
-		fprintf(stderr, "Didn't get a response from the disk\r\n");
+		DEBUG("Didn't get a response from the disk\r\n");
 		return 0;
 	}
 	
 	char csd[16];
 	if(_read(csd, 16) != 0) {
-		fprintf(stderr, "Couldn't read csd response from disk\r\n");
+		DEBUG("Couldn't read csd response from disk\r\n");
 		return 0;
 	}
 	
@@ -564,8 +569,8 @@ int SDFS::_sd_sectors() {
 	
 	int csd_structure = ext_bits(csd, 127, 126);
 	
-	#ifdef DEBUG
-	fprintf(stderr, "CSD_STRUCT = %d\r\n", csd_structure);
+	#ifdef DEBUG_ENABLED
+	DEBUG("CSD_STRUCT = %d\r\n", csd_structure);
 	#endif
 	
 	switch (csd_structure){
@@ -581,8 +586,8 @@ int SDFS::_sd_sectors() {
 			blocknr = (c_size + 1) * mult;
 			capacity = blocknr * block_len;
 			blocks = capacity / 512;
-			#ifdef DEBUG
-			fprintf(stderr, "SDCard\n\rc_size: %.4X \n\rcapacity: %.ld MB\n\rsectors: %d\n\r", c_size, capacity/1024/1024, blocks);
+			#ifdef DEBUG_ENABLED
+			DEBUG("SDCard\n\rc_size: %.4X \n\rcapacity: %.ld MB\n\rsectors: %d\n\r", c_size, capacity/1024/1024, blocks);
 			#endif
 			break;
 		}	
@@ -593,15 +598,15 @@ int SDFS::_sd_sectors() {
 			int hc_read_bl_len = ext_bits(csd, 83, 80);
 			hc_capacity = hc_c_size+1;
 			blocks = (hc_c_size+1)*1024;
-			#ifdef DEBUG
-			fprintf(stderr, "SDHC Card \n\rhc_c_size: %.4X\n\rsectors: %d\n\r", hc_c_size, blocks);
-			fprintf(stderr, "capacity: %llu MB\r\n", hc_capacity*512/1024);
+			#ifdef DEBUG_ENABLED
+			DEBUG("SDHC Card \n\rhc_c_size: %.4X\n\rsectors: %d\n\r", hc_c_size, blocks);
+			DEBUG("capacity: %llu MB\r\n", hc_capacity*512/1024);
 			#endif
 			break;
 		}	
 		default:
 		{
-			fprintf(stderr, "This disk tastes funny! I only know about type 0 CSD structures\r\n");
+			DEBUG("This disk tastes funny! I only know about type 0 CSD structures\r\n");
 			return 0;
 			break;
 		}

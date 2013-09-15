@@ -167,10 +167,12 @@ int _open(const char* name, int flags, int mode)
 	FIL* file = new FIL;
 	FRESULT result = f_open(file, fatfsFilename, fatfsFlags);
 	delete[] fatfsFilename;
+// 	if(result != FR_OK)
+// 		result = f_open(file, fatfsFilename, fatfsFlags);
 	if(result != FR_OK)
 	{
 		errno = FatFS::errnoFromFResult(result);
-		fprintf(stderr, "f_open failed on %s: %s (%i)\r\n", name, strerror(errno), result);
+		fprintf(stderr, "f_open failed on %s: %s (fatfs error %i)\r\n", name, strerror(errno), result);
 		return -1;
 	}
 

@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <debugpretty.h>
 
 using namespace std;
 
@@ -43,11 +44,11 @@ int32_t ConfigFile::readConfig()
 	FILE* file = fopen(filename.c_str(), "r");
 	if(file == NULL)
 	{
-		fprintf(stderr, "failed to open config file: %s (%i)\r\n", filename.c_str(), errno);
+		DEBUG("failed to open config file: %s (%i)\r\n", filename.c_str(), errno);
 		return -1;
 	}
 
-// 	fprintf(stderr, "parsing config file: %s\r\n", filename.c_str());
+// 	DEBUG("parsing config file: %s\r\n", filename.c_str());
 
 	//TODO needs better validation
 	int32_t parametersRead = 0;
@@ -71,11 +72,15 @@ int32_t ConfigFile::readConfig()
 		
 		parameters[key] = value;
 		parametersRead++;
-		fprintf(stderr, "<%s> = <%s>\r\n", key.c_str(), value.c_str());
+		printf("<%s> = <%s>\r\n", key.c_str(), value.c_str());
 	}
 
 	delete[] line;
 	fclose(file);
+	if(parametersRead == 0)
+	{
+		DEBUG("config file read; no parameters found\r\n");
+	}
 	return parametersRead;
 }
 
@@ -84,13 +89,13 @@ int32_t ConfigFile::writeConfig(bool overwriteExistingFile)
 	int fd = open(filename.c_str(), O_CREAT | O_WRONLY | (overwriteExistingFile ? 0 : O_EXCL));
 	if(fd < 0)
 	{
-		fprintf(stderr, "error opening %s for writing: %s\r\n", filename.c_str(), strerror(errno));
+		DEBUG("error opening %s for writing: %s\r\n", filename.c_str(), strerror(errno));
 		return -1;
 	}
 	FILE* file = fdopen(fd, "w");
 	if(file == NULL)
 	{
-		fprintf(stderr, "error opening %s for writing: %s\r\n", filename.c_str(), strerror(errno));
+		DEBUG("error opening %s for writing: %s\r\n", filename.c_str(), strerror(errno));
 		return -1;
 	}
 	
