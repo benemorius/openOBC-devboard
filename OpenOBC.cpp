@@ -477,8 +477,10 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	}
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 	lcd->printf("openOBC %s", GIT_VERSION);
-	lcd->printfClock("  r2");;
+	lcd->printfClock("%s", GIT_TAG);
 	delay(1500);
+	lcd->printf("");
+	lcd->printfClock("");
 	ccmLight->off();
 	codeLed->off();
 	limitLed->off();
