@@ -54,6 +54,9 @@ public:
 	
 	void setActiveTask(ObcUITask* task, float forSeconds = 0);
 	ObcUITask* getActiveTask() {return activeTask;}
+	ObcUITask* popActiveTask(ObcUITask* task = NULL);
+	void setActiveTaskClock(ObcUITask* task) {activeTaskClock = task;}
+	ObcUITask* getActiveTaskClock() {return activeTaskClock;}
 	
 	void registerButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask);
 	void unregisterButton(ObcUITask* task, ObcUITaskFocus::type focus, uint32_t buttonMask);
@@ -72,6 +75,7 @@ private:
 	ObcKeypad& keypad;
 	std::vector<ObcUITask*> tasks;
 	ObcUITask* activeTask;
+	ObcUITask* activeTaskClock;
 	ObcUIMeasurementSystem::system measurementSystem;
 	Timer activeTaskTimeout;
 	std::deque<ObcUITask*> activeTaskList;

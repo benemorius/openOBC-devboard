@@ -53,6 +53,7 @@ public:
 	virtual void sleep() {}; //run once just before switching to sleep state
 	
 	char* getDisplay() {return displayBuffer;}
+	char* getDisplayClock() {return displayClockBuffer;}
 	float getDisplayRefreshPeriod() {return displayRefreshPeriod;}
 	void setActive(bool isActive) {_isActive = isActive;}
 	void runButtonEvents();
@@ -65,6 +66,7 @@ protected:
 	void registerButton(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	void unregisterButton(ObcUITaskFocus::type focus, uint32_t buttonMask);
 	void setDisplay(char* format, ...);
+	void setDisplayClock(char* format, ...);
 	bool isActive() {return _isActive;}
 	void setDisplayRefreshPeriod(float seconds) {displayRefreshPeriod = seconds;}
 
@@ -74,6 +76,7 @@ private:
 	std::vector<uint32_t> buttonEventsActive;
 	std::vector<uint32_t> buttonEventsBackground;
 	char displayBuffer[21];
+	char displayClockBuffer[5];
 	bool _isActive;
     float displayRefreshPeriod;
 	float activeTaskTimeout;

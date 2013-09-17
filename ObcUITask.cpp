@@ -56,6 +56,14 @@ void ObcUITask::setDisplay(char* format, ...)
 	va_end(args);
 }
 
+void ObcUITask::setDisplayClock(char* format, ... )
+{
+	va_list args;
+	va_start(args, format);
+	vsnprintf(displayClockBuffer, sizeof(displayClockBuffer), format, args);
+	va_end(args);
+}
+
 void ObcUITask::createButtonEvent(ObcUITaskFocus::type focus, uint32_t buttonMask)
 {
 	if(focus == ObcUITaskFocus::active)

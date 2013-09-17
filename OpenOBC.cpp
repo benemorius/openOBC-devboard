@@ -51,6 +51,7 @@
 #include <ObcKmmls.h>
 #include <ObcMemo.h>
 #include <ObcOdometer.h>
+#include <ObcClock.h>
 #include "ObcUI.h"
 
 volatile uint32_t SysTickCnt;
@@ -430,9 +431,6 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypad->attach(BUTTON_100, this, &OpenOBC::button100);
 	keypad->attach(BUTTON_10, this, &OpenOBC::button10);
 	keypad->attach(BUTTON_1, this, &OpenOBC::button1);
-	keypad->attach(BUTTON_CLOCK, this, &OpenOBC::buttonClock);
-	keypad->attach(BUTTON_DATE, this, &OpenOBC::buttonDate);
-	keypad->attach(BUTTON_SET, this, &OpenOBC::buttonSet);
 
 	//analog input configuration
 	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE, (10 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
@@ -490,6 +488,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	ui = new ObcUI(*lcd, *keypad, *config);
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
+	ui->addTask(new ObcClock(*this));
 	ui->addTask(new ObcOdometer(*this));
 	ui->addTask(new ObcSpeed(*this));
 	ui->addTask(new ObcMemo(*this));
@@ -602,7 +601,8 @@ void OpenOBC::mainloop()
 		diag->task();
 		callback->task();
 		
-		if(displayRefreshTimer.read_ms() >= 100)
+// 		if(displayRefreshTimer.read_ms() >= 100)
+		if(0)
 		{
 			displayRefreshTimer.start();
 			if(!*stalkButton)
@@ -750,25 +750,7 @@ void OpenOBC::wake()
 
 void OpenOBC::button1000()
 {
-	if(displayMode == DISPLAY_CLOCKSET)
-	{
-		int hour = rtc->getHour() + 10;
-		if(hour >= 24)
-			while(hour >= 10)
-				hour -= 10;
-		rtc->setHour(hour);
-	}
-	else if(displayMode == DISPLAY_DATESET)
-	{
-		int month = rtc->getMonth() + 10;
-		if(month >= 13)
-			while(month >= 10)
-				month -= 10;
-		if(month == 0)
-			month = 10;
-		rtc->setMonth(month);
-	}
-	else if(displayMode == DISPLAY_OPENOBC)
+	if(displayMode == DISPLAY_OPENOBC)
 	{
 		disableComms = !disableComms;
 	}
@@ -776,37 +758,12 @@ void OpenOBC::button1000()
 
 void OpenOBC::button100()
 {
-	if(displayMode == DISPLAY_CLOCKSET)
-	{
-		rtc->setHour(rtc->getHour() + 1);
-	}
-	else if(displayMode == DISPLAY_DATESET)
-	{
-		rtc->setMonth(rtc->getMonth() + 1);
-	}
+
 }
 
 void OpenOBC::button10()
 {
-	if(displayMode == DISPLAY_CLOCKSET)
-	{
-		int minute = rtc->getMinute() + 10;
-		if(minute >= 60)
-			while(minute >= 10)
-				minute -= 10;
-		rtc->setMinute(minute);
-	}
-	else if(displayMode == DISPLAY_DATESET)
-	{
-		int day = rtc->getDay() + 10;
-		if(day >= 32)
-			while(day >= 10)
-				day -= 10;
-		if(day == 0)
-			day = 10;
-		rtc->setDay(day);
-	}
-	else if(displayMode == DISPLAY_CALIBRATE)
+	if(displayMode == DISPLAY_CALIBRATE)
 	{
 		batteryVoltageCalibration += 0.0005;
 		batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
@@ -815,65 +772,10 @@ void OpenOBC::button10()
 
 void OpenOBC::button1()
 {
-	if(displayMode == DISPLAY_CLOCKSET)
-	{
-		rtc->setMinute(rtc->getMinute() + 1);
-	}
-	else if(displayMode == DISPLAY_DATESET)
-	{
-		rtc->setDay(rtc->getDay() + 1);
-	}
-	else if(displayMode == DISPLAY_CALIBRATE)
+	if(displayMode == DISPLAY_CALIBRATE)
 	{
 		batteryVoltageCalibration -= 0.0005;
 		batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
-	}
-}
-
-void OpenOBC::buttonClock()
-{
-	if(displayMode == DISPLAY_DATESET)
-		displayMode = DISPLAY_CLOCKSET;
-	clockDisplayMode = CLOCKDISPLAY_CLOCK;
-}
-
-void OpenOBC::buttonDate()
-{
-	if(displayMode == DISPLAY_CLOCKSET)
-		displayMode = DISPLAY_DATESET;
-	clockDisplayMode = CLOCKDISPLAY_DATE;
-}
-
-void OpenOBC::buttonSet()
-{
-	if(keypad->getKeys() & BUTTON_CLOCK_MASK)
-	{
-		if(displayMode != DISPLAY_CLOCKSET)
-			lastDisplayMode = displayMode;
-		displayMode = DISPLAY_CLOCKSET;
-	}
-	else if(keypad->getKeys() & BUTTON_DATE_MASK)
-	{
-		if((displayMode != DISPLAY_CLOCKSET) && (displayMode != DISPLAY_DATESET))
-			lastDisplayMode = displayMode;
-		displayMode = DISPLAY_DATESET;
-	}
-	else if(displayMode == DISPLAY_CLOCKSET)
-	{
-		displayMode = lastDisplayMode;
-	}
-	else if(displayMode == DISPLAY_DATESET)
-	{
-		displayMode = lastDisplayMode;
-	}
-	else if(displayMode == DISPLAY_VOLTAGE)
-	{
-		batteryVoltageCalibration = atof(config->getValueByName("BatteryVoltageCalibration").c_str());
-		displayMode = DISPLAY_CALIBRATE;
-	}
-	else if(displayMode == DISPLAY_CALIBRATE)
-	{
-		displayMode = DISPLAY_VOLTAGE;
 	}
 }
 

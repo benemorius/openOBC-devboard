@@ -31,6 +31,7 @@
 ObcUI::ObcUI(ObcLcd& lcd, ObcKeypad& keypad, ConfigFile& config) : lcd(lcd), keypad(keypad), config(config)
 {
 	activeTask = NULL;
+	activeTaskClock = NULL;
 	
 	if(config.getValueByName("MeasurementSystem") == "Metric")
 		measurementSystem = ObcUIMeasurementSystem::Metric;
@@ -84,6 +85,12 @@ void ObcUI::task()
 		displayUpdateTimer.start();
 		lcd.printf("%s", activeTask->getDisplay());
 	}
+	static Timer displayClockUpdateTimer;
+	if(activeTaskClock && (displayClockUpdateTimer.read_ms() >= 100))
+	{
+		displayClockUpdateTimer.start();
+		lcd.printfClock("%s", activeTaskClock->getDisplayClock());
+	}
 }
 
 void ObcUI::addTask(ObcUITask* task)
@@ -109,7 +116,11 @@ void ObcUI::removeTask(ObcUITask* task)
 void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
 {
 	if(task == NULL)
+	{
+		lcd.printf("");
+		activeTask = NULL;
 		return;
+	}
 // 	DEBUG("setting active task\r\n");
 	task->setActive(true);
 	if(activeTask != NULL)
@@ -123,6 +134,37 @@ void ObcUI::setActiveTask(ObcUITask* task, float forSeconds)
 	activeTaskList.push_back(task);
 	activeTask->setActiveTaskTimeout(forSeconds);
 	activeTaskTimeout.start();
+}
+
+ObcUITask* ObcUI::popActiveTask(ObcUITask* task)
+{
+	if(activeTaskList.size() == 0)
+		return NULL;
+		
+	if(task == NULL)
+	{
+		task = activeTaskList.back();
+	}
+	
+	std::deque<ObcUITask*>::iterator found = std::find(activeTaskList.begin(), activeTaskList.end(), task);
+	if(found  == activeTaskList.end())
+		return NULL;
+	
+	activeTaskList.erase(found);
+	
+	if(task == activeTask)
+	{
+		if(activeTaskList.size() > 0)
+		{
+			setActiveTask(activeTaskList.back());
+		}
+		else
+		{
+			setActiveTask(NULL);
+		}
+	}
+	
+	return task;
 }
 
 void ObcUI::wake()

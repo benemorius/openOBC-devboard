@@ -116,6 +116,7 @@ void ObcKeypad::scan()
 		activeKeys |= key;
 		if(key)
 		{
+			callbackRaw.call(activeKeys);
 // 			DEBUG("additional key press: 0x%x\r\n", key);
 		}
 	}
@@ -123,6 +124,7 @@ void ObcKeypad::scan()
 	{
 // 		DEBUG("all keys released\r\n");
 		activeKeys = 0;
+		callbackRaw.call(activeKeys);
 	}
 
 	switch(key)

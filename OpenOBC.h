@@ -94,9 +94,6 @@ public:
 	void button100();
 	void button10();
 	void button1();
-	void buttonClock();
-	void buttonDate();
-	void buttonSet();
 	void uartHandler();
 	
 	Callback* callback;
