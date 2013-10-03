@@ -61,10 +61,12 @@ bool PCA95xxPin::getState() const
 
 void PCA95xxPin::setInput()
 {
+	isOutput = false;
 	pca.setInput(port, pin);
 }
 
 void PCA95xxPin::setOutput()
 {
+	isOutput = true;
 	pca.setOutput(port, pin);
 }
