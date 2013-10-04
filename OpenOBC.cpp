@@ -186,6 +186,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	idle = new IO(2, 0, true);
 	isr = new IO(2, 1, true);
 	obcS = this;
+	doHardwareTest = false;
 	
 	callback = new Callback();
 // 	callback->addCallback(this, &OpenOBC::buttonMemo, 10000);
@@ -211,19 +212,25 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 	//i/o expander configuration
 	Input* io0Interrupt = new Input(PCA95XX_INTERRUPT_PORT, PCA95XX_INTERRUPT_PIN);
-	io0 = new PCA95xx(*i2c0, PCA95XX_ADDRESS, *io0Interrupt, 400000);
-	codeLed = new PCA95xxPin(*io0, CODE_LED_PORT, CODE_LED_PIN, true);
-	limitLed = new PCA95xxPin(*io0, LIMIT_LED_PORT, LIMIT_LED_PIN, true);
-	timerLed = new PCA95xxPin(*io0, TIMER_LED_PORT, TIMER_LED_PIN, true);
-	ccmLight = new PCA95xxPin(*io0, CCM_LIGHT_PORT, CCM_LIGHT_PIN, true);
-	chime0 = new PCA95xxPin(*io0, CHIME0_PORT, CHIME0_PIN, true);
-	chime1 = new PCA95xxPin(*io0, CHIME1_PORT, CHIME1_PIN, true);
-	ventilation = new PCA95xxPin(*io0, VENTILATION_PORT, VENTILATION_PIN, true);
-	antitheftHorn = new PCA95xxPin(*io0, ANTITHEFT_HORN_PORT, ANTITHEFT_HORN_PIN, true);
-	ews = new PCA95xxPin(*io0, EWS_PORT, EWS_PIN, true);
+	io = new PCA95xx(*i2c0, PCA95XX_ADDRESS, *io0Interrupt, 400000);
+	codeLed = new PCA95xxPin(*io, CODE_LED_PORT, CODE_LED_PIN, true);
+	limitLed = new PCA95xxPin(*io, LIMIT_LED_PORT, LIMIT_LED_PIN, true);
+	timerLed = new PCA95xxPin(*io, TIMER_LED_PORT, TIMER_LED_PIN, true);
+	ccmLight = new PCA95xxPin(*io, CCM_LIGHT_PORT, CCM_LIGHT_PIN, true);
+	chime0 = new PCA95xxPin(*io, CHIME0_PORT, CHIME0_PIN, true);
+	chime1 = new PCA95xxPin(*io, CHIME1_PORT, CHIME1_PIN, true);
+	ventilation = new PCA95xxPin(*io, VENTILATION_PORT, VENTILATION_PIN, true);
+	antitheftHorn = new PCA95xxPin(*io, ANTITHEFT_HORN_PORT, ANTITHEFT_HORN_PIN, true);
+	ews = new PCA95xxPin(*io, EWS_PORT, EWS_PIN, true);
+	out0 = new PCA95xxPin(*io, OUT0_PORT, OUT0_PIN, true);
+	out1 = new PCA95xxPin(*io, OUT1_PORT, OUT1_PIN, true);
+	out2 = new PCA95xxPin(*io, OUT2_PORT, OUT2_PIN, true);
+	out3 = new PCA95xxPin(*io, OUT3_PORT, OUT3_PIN, true);
+	io0 = new PCA95xxPin(*io, IO0_PORT, IO0_PIN, false);
+	io1 = new PCA95xxPin(*io, IO1_PORT, IO1_PIN, false);
 	
 	//lcd configuration
-	lcdBiasEn = new PCA95xxPin(*io0, LCD_BIAS_EN_PORT, LCD_BIAS_EN_PIN, true);
+	lcdBiasEn = new PCA95xxPin(*io, LCD_BIAS_EN_PORT, LCD_BIAS_EN_PIN, true);
 	lcdReset = new IO(LCD_RESET_PORT, LCD_RESET_PIN, false);
 // 	IO lcdBias(LCD_BIASCLOCK_PORT, LCD_BIASCLOCK_PIN, true);
 	lcdBiasClock = new PWM(LCD_BIASCLOCK_PORT, LCD_BIASCLOCK_PIN, .99);
@@ -238,6 +245,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
+	auxLight = new IO(AUX_BACKLIGHT_PORT, AUX_BACKLIGHT_PIN, true);
 	keypadLight = new IO(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, true);
 // 	lcdBacklight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, .2);
 // 	clockBacklight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN);
@@ -350,7 +358,17 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	fuelLevel = new FuelLevel(*fuelLevelInput, interruptManager);
 
 	//stalk button configuration
-	stalkButton = new Input(STALK_BUTTON_PORT, STALK_BUTTON_PIN);
+	stalkButton = new Input(STALK_BUTTON_PORT, STALK_BUTTON_PIN, false);
+
+	//brake switch configuration
+	brakeSwitch = new Input(BRAKE_SWITCH_PORT, BRAKE_SWITCH_PIN);
+	brakeCheck = new Input(BRAKE_CHECK_PORT, BRAKE_CHECK_PIN);
+
+	//illumination input configuration
+	illumination = new Input(ILLUMINATION_PORT, ILLUMINATION_PIN);
+
+	//ambient light input configuration
+	ambientLight = new Input(AMBIENT_LIGHT_PORT, AMBIENT_LIGHT_PIN);
 
 	//diagnostics interface configuration
 	klWake = new IO(KL_WAKE_PORT, KL_WAKE_PIN, true);
@@ -413,7 +431,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	speed = new SpeedInput(*speedPin, interruptManager);
 
 	//sd card configuration
-	sdcardDetect = new Input(SDCARD_DETECT_PORT, SDCARD_DETECT_PIN);
+	sdcardDetect = new Input(SDCARD_DETECT_PORT, SDCARD_DETECT_PIN, false);
 	sdcardDetect->setPullup();
 
 	//keypad configuration
@@ -433,10 +451,11 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypad->attach(BUTTON_1, this, &OpenOBC::button1);
 
 	//analog input configuration
-	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE, (10 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
+	batteryVoltage = new AnalogIn(BATTERY_VOLTAGE_PORT, BATTERY_VOLTAGE_PIN, REFERENCE_VOLTAGE, (10.0 + 1.0) / 1.0 * REFERENCE_VOLTAGE, atof(config->getValueByName("BatteryVoltageCalibration").c_str()));
 	temperature = new AnalogIn(EXT_TEMP_PORT,EXT_TEMP_PIN, REFERENCE_VOLTAGE);
-	analogIn1 = new AnalogIn(ANALOG_IN1_PORT, ANALOG_IN1_PIN);
-	analogIn2 = new AnalogIn(ANALOG_IN2_PORT, ANALOG_IN2_PIN);
+	analogIn1 = new AnalogIn(ANALOG_IN1_PORT, ANALOG_IN1_PIN, REFERENCE_VOLTAGE);
+	analogIn2 = new AnalogIn(ANALOG_IN2_PORT, ANALOG_IN2_PIN, REFERENCE_VOLTAGE);
+	vstart = new AnalogIn(VSTART_PORT, VSTART_PIN, REFERENCE_VOLTAGE, (10.0 + 1.0) / 1.0 * REFERENCE_VOLTAGE);
 	
 	//analog output configuration
 	analogOut = new AnalogOut(ANALOG_OUT_PORT, ANALOG_OUT_PIN, REFERENCE_VOLTAGE);
@@ -444,6 +463,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	
 // 	averageFuelConsumptionSeconds = 0;
 // 	averageLitresPer100km = 0;
+	
+	debug->attach(this, &OpenOBC::uartHandler);
 
 	ccmLight->on();
 	codeLed->on();
@@ -503,6 +524,11 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	ui->addTask(new ObcCode(*this));
 	
 	ui->wake();
+
+// 	if(keypad->getKeys() == (BUTTON_1000_MASK | BUTTON_10_MASK))
+// 	if(*stalkButton)
+	if(doHardwareTest)
+		hardwareTest();
 	
 	doSleepCheck = true;
 }
@@ -511,13 +537,22 @@ void OpenOBC::uartHandler()
 {
 	while(debugS->readable())
 	{
-		static int esc;
+		static int escapeLevel;
 		char c = debugS->get();
-		DEBUG("0x%x\r\n", c);
-		if(esc == 0)
+// 		DEBUG("0x%x\r\n", c);
+
+		if(c == ' ')
 		{
-			if(c == 0x1b)
-				esc = 1;
+			doHardwareTest = true;
+			continue;
+		}
+		
+		if(escapeLevel == 0)
+		{
+			if(c == '\033')
+			{
+				escapeLevel = 1;
+			}
 			else if(c == 'u')
 			{
 				batteryVoltageCalibration += 0.0005;
@@ -528,21 +563,32 @@ void OpenOBC::uartHandler()
 				batteryVoltageCalibration -= 0.0005;
 				batteryVoltage->setCalibrationScale(batteryVoltageCalibration);
 			}
-		}
-		else if(esc == 1)
-		{
-			if(esc == 1 && c == 0x5b)
-				esc = 2;
 			else
-				esc = 0;
+			{
+				DEBUG("unhandled character: %c (0x%x)\r\n", c, c);
+			}
 		}
-		else if(esc == 2)
+		else if(escapeLevel == 1)
 		{
-			esc = 0;
+			if(escapeLevel == 1 && c == '[')
+				escapeLevel = 2;
+			else
+			{
+				escapeLevel = 0;
+				DEBUG("unhandled escape sequence: \\033%c (0x%x)\r\n", c, c);
+			}
+		}
+		else if(escapeLevel == 2)
+		{
+			escapeLevel = 0;
 			if(c == 0x41)
+			{
 				++setvalue;
+			}
 			else if(c == 0x42)
+			{
 				--setvalue;
+			}
 			else if(c == 0x43)
 			{
 				++seti;
@@ -561,17 +607,152 @@ void OpenOBC::uartHandler()
 					seti = 17;
 				setvalue = reply8[seti];
 			}
-
+			else
+			{
+				DEBUG("unhandled escape sequence: \\033[%c (0x%x)\r\n", c, c);
+			}
 		}
 		else
-			esc = 0;
+			escapeLevel = 0;
 	}
 }
 
-void OpenOBC::mainloop()
+void OpenOBC::hardwareTest()
 {
-	debug->attach(this, &OpenOBC::uartHandler);
+	debug->detach(this, &OpenOBC::uartHandler);
+
+	Input* ccmData = new Input(CCM_DATA_PORT, CCM_DATA_PIN);
+	IO* ccmClock = new IO(CCM_CLOCK_PORT, CCM_CLOCK_PIN);
+	IO* ccmLatch = new IO(CCM_LATCH_PORT, CCM_LATCH_PIN);
+	Input* speedInput = new Input(SPEED_PORT, SPEED_PIN);
+	Input* fuelLevelInput = new Input(FUEL_LEVEL_PORT, FUEL_LEVEL_PIN);
+	Input* fuelConsInput = new Input(FUEL_CONS_PORT, FUEL_CONS_PIN);
+
+	printf("hardware test...\r\n");
+	lcd->printf("hardware test...");
+	delay(200);
+	while(debug->readable() && debug->get() == ' ')
+	{
+		wdt.feed();
+		while(debug->readable() && debug->get() == ' ');
+		delay(200);
+	}
+
+	printf("K and L bus echo test...\r\n");
+	zke->query();
 	
+	printf("button test...\r\n");
+	lcd->printf("button test...");
+	while(1)
+	{
+		if(debug->readable() && debug->get() == ' ')
+			break;
+		wdt.feed();
+		lcd->printf("button mask: 0x%05x", keypad->getKeys());
+		printf("button mask: 0x%05x  (press space to continue)\r\n", keypad->getKeys());
+		delay(50);
+		printf("\033[F");
+	}
+	printf("\r\n");
+	
+	printf("output test... (press space to continue)\r\n");
+	lcd->printf("output test...");
+	io0->setOutput();
+	io1->setOutput();
+	while(1)
+	{
+		if(debug->readable() && debug->get() == ' ')
+			break;
+
+		wdt.feed();
+		
+		//all on
+		lcdLight->on();
+		clockLight->on();
+		auxLight->on();
+		keypadLight->on();
+		timerLed->on();
+		limitLed->on();
+		codeLed->on();
+		out0->on();
+		out1->on();
+		out2->on();
+		out3->on();
+		io0->on();
+		io1->on();
+		chime0->on();
+		chime1->on();
+		ventilation->on();
+		antitheftHorn->on();
+		ews->on();
+		ccmLight->on();
+		ccmClock->on();
+		ccmLatch->on();
+
+		delay(500);
+		
+		//all off
+		lcdLight->off();
+		clockLight->off();
+		auxLight->off();
+		keypadLight->off();
+		timerLed->off();
+		limitLed->off();
+		codeLed->off();
+		out0->off();
+		out1->off();
+		out2->off();
+		out3->off();
+		io0->off();
+		io1->off();
+		chime0->off();
+		chime1->off();
+		ventilation->off();
+		antitheftHorn->off();
+		ews->off();
+		ccmLight->off();
+		ccmClock->off();
+		ccmLatch->off();
+		
+		delay(500);
+	}
+	
+	io0->setInput();
+	io1->setInput();
+	
+	lcdLight->on();
+	clockLight->on();
+	keypadLight->on();
+	
+	printf("input test...\r\n");
+	lcd->printf("input test...");
+	while(1)
+	{
+		if(debug->readable() && debug->get() == ' ')
+			break;
+
+		wdt.feed();
+
+		printf("x% 2.2f y% 2.2f z% 2.2f\r\n", accel->getX(), accel->getY(), accel->getZ());
+		printf("stalkButton: %i sdcardDetect: %i io0: %i io1: %i ccmData: %i speed: %i\r\n", *stalkButton ? 1 : 0, *sdcardDetect ? 1 : 0, *io0 ? 1 : 0, *io1 ? 1 : 0, *ccmData ? 1 : 0, *speedInput ? 1 : 0);
+		printf("illumination: %i ambientLight: %i brakeSwitch: %i brakeCheck: %i\r\n", *illumination ? 1 : 0, *ambientLight ? 1 : 0, *brakeSwitch ? 1 : 0, *brakeCheck ? 1 : 0);
+		printf("batteryVoltage: % 2.2f temperature: % 2.2f vstart: % 2.2f analogIn1: % 2.2f analogIn2: % 2.2f\r\n", batteryVoltage->read(), temperature->read(), vstart->read(), analogIn1->read(), analogIn2->read());
+		printf("fuelLevel: %i fuelCons: %i\r\n", *fuelLevelInput ? 1 : 0, *fuelConsInput ? 1 : 0);
+		printf("(press space to continue)\r\n");
+		fflush(stdout);
+		delay(50);
+		printf("\033[F\033[F\033[F\033[F\033[F\033[F");
+	}
+	printf("\r\n\r\n\r\n\r\n\r\n\r\n");
+	
+	printf("test complete\r\n");
+	lcd->printf("test complete");
+	
+	debug->attach(this, &OpenOBC::uartHandler);
+}
+
+void OpenOBC::mainloop()
+{	
 	printf("stack: 0x%lx heap: 0x%lx free: %li\r\n", get_stack_top(), get_heap_end(), get_mem_free());
 	printf("starting mainloop...\r\n");
 	wdt.start(5);
@@ -605,7 +786,7 @@ void OpenOBC::mainloop()
 		if(0)
 		{
 			displayRefreshTimer.start();
-			if(!*stalkButton)
+			if(*stalkButton)
 				lcd->printfClock("  :D");
 			else
 			{

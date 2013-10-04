@@ -95,12 +95,14 @@ public:
 	void button10();
 	void button1();
 	void uartHandler();
-	
+	void hardwareTest();
+
 	Callback* callback;
 	SPI* spi0;
 	SPI* spi1;
 	IO* lcdLight;
 	IO* clockLight;
+	IO* auxLight;
 	IO* keypadLight;
 	IO* codeLed;
 	IO* limitLed;
@@ -111,11 +113,21 @@ public:
 	IO* ventilation;
 	IO* antitheftHorn;
 	IO* ews;
+	IO* out0;
+	IO* out1;
+	IO* out2;
+	IO* out3;
+	IO* io0;
+	IO* io1;
 	Input* run;
 	ObcKeypad* keypad;
 	Input* sdcardDetect;
 	FuelLevel* fuelLevel;
 	Input* stalkButton;
+	Input* illumination;
+	Input* ambientLight;
+	Input* brakeSwitch;
+	Input* brakeCheck;
 	SDFS* sd;
 	ConfigFile* config;
 	DS2* diag;
@@ -126,7 +138,7 @@ public:
 	E36MK4* mk4;
 	I2C* i2c0;
 	I2C* i2c1;
-	PCA95xx* io0;
+	PCA95xx* io;
 	MMA845x* accel;
 	ObcUI* ui;
 	CheckControlModule* ccm;
@@ -135,13 +147,15 @@ public:
 	float averageLitresPer100km;
 	AnalogIn* temperature;
 	AnalogIn* batteryVoltage;
+	AnalogIn* vstart;
 	Uart* kline;
 	Uart* lline;
     IO* klWake;
 	RTC* rtc;
-	PWM* lcdBacklight;
-	PWM* clockBacklight;
-	PWM* keypadBacklight;
+// 	PWM* lcdBacklight;
+// 	PWM* clockBacklight;
+// 	PWM* auxBacklight;
+// 	PWM* keypadBacklight;
 	ObcLcd* lcd;
 	IO* lcdReset;
 	IO* lcdBiasEn;
@@ -171,6 +185,7 @@ protected:
 	float batteryVoltageCalibration;
 	bool disableComms;
     IO* vrefEn;
+	bool doHardwareTest;
 	
 };
 

@@ -87,6 +87,9 @@ extern "C" char* get_mem_free(void);
 #define CLOCK_BACKLIGHT_PORT (3)
 #define CLOCK_BACKLIGHT_PIN (25)
 
+#define AUX_BACKLIGHT_PORT (1)
+#define AUX_BACKLIGHT_PIN (24)
+
 #define LCD_BIASCLOCK_PORT (1)
 #define LCD_BIASCLOCK_PIN (26)
 
@@ -125,6 +128,9 @@ extern "C" char* get_mem_free(void);
 
 #define EXT_TEMP_PORT (0)
 #define EXT_TEMP_PIN (23)
+
+#define VSTART_PORT (0)
+#define VSTART_PIN (24)
 
 #define VREF_EN_PORT (1)
 #define VREF_EN_PIN (14)
@@ -166,6 +172,18 @@ extern "C" char* get_mem_free(void);
 #define ANTITHEFT_HORN_PIN (0)
 #define EWS_PORT (1)
 #define EWS_PIN (5)
+#define OUT0_PORT (0)
+#define OUT0_PIN (3)
+#define OUT1_PORT (0)
+#define OUT1_PIN (4)
+#define OUT2_PORT (0)
+#define OUT2_PIN (5)
+#define OUT3_PORT (0)
+#define OUT3_PIN (6)
+#define IO0_PORT (0)
+#define IO0_PIN (7)
+#define IO1_PORT (1)
+#define IO1_PIN (7)
 
 #define LCD_BIAS_EN_PORT (1)
 #define LCD_BIAS_EN_PIN (6)
@@ -181,6 +199,18 @@ extern "C" char* get_mem_free(void);
 
 #define ANALOG_OUT_PORT (0)
 #define ANALOG_OUT_PIN (26)
+
+#define ILLUMINATION_PORT (1)
+#define ILLUMINATION_PIN (19)
+
+#define AMBIENT_LIGHT_PORT (1)
+#define AMBIENT_LIGHT_PIN (18)
+
+#define BRAKE_SWITCH_PORT (1)
+#define BRAKE_SWITCH_PIN (1)
+
+#define BRAKE_CHECK_PORT (1)
+#define BRAKE_CHECK_PIN (10)
 
 #define DEFAULT_CCM_DISABLE_MASK (0x00)
 #define DEFAULT_CCM_INVERT_MASK (ObcCCMBits::WasherFluid | ObcCCMBits::CoolantLevel | ObcCCMBits::BrakeLight1 | ObcCCMBits::BrakeLight2)
