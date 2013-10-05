@@ -95,7 +95,7 @@ CMSISOBJS = $(CMSISCSRCS:.c=.o)
 
 .PHONY: all size clean install flash
 
-all: $(PROJECT).elf $(PROJECT).hex
+all: $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
 
 size: $(PROJECT).elf
 	@$(SIZE) *.o $<
@@ -105,7 +105,7 @@ size: $(PROJECT).elf
 
 %.bin: %.elf
 	@$(CP) $(CPFLAGS) -O binary $< $*.bin
-	@$(LPCCHECKSUM) $*.bin #write checksum to .bin file; can be commented out
+# 	@$(LPCCHECKSUM) $*.bin #write checksum to .bin file; can be commented out
 
 $(PROJECT).elf: $(LINKER_SCRIPT) $(OBJS) cmsis.a
 	$(CC) -o $@ $(OBJS) -Xlinker -Map -Xlinker $(PROJECT).map -Xlinker -T $(LINKER_SCRIPT) $(CFLAGS) -l:cmsis.a -lstdc++
