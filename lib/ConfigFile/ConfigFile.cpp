@@ -61,13 +61,33 @@ int32_t ConfigFile::readConfig()
 			continue;
 		
 		char* tok;
-		tok = strtok(line, " =\r\n");
+		tok = strtok(line, "=\r\n");
 		if(tok == NULL)
 			continue;
+		//strip leading spaces
+		while(*tok == ' ')
+			++tok;
+		if(*tok == '\0')
+			continue;
+		//strip trailing spaces
+		char* end = tok + strlen(tok) - 1;
+		while(end > tok && *end == ' ')
+			--end;
+		*(end+1) = '\0';
 		string key = tok;
-		tok = strtok(NULL, " =\r\n");
+		tok = strtok(NULL, "=\r\n");
 		if(tok == NULL)
 			continue;
+		//strip leading spaces
+		while(*tok == ' ')
+			++tok;
+		if(*tok == '\0')
+			continue;
+		//strip trailing spaces
+		end = tok + strlen(tok) - 1;
+		while(end > tok && *end == ' ')
+			--end;
+		*(end+1) = '\0';
 		string value = tok;
 		
 		parameters[key] = value;
@@ -135,6 +155,8 @@ string ConfigFile::getValueByNameWithDefault(const string& name, const char* def
 
 void ConfigFile::setValueByName(const string& name, const string& value)
 {
+	if(parameters[name] == value)
+		return;
 	parameters[name] = value;
 
 	string newfilename = filename + "~";
@@ -164,9 +186,33 @@ void ConfigFile::setValueByName(const string& name, const string& value)
 
 		//get the key and value from the line
 		char* tok;
-		tok = strtok(line, " =\r\n");
+		tok = strtok(line, "=\r\n");
+		if(tok == NULL)
+			continue;
+		//strip leading spaces
+		while(*tok == ' ')
+			++tok;
+		if(*tok == '\0')
+			continue;
+		//strip trailing spaces
+		char* end = tok + strlen(tok) - 1;
+		while(end > tok && *end == ' ')
+			--end;
+		*(end+1) = '\0';
 		string key = tok;
-		tok = strtok(NULL, " =\r\n");
+		tok = strtok(NULL, "=\r\n");
+		if(tok == NULL)
+			continue;
+		//strip leading spaces
+		while(*tok == ' ')
+			++tok;
+		if(*tok == '\0')
+			continue;
+		//strip trailing spaces
+		end = tok + strlen(tok) - 1;
+		while(end > tok && *end == ' ')
+			--end;
+		*(end+1) = '\0';
 		string oldValue = tok;
 
 		//keep lines unchanged if the parameter name doesn't match

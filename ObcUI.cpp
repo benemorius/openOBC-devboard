@@ -33,13 +33,13 @@ ObcUI::ObcUI(ObcLcd& lcd, ObcKeypad& keypad, ConfigFile& config) : lcd(lcd), key
 	activeTask = NULL;
 	activeTaskClock = NULL;
 	
-	if(config.getValueByName("MeasurementSystem") == "Metric")
+	std::string system = config.getValueByNameWithDefault("MeasurementSystem", "Both");
+	if(system == "Metric")
 		measurementSystem = ObcUIMeasurementSystem::Metric;
-	else if(config.getValueByName("MeasurementSystem") == "Imperial")
+	else if(system == "Imperial")
 		measurementSystem = ObcUIMeasurementSystem::Imperial;
 	else
 	{
-		config.setValueByName("MeasurementSystem", "Both");
 		measurementSystem = ObcUIMeasurementSystem::Both;
 	}
 }

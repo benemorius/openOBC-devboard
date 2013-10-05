@@ -84,6 +84,10 @@ typedef enum
 	CLOCKDISPLAY_DATE
 } ClockDisplayMode_Type;
 
+namespace ObcBootupText {
+	enum mode {GitHash, Custom, None};
+}
+
 class OpenOBC : public InterruptManagerOwner
 {
 	

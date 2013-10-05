@@ -34,17 +34,13 @@ ObcTemp::ObcTemp(OpenOBC& obc) : ObcUITask(obc)
 {
 	setDisplay("ObcTemp");
 	
-	if(!obc.config->isSet("ObcTempState"))
-		obc.config->setValueByName("ObcTempState", "TempExt");
-	
-	if(obc.config->getValueByName("ObcTempState") == "TempCoolant")
+	std::string configState = obc.config->getValueByNameWithDefault("ObcTempState", "TempExt");
+	if(configState == "TempCoolant")
 		state = TempCoolant;
-	else if(obc.config->getValueByName("ObcTempState") == "TempExt")
+	else if(configState == "TempExt")
 		state = TempExt;
 	
-	if(!obc.config->isSet("ObcTempCoolantWarningTemp"))
-		obc.config->setValueByName("ObcTempCoolantWarningTemp", "%i", 100);
-	coolantWarningTemp = strtoul(obc.config->getValueByName("ObcTempCoolantWarningTemp").c_str(), NULL, 0);
+	coolantWarningTemp = strtoul(obc.config->getValueByNameWithDefault("ObcTempCoolantWarningTemp", "100").c_str(), NULL, 0);
 }
 
 ObcTemp::~ObcTemp()

@@ -249,9 +249,9 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	keypadLight = new IO(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, true);
 // 	lcdBacklight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, .2);
 // 	clockBacklight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN);
-	
-	lcd->printf("read config file...");
-	
+
+	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
+
 	//config file configuration
 	IO* sdcardCs = new IO(SDCARD_CS_PORT, SDCARD_CS_PIN);
 	sd = new SDFS(*spi1, *sdcardCs);
@@ -270,17 +270,46 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 			DEBUG("couldn't open file for writing: %s\r\n", config->getFilename().c_str());
 		}
 	}
-	
-	if(config->getValueByName("LogConsoleToFile") == "yes")
+
+	ObcBootupText::mode mode;
+	std::string bootupTextMode = config->getValueByNameWithDefault("BootupTextMode", "GitHash");
+	std::string bootupText;
+	std::string customBootupText = config->getValueByNameWithDefault("CustomBootupText", "openOBC");
+	uint bootupDelay = atoi(config->getValueByNameWithDefault("BootupDelay", "800").c_str());
+	if(bootupTextMode == "GitHash")
+	{
+		mode = ObcBootupText::GitHash;
+		bootupText = "openOBC " GIT_VERSION;
+		lcd->printfClock("%s", GIT_TAG);
+	}
+	else if(bootupTextMode == "Custom")
+	{
+		mode = ObcBootupText::Custom;
+		bootupText = customBootupText;
+	}
+	else if(bootupTextMode == "None")
+	{
+		mode = ObcBootupText::None;
+		bootupText = "";
+	}
+
+	lcd->printf("%s", bootupText.c_str());
+
+	ccmLight->on();
+	codeLed->on();
+	limitLed->on();
+	timerLed->on();
+
+	delay(bootupDelay);
+
+	if(config->getValueByNameWithDefault("LogConsoleToFile", "no") == "yes")
 		freopen("/sd/stdout.log", "a", stdout);
-	else
-		config->setValueByName("LogConsoleToFile", "no");
-	
+
 	//default config file parameters
 	if(config->getValueByName("DefaultDisplayMode") == "")
 		config->setValueByName("DefaultDisplayMode", "DISPLAY_LAST_DISPLAYMODE");
 	if(config->getValueByName("BatteryVoltageCalibration") == "")
-		config->setValueByName("BatteryVoltageCalibration", "1.0000");	
+		config->setValueByName("BatteryVoltageCalibration", "1.0000");
 
 	//default display mode configuration
 	std::string defaultDisplayModeString = config->getValueByName("DefaultDisplayMode");
@@ -316,9 +345,9 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 		displayMode = DISPLAY_OPENOBC;
 
 	clockDisplayMode = CLOCKDISPLAY_CLOCK;
-	
+
 	batteryVoltageCalibration = atof(config->getValueByName("BatteryVoltageCalibration").c_str());
-	
+
 	//rtc configuration
 	rtc = new RTC(); rtcS = rtc;
 	RTC_TIME_Type settime;
@@ -329,28 +358,18 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	settime.MIN = 29;
 	settime.SEC = 0;
 // 	rtc->setTime(&settime);
-	
+
 	//accelerometer configuration
 	Input* accelInterrupt = new Input(ACCEL_INTERRUPT_PORT, ACCEL_INTERRUPT_PIN);
 	accel = new MMA845x(*i2c0, ACCEL_ADDRESS, *accelInterrupt, interruptManager);
-	
+
 	//ccm configuration
 	Input* ccmData = new Input(CCM_DATA_PORT, CCM_DATA_PIN);
 	IO* ccmClock = new IO(CCM_CLOCK_PORT, CCM_CLOCK_PIN);
 	IO* ccmLatch = new IO(CCM_LATCH_PORT, CCM_LATCH_PIN);
-	uint8_t ccmDisableMask = strtoul(config->getValueByName("ObcCheckDisableMask").c_str(), NULL, 0);
-	if(ccmDisableMask == 0)
-	{
-		config->setValueByName("ObcCheckDisableMask", "0x%02x", DEFAULT_CCM_DISABLE_MASK);
-		ccmDisableMask = DEFAULT_CCM_DISABLE_MASK;
-	}
-	uint8_t ccmInvertMask = strtoul(config->getValueByName("ObcCheckInvertMask").c_str(), NULL, 0);
-	if(ccmInvertMask == 0)
-	{
-		config->setValueByName("ObcCheckInvertMask", "0x%02x", DEFAULT_CCM_INVERT_MASK);
-		ccmInvertMask = DEFAULT_CCM_INVERT_MASK;
-	}
-	
+	uint8_t ccmDisableMask = strtoul(config->getValueByNameWithDefault("ObcCheckDisableMask", "0x%02x", DEFAULT_CCM_DISABLE_MASK).c_str(), NULL, 0);
+	uint8_t ccmInvertMask = strtoul(config->getValueByNameWithDefault("ObcCheckInvertMask", "0x%02x", DEFAULT_CCM_INVERT_MASK).c_str(), NULL, 0);
+
 	ccm = new CheckControlModule(*ccmData, *ccmClock, *ccmLatch, ccmDisableMask, ccmInvertMask);
 
 	//fuel level configuration
@@ -398,7 +417,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	ihkr = new E36IHKR(*diag);
 	kombi = new E36Kombi(*diag);
 	mk4 = new E36MK4(*diag);
-	
+
 	//ignition/run/on input configuration
 	run = new Input(RUN_PORT, RUN_PIN);
 	PINSEL_CFG_Type pincfg;
@@ -419,12 +438,12 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	NVIC_SetPriorityGrouping(4);
 	NVIC_SetPriority(EINT1_IRQn, 0);
 	NVIC_EnableIRQ(EINT1_IRQn);
-	
+
 	//fuel consumption configuration
 	Input* fuelConsInput = new Input(FUEL_CONS_PORT, FUEL_CONS_PIN);
 	fuelConsInput->setPullup();
 	fuelCons = new FuelConsumption(*fuelConsInput, interruptManager);
-	
+
 	//speed configuration
 	Input* speedPin = new Input(SPEED_PORT, SPEED_PIN);
 // 	speedPin->setPullup(); //for bench use only
@@ -456,20 +475,16 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	analogIn1 = new AnalogIn(ANALOG_IN1_PORT, ANALOG_IN1_PIN, REFERENCE_VOLTAGE);
 	analogIn2 = new AnalogIn(ANALOG_IN2_PORT, ANALOG_IN2_PIN, REFERENCE_VOLTAGE);
 	vstart = new AnalogIn(VSTART_PORT, VSTART_PIN, REFERENCE_VOLTAGE, (10.0 + 1.0) / 1.0 * REFERENCE_VOLTAGE);
-	
+
 	//analog output configuration
 	analogOut = new AnalogOut(ANALOG_OUT_PORT, ANALOG_OUT_PIN, REFERENCE_VOLTAGE);
 	analogOut->writeVoltage(1.0);
-	
+
 // 	averageFuelConsumptionSeconds = 0;
 // 	averageLitresPer100km = 0;
-	
+
 	debug->attach(this, &OpenOBC::uartHandler);
 
-	ccmLight->on();
-	codeLed->on();
-	limitLed->on();
-	timerLed->on();
 	if(wdt.wasReset())
 	{
 		printf("WATCHDOG RESET\r\n");
@@ -494,19 +509,9 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 		lcd->clear();
 		lcd->clearClock();
 	}
-	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
-	lcd->printf("openOBC %s", GIT_VERSION);
-	lcd->printfClock("%s", GIT_TAG);
-	delay(1500);
-	lcd->printf("");
-	lcd->printfClock("");
-	ccmLight->off();
-	codeLed->off();
-	limitLed->off();
-	timerLed->off();
-	
+
 	coolantTemperature = 0;
-	
+
 	ui = new ObcUI(*lcd, *keypad, *config);
 	keypad->attachRaw(ui, &ObcUI::handleButtonEvent);
 	ui->addTask(new ObcClock(*this));
@@ -522,8 +527,15 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	ui->addTask(new ObcTimer(*this));
 	ui->addTask(new ObcKmmls(*this));
 	ui->addTask(new ObcCode(*this));
-	
+
 	ui->wake();
+
+	lcd->printf("");
+	lcd->printfClock("");
+	ccmLight->off();
+	codeLed->off();
+	limitLed->off();
+	timerLed->off();
 
 // 	if(keypad->getKeys() == (BUTTON_1000_MASK | BUTTON_10_MASK))
 // 	if(*stalkButton)
