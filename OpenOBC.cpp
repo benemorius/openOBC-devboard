@@ -663,7 +663,7 @@ void OpenOBC::hardwareTest()
 		lcd->printf("button mask: 0x%05x", keypad->getKeys());
 		printf("button mask: 0x%05x  (press space to continue)\r\n", keypad->getKeys());
 		delay(50);
-		printf("\033[F");
+		printf("\033[A");
 	}
 	printf("\r\n");
 	
@@ -753,7 +753,7 @@ void OpenOBC::hardwareTest()
 		printf("(press space to continue)\r\n");
 		fflush(stdout);
 		delay(50);
-		printf("\033[F\033[F\033[F\033[F\033[F\033[F");
+		printf("\033[6A");
 	}
 	printf("\r\n\r\n\r\n\r\n\r\n\r\n");
 	
