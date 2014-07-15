@@ -48,8 +48,12 @@ public:
 	void errorTimeout();
 	
 private:
-	ObcCheckState::state state;
-	uint8_t ccmErrorsSinceReset;
+	std::deque<ObcCCMBits::bits> warnings;
+	bool isValid;
+
+	void updateDisplay();
+	void newWarning(ObcCCMBits::bits warning);
+
 };
 
 #endif // OBCCHECK_H

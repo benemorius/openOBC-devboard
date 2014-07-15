@@ -42,7 +42,7 @@ bit 0 H Pulldown
 
 namespace ObcCCMBits
 {
-	enum {
+	enum bits {
 		Pulldown = 0x1,
 		WasherFluid = 0x2,
 		CoolantLevel = 0x4,

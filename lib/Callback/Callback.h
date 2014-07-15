@@ -70,9 +70,24 @@ public:
 		functions.push_back(new FunctionPointer<void, void>);
 		functions.back()->attach(functionPointer);
 	}
-	void deleteCallback(uint32_t pointer)
+
+	template<typename T>
+	uint32_t deleteCallback(T* classPointer, void (T::*methodPointer)())
 	{
-		//FIXME TODO
+		if((methodPointer != 0) && (classPointer != 0))
+		{
+			for(uint16_t numFunctions = functions.size(); numFunctions; --numFunctions)
+			{
+				functions[numFunctions-1]->detach(classPointer, methodPointer);
+			}
+		}
+	}
+	uint32_t deleteCallback(void (*functionPointer)())
+	{
+		for(uint16_t numFunctions = functions.size(); numFunctions; --numFunctions)
+		{
+			functions[numFunctions-1]->detach(functionPointer);
+		}
 	}
 	
 private:

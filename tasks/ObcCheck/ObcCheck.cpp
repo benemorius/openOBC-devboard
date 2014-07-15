@@ -25,14 +25,15 @@
 
 #include "ObcCheck.h"
 #include <ObcUI.h>
+#include <algorithm>
 
 using namespace ObcCCMBits;
 
 ObcCheck::ObcCheck(OpenOBC& obc) : ObcUITask(obc)
 {
 	registerButton(ObcUITaskFocus::background, BUTTON_CHECK_MASK);
-	ccmErrorsSinceReset = 0;
-	setDisplay("check ok");
+	setDisplay("check ...");
+	isValid = false;
 }
 
 ObcCheck::~ObcCheck()
@@ -47,33 +48,58 @@ void ObcCheck::wake()
 
 void ObcCheck::runTask()
 {
+	updateDisplay();
+
 	uint8_t rawByte = obc.ccm->getRawByte();
-	uint8_t checkByte = obc.ccm->getCCMByte();
-	uint8_t newErrors = checkByte & ~ccmErrorsSinceReset;
-	if(newErrors)
+	static uint8_t lastRawByte;
+	static uint16_t matchCount;
+
+	if(rawByte == lastRawByte)
 	{
-		DEBUG("CCM raw byte: 0x%02x new errors: 0x%02x (old errors: 0x%02x)\r\n", rawByte, newErrors, ccmErrorsSinceReset);
-		if((rawByte == 0xff) && (checkByte != 0x00))
-			setDisplay("check module failure");
-		else if(newErrors & WasherFluid)
-			setDisplay("washer fluid low");
-		else if(newErrors & CoolantLevel)
-			setDisplay("coolant low");
-		else if(newErrors & LowBeam)
-			setDisplay("low beam failure");
-		else if(newErrors & LicensePlateLight)
-			setDisplay("license light fail");
-		else if(newErrors & TailLight)
-			setDisplay("tail light failure");
-		else if(newErrors & BrakeLight1)
-			setDisplay("brake1 light failure");
-		else if(newErrors & BrakeLight2)
-			setDisplay("brake2 light failure");
-		obc.ui->setActiveTask(this, 10);
-		obc.ccmLight->on();
-		obc.ui->callback.addCallback(this, &ObcCheck::errorTimeout, 10000);
+		matchCount++;
+		if(matchCount < 60) //2 seconds
+		{
+			return;
+		}
+		matchCount = 0;
 	}
-	ccmErrorsSinceReset |= newErrors;
+	else
+	{
+		matchCount = 0;
+		lastRawByte = rawByte;
+		return;
+	}
+
+	if(rawByte == 0xff) //ccm off or not connected
+	{
+		isValid = false;
+		return;
+	}
+
+	if(rawByte & 1) //bit 0 is always 0
+	{
+		isValid = false;
+		return;
+	}
+
+	isValid = true;
+
+	uint8_t checkByte = obc.ccm->getCCMByte();
+
+	if((checkByte & WasherFluid) && (std::find(warnings.begin(), warnings.end(), WasherFluid) == warnings.end()))
+		newWarning(WasherFluid);
+	if((checkByte & CoolantLevel) && (std::find(warnings.begin(), warnings.end(), CoolantLevel) == warnings.end()))
+		newWarning(CoolantLevel);
+	if((checkByte & LowBeam) && (std::find(warnings.begin(), warnings.end(), LowBeam) == warnings.end()))
+		newWarning(LowBeam);
+	if((checkByte & LicensePlateLight) && (std::find(warnings.begin(), warnings.end(), LicensePlateLight) == warnings.end()))
+		newWarning(LicensePlateLight);
+	if((checkByte & TailLight) && (std::find(warnings.begin(), warnings.end(), TailLight) == warnings.end()))
+		newWarning(TailLight);
+	if((checkByte & BrakeLight1) && (std::find(warnings.begin(), warnings.end(), BrakeLight1) == warnings.end()))
+		newWarning(BrakeLight1);
+	if((checkByte & BrakeLight2) && (std::find(warnings.begin(), warnings.end(), BrakeLight2) == warnings.end()))
+		newWarning(BrakeLight2);
 }
 
 void ObcCheck::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
@@ -84,11 +110,23 @@ void ObcCheck::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 			obc.ui->setActiveTask(this);
 		return;
 	}
+
+	if(buttonMask == BUTTON_CHECK_MASK)
+	{
+		if(!warnings.empty())
+		{
+			warnings.push_front(warnings.back());
+			warnings.pop_back();
+		}
+	}
 	
 	if(buttonMask == BUTTON_SET_MASK)
 	{
-		ccmErrorsSinceReset = 0;
-		setDisplay("check ok");
+		while(!warnings.empty())
+			warnings.pop_back();
+
+		obc.ui->callback.deleteCallback(this, &ObcCheck::errorTimeout);
+		obc.ccmLight->off();
 	}
 }
 
@@ -100,4 +138,45 @@ void ObcCheck::sleep()
 void ObcCheck::errorTimeout()
 {
 	obc.ccmLight->off();
+}
+
+void ObcCheck::updateDisplay()
+{
+	if(!isValid)
+	{
+		setDisplay("CCM not found");
+		return;
+	}
+	if(warnings.empty())
+	{
+		setDisplay("check ok");
+		return;
+	}
+
+	ObcCCMBits::bits currentWarning = warnings.back();
+
+	if(currentWarning == WasherFluid)
+		setDisplay("washer fluid low");
+	else if(currentWarning == CoolantLevel)
+		setDisplay("coolant low");
+	else if(currentWarning == LowBeam)
+		setDisplay("low beam failure");
+	else if(currentWarning == LicensePlateLight)
+		setDisplay("license light fail");
+	else if(currentWarning == TailLight)
+		setDisplay("tail light failure");
+	else if(currentWarning == BrakeLight1)
+		setDisplay("brake1 light failure");
+	else if(currentWarning == BrakeLight2)
+		setDisplay("brake2 light failure");
+}
+
+void ObcCheck::newWarning(ObcCCMBits::bits warning)
+{
+	warnings.push_back(warning);
+	obc.ui->setActiveTask(this, 10);
+	obc.ccmLight->on();
+	obc.ui->callback.deleteCallback(this, &ObcCheck::errorTimeout);
+	obc.ui->callback.addCallback(this, &ObcCheck::errorTimeout, 10000);
+	DEBUG("CCM raw byte: 0x%02x new warning: 0x%02x\r\n", obc.ccm->getRawByte(), warning);
 }
