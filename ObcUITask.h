@@ -78,7 +78,7 @@ private:
 	char displayBuffer[21];
 	char displayClockBuffer[5];
 	bool _isActive;
-    float displayRefreshPeriod;
+	float displayRefreshPeriod;
 	float activeTaskTimeout;
 };
 

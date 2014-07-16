@@ -74,6 +74,7 @@ void ObcMemo::runTask()
 		float y = obc.accel->getY();
 		float z = obc.accel->getZ();
 		setDisplay("x% 2.2f y% 2.2f z% 2.2f", x, y, z);
+		setDisplayRefreshPeriod(0.5);
 	}
 }
 
@@ -94,5 +95,6 @@ void ObcMemo::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 			state = Accelerometer;
 		else if(state == Accelerometer)
 			state = Voltage;
+		setDisplayRefreshPeriod(0.1);
 	}
 }
