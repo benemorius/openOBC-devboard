@@ -245,12 +245,12 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	delay(15);
 
 	//backlight configuration
-	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
-	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
+// 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
+// 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
 	auxLight = new IO(AUX_BACKLIGHT_PORT, AUX_BACKLIGHT_PIN, true);
 	keypadLight = new IO(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, true);
-// 	lcdLight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, .1);
-// 	clockBacklight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN);
+	lcdLight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, 1.0);
+	clockLight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, 1.0);
 
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);
 

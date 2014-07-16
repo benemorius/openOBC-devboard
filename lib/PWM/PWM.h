@@ -39,6 +39,12 @@ public:
 	void setFrequency(float frequency); //on the LPC17xx this will set the frequency of all 6 PWM channels
 	float getFrequency();
 
+	void on();
+	void off();
+
+	PWM& operator=(bool state);
+	PWM& operator=(float dutyCycle);
+
 private:
 	uint8_t port;
 	uint8_t pin;
@@ -46,6 +52,7 @@ private:
 	LPC_PWM_TypeDef* peripheral;
 	float dutyCycle;
 	float frequency;
+	static bool isInitialized;
 };
 
 #endif // PWM_H

@@ -30,14 +30,14 @@
 
 #include <stdio.h>
 
+bool PWM::isInitialized = false;
 
-//FIXME can't instantiate more than one PWM at a time
 PWM::PWM(uint8_t port, uint8_t pin, float dutyCycle, float frequency)
 {
 	this->port = port;
 	this->pin = pin;
 	this->dutyCycle = dutyCycle;
-	this->frequency = 100000;
+	this->frequency = frequency;
 
 	PINSEL_CFG_Type PinCfg;
 	if(port == 1 && pin == 18)
@@ -137,6 +137,45 @@ PWM::PWM(uint8_t port, uint8_t pin, float dutyCycle, float frequency)
 	PinCfg.Pinmode = PINSEL_PINMODE_TRISTATE;
 	PINSEL_ConfigPin(&PinCfg);
 
+
+	if(isInitialized)
+	{
+		uint32_t pwmclk = CLKPWR_GetPCLK(CLKPWR_PCLKSEL_PWM1);
+
+		/* Set match value for PWM match channel 0 and reset on match to set the period for all channels */
+		PWM_MatchUpdate(this->peripheral, 0, pwmclk / this->frequency, PWM_MATCH_UPDATE_NOW);
+		PWM_MATCHCFG_Type PWMMatchCfgDat;
+		PWMMatchCfgDat.IntOnMatch = DISABLE;
+		PWMMatchCfgDat.MatchChannel = 0;
+		PWMMatchCfgDat.ResetOnMatch = ENABLE;
+		PWMMatchCfgDat.StopOnMatch = DISABLE;
+		PWM_ConfigMatch(this->peripheral, &PWMMatchCfgDat);
+
+
+		/* Configure each PWM channel: --------------------------------------------- */
+		/* - Single edge
+		 * - PWM Duty on each PWM channel determined by
+		 * the match on channel 0 to the match of that match channel.
+		 * Example: PWM Duty on PWM channel 1 determined by
+		 * the match on channel 0 to the match of match channel 1.
+		 */
+		PWM_ChannelConfig(this->peripheral, this->channel, PWM_CHANNEL_SINGLE_EDGE);
+
+
+		/* Set up match value */
+		PWM_MatchUpdate(this->peripheral, this->channel, this->dutyCycle * (pwmclk / this->frequency), PWM_MATCH_UPDATE_NOW);
+		PWMMatchCfgDat.IntOnMatch = DISABLE;
+		PWMMatchCfgDat.MatchChannel = this->channel;
+		PWMMatchCfgDat.ResetOnMatch = DISABLE;
+		PWMMatchCfgDat.StopOnMatch = DISABLE;
+		PWM_ConfigMatch(this->peripheral, &PWMMatchCfgDat);
+
+		/* Enable PWM Channel Output */
+		PWM_ChannelCmd(this->peripheral, this->channel, ENABLE);
+		return;
+	}
+	isInitialized = true;
+
 	
 	/* PWM block section -------------------------------------------- */
 	/* Initialize PWM peripheral, timer mode
@@ -228,4 +267,23 @@ void PWM::setFrequency(float frequency)
 // 
 // 	PWM_Cmd(this->peripheral, ENABLE);
 	
+}
+
+void PWM::on()
+{
+	setDutyCycle(1.0);
+}
+
+void PWM::off()
+{
+	setDutyCycle(0.0);
+}
+
+PWM& PWM::operator=(bool state)
+{
+	if(state)
+		setDutyCycle(1.0);
+	else
+		setDutyCycle(0.0);
+	return *this;
 }

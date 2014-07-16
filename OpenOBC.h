@@ -104,8 +104,8 @@ public:
 	Callback* callback;
 	SPI* spi0;
 	SPI* spi1;
-	IO* lcdLight;
-	IO* clockLight;
+	PWM* lcdLight;
+	PWM* clockLight;
 	IO* auxLight;
 	IO* keypadLight;
 	IO* codeLed;
