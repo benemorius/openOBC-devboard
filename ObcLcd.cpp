@@ -30,6 +30,8 @@
 #include "delay.h"
 #include <string.h>
 
+const uint8_t ObcLcd::constBytes[8] = {0x1f, 0x00, 0x11, 0x19, 0x15, 0x13, 0x11, 0x00};
+
 ObcLcd::ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1, uint32_t spiClockrateHz) : spi(spi), cs(cs), refresh(refresh), unk0(unk0), unk1(unk1), spiClockrate(spiClockrateHz)
 {
 	this->cs = true;
@@ -38,8 +40,7 @@ ObcLcd::ObcLcd(SPI& spi, IO& cs, IO& refresh, IO& unk0, IO& unk1, uint32_t spiCl
 	this->unk1 = false;
 	*lcdBuffer = '\0';
 	*clockBuffer = '\0';
-	this->colonEnabled = false;
-	this->dotsEnabled = false;
+	memset(symbolBytes, 0, sizeof(symbolBytes));
 }
 
 void ObcLcd::printf(char* format, ...)
@@ -74,7 +75,8 @@ void ObcLcd::update()
 {
 	spi.setClockRate(spiClockrate);
 
-	testSymbols();
+	sendSymbols();
+	delay(1);
 
 	cs = false;
 
@@ -107,7 +109,6 @@ void ObcLcd::update()
 	while(i++ < CLOCK_MAX_CHARACTERS)
 		spi.readWrite(' ');
 
-	//I forget what or why this is
 	spi.readWrite(0x08); //must be 0x08 to enable extra lcd symbols; 0x00 will disable them
 	spi.readWrite(' ');
 	spi.readWrite(' ');
@@ -131,11 +132,11 @@ void ObcLcd::testSymbols()
 	int numStuff = 32;
 
 	const char* stuff;
-	if(colonEnabled)
-		stuff = colon;
-	else if(dotsEnabled)
-		stuff = dots;
-	else
+// 	if(colonEnabled)
+// 		stuff = colon;
+// 	else if(dotsEnabled)
+// 		stuff = dots;
+// 	else
 		stuff = none;
 
 	cs.off();
@@ -147,6 +148,35 @@ void ObcLcd::testSymbols()
 		unk1.off();
 	}
 	cs.on();
-	delay(1);
 }
 
+void ObcLcd::sendSymbols()
+{
+	cs.off();
+	for(int8_t byte = 7; byte >= 0; --byte)
+	{
+		spi.readWrite(byte);
+		spi.readWrite(symbolBytes[byte]);
+		unk1.on();
+		unk1.off();
+	}
+	for(int8_t byte = 15; byte >= 8; --byte)
+	{
+		spi.readWrite(byte);
+		spi.readWrite(constBytes[byte - 8]);
+		unk1.on();
+		unk1.off();
+	}
+	cs.on();
+}
+
+void ObcLcd::setSymbol(ObcLcdSymbols::symbol symbol, bool isOn)
+{
+	uint8_t symbolByte = ObcLcdSymbolOffsets::symbol[symbol];
+	uint8_t symbolMask = ObcLcdSymbolMasks::symbol[symbol];
+
+	if(isOn)
+		symbolBytes[symbolByte] = symbolBytes[symbolByte] | symbolMask;
+	else
+		symbolBytes[symbolByte] = symbolBytes[symbolByte] &  ~symbolMask;
+}

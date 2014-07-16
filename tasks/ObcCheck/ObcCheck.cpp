@@ -132,7 +132,7 @@ void ObcCheck::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 
 void ObcCheck::sleep()
 {
-    
+
 }
 
 void ObcCheck::errorTimeout()
@@ -142,14 +142,21 @@ void ObcCheck::errorTimeout()
 
 void ObcCheck::updateDisplay()
 {
+	if(!isActive())
+	{
+		obc.lcd->setSymbol(ObcLcdSymbols::Plus, false);
+		return;
+	}
 	if(!isValid)
 	{
 		setDisplay("CCM not found");
+		obc.lcd->setSymbol(ObcLcdSymbols::Plus, false);
 		return;
 	}
 	if(warnings.empty())
 	{
 		setDisplay("check ok");
+		obc.lcd->setSymbol(ObcLcdSymbols::Plus, false);
 		return;
 	}
 
@@ -169,6 +176,11 @@ void ObcCheck::updateDisplay()
 		setDisplay("brake1 light failure");
 	else if(currentWarning == BrakeLight2)
 		setDisplay("brake2 light failure");
+
+	if(warnings.size() > 1)
+		obc.lcd->setSymbol(ObcLcdSymbols::Plus, true);
+	else
+		obc.lcd->setSymbol(ObcLcdSymbols::Plus, false);
 }
 
 void ObcCheck::newWarning(ObcCCMBits::bits warning)
@@ -178,5 +190,5 @@ void ObcCheck::newWarning(ObcCCMBits::bits warning)
 	obc.ccmLight->on();
 	obc.ui->callback.deleteCallback(this, &ObcCheck::errorTimeout);
 	obc.ui->callback.addCallback(this, &ObcCheck::errorTimeout, 10000);
-	DEBUG("CCM raw byte: 0x%02x new warning: 0x%02x\r\n", obc.ccm->getRawByte(), warning);
+	DEBUG("CCM raw byte: 0x%02x new warning: 0x%02x (%i warnings total)\r\n", obc.ccm->getRawByte(), warning, warnings.size());
 }

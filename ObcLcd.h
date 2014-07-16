@@ -31,6 +31,28 @@
 #define LCD_MAX_CHARACTERS (20)
 #define CLOCK_MAX_CHARACTERS (4)
 
+namespace ObcLcdSymbolMasks {
+	const uint8_t symbol[] = {0x4, 0x4, 0x4, 0x8, 0x8, 0xc, 0x4, 0x4, 0x4};
+}
+
+namespace ObcLcdSymbolOffsets {
+	const uint8_t symbol[] = {0x0, 0x3, 0x4, 0x2, 0x4, 0x6, 0x1, 0x7, 0x5};
+}
+
+namespace ObcLcdSymbols {
+	enum symbol {
+		LeftArrow = 0x0,
+		RightArrow = 0x1,
+		Plus = 0x2,
+		TopDot = 0x3,
+		BottomDot = 0x4,
+		Periods = 0x5,
+		Memo = 0x6,
+		AM = 0x7,
+		PM = 0x8,
+	};
+}
+
 class ObcLcd
 {
 public:
@@ -41,12 +63,12 @@ public:
 	void clear();
 	void clearClock();
 
-	void setColon(bool enabled) {colonEnabled = enabled;}
-	void setDots(bool enabled) {dotsEnabled = enabled;}
+	void setSymbol(ObcLcdSymbols::symbol symbol, bool isOn);
 
 private:
 	void update();
 	void testSymbols();
+	void sendSymbols();
 
 	SPI& spi;
 	IO& cs;
@@ -54,9 +76,9 @@ private:
 	IO& unk0;
 	IO& unk1;
 	uint32_t spiClockrate;
-	bool colonEnabled;
-	bool dotsEnabled;
-	
+	uint8_t symbolBytes[8];
+	static const uint8_t constBytes[8];
+
 	char lcdBuffer[LCD_MAX_CHARACTERS+1];
 	char clockBuffer[CLOCK_MAX_CHARACTERS+1];
 };

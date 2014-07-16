@@ -242,25 +242,7 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	*lcdBiasEn = true;
 	delay(4);
 	*lcdReset = true;
-// 	lcd->printf("zomgomgomgnomnom");
-// 	lcd->printfClock("----");
-// 	lcd->printf("zomgomgomgnomnom");
-// 	lcd->printfClock("----");
-// 	lcd->printf("zomgomgomgnomnom");
-// 	lcd->printfClock("----");
-// 	lcd->printf("zomgomgomgnomnom");
-// 	lcd->printfClock("----");
-// 	lcd->printf("zomgomgomgnomnom");
-// 	lcd->printfClock("----");
-// 	*lcdReset = false;
-// 	delay(4);
-// 	*lcdReset = true;
-//
 	delay(15);
-//
-// 	lcd->printf("");
-// 	lcd->printfClock("");
-
 
 	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
