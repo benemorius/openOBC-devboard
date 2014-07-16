@@ -482,6 +482,9 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	analogOut = new AnalogOut(ANALOG_OUT_PORT, ANALOG_OUT_PIN, REFERENCE_VOLTAGE);
 	analogOut->writeVoltage(1.0);
 
+	//optional sensors
+	oilPressure = new OilPressureSensor(*analogIn1);
+
 // 	averageFuelConsumptionSeconds = 0;
 // 	averageLitresPer100km = 0;
 

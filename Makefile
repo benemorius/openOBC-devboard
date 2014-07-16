@@ -26,6 +26,7 @@ INCDIRS += lib/ConfigFile lib/Debug lib/FunctionPointer lib/IO lib/Input lib/Int
 INCDIRS += lib/PCA95xx lib/I2C
 INCDIRS += lib/MMA845x
 INCDIRS += lib/AnalogOut
+INCDIRS += lib/OilPressureSensor
 INCDIRS += tasks/ObcCode tasks/ObcCheck tasks/ObcLimit tasks/ObcSpeed
 INCDIRS += tasks/ObcConsum
 INCDIRS += tasks/ObcDist
@@ -74,6 +75,7 @@ CPPSRCS += $(wildcard lib/ConfigFile/*.cpp) $(wildcard lib/Debug/*.cpp) $(wildca
 CPPSRCS += $(wildcard lib/PCA95xx/*.cpp) $(wildcard lib/I2C/*.cpp)
 CPPSRCS += $(wildcard lib/MMA845x/*.cpp)
 CPPSRCS += $(wildcard lib/AnalogOut/*.cpp)
+CPPSRCS += $(wildcard lib/OilPressureSensor/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcCode/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcCheck/*.cpp)
 CPPSRCS += $(wildcard tasks/ObcLimit/*.cpp)
@@ -130,7 +132,7 @@ clean:
 	@rm -f *.hex *.bin
 	@-rm -f *.elf
 	@-\
-for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2" "lib/ConfigFile" "lib/Debug" "lib/FunctionPointer" "lib/IO" "lib/Input" "lib/InterruptManager" "lib/PWM" "lib/RTC" "lib/SPI" "lib/Stream" "lib/Timer" "lib/Uart" "lib/Callback" "lib/Watchdog" "lib/PCA95xx" "lib/I2C" "lib/MMA845x" "lib/AnalogOut" "tasks/ObcCode" "tasks/ObcCheck" "tasks/ObcLimit" "tasks/ObcSpeed" "tasks/ObcConsum" "tasks/ObcDist" "tasks/ObcRange" "tasks/ObcTemp" "tasks/ObcTimer" "tasks/ObcKmmls" "tasks/ObcMemo" "tasks/ObcOdometer" "tasks/ObcClock"; do \
+for D in "." "cmsis" "lib/SDFS" "lib/fatfs" "lib/fatfs/option" "lib/AnalogIn" "lib/E36Diag" "lib/DS2" "lib/ConfigFile" "lib/Debug" "lib/FunctionPointer" "lib/IO" "lib/Input" "lib/InterruptManager" "lib/PWM" "lib/RTC" "lib/SPI" "lib/Stream" "lib/Timer" "lib/Uart" "lib/Callback" "lib/Watchdog" "lib/PCA95xx" "lib/I2C" "lib/MMA845x" "lib/AnalogOut" "lib/OilPressureSensor" "tasks/ObcCode" "tasks/ObcCheck" "tasks/ObcLimit" "tasks/ObcSpeed" "tasks/ObcConsum" "tasks/ObcDist" "tasks/ObcRange" "tasks/ObcTemp" "tasks/ObcTimer" "tasks/ObcKmmls" "tasks/ObcMemo" "tasks/ObcOdometer" "tasks/ObcClock"; do \
   rm -f $$D/*.o $$D/*.d $$D/*.lst $$D/*.dump $$D/*.map $$D/*.a; \
 done
 

@@ -34,8 +34,8 @@ ObcMemo::ObcMemo(OpenOBC& obc) : ObcUITask(obc)
 	std::string configState = obc.config->getValueByNameWithDefault("ObcMemoState", "Voltage");
 	if(configState == "Voltage")
 		state = Voltage;
-	else if(configState == "FreeMem")
-		state = FreeMem;
+	else if(configState == "OilPressure")
+		state = OilPressure;
 	else if(configState == "Accelerometer")
 		state = Accelerometer;
 }
@@ -55,8 +55,8 @@ void ObcMemo::sleep()
 	std::string configState;
 	if(state == Voltage)
 		configState = "Voltage";
-	else if(state == FreeMem)
-		configState = "FreeMem";
+	else if(state == OilPressure)
+		configState = "OilPressure";
 	else if(state == Accelerometer)
 		configState = "Accelerometer";
 	obc.config->setValueByName("ObcMemoState", configState);
@@ -66,8 +66,8 @@ void ObcMemo::runTask()
 {
 	if(state == Voltage)
 		setDisplay("%.2fV %.2fV %.2fV", obc.batteryVoltage->read(), obc.analogIn1->read(), obc.analogIn2->read());
-	else if(state == FreeMem)
-		setDisplay("free memory: %i", get_mem_free());
+	else if(state == OilPressure)
+		setDisplay("oil % 2.0f psi", obc.oilPressure->getPsi());
 	else if(state == Accelerometer)
 	{
 		float x = obc.accel->getX();
@@ -90,8 +90,8 @@ void ObcMemo::buttonHandler(ObcUITaskFocus::type focus, uint32_t buttonMask)
 	if(buttonMask == BUTTON_MEMO_MASK)
 	{
 		if(state == Voltage)
-			state = FreeMem;
-		else if(state == FreeMem)
+			state = OilPressure;
+		else if(state == OilPressure)
 			state = Accelerometer;
 		else if(state == Accelerometer)
 			state = Voltage;

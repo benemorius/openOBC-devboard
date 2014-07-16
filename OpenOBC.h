@@ -53,6 +53,7 @@
 #include <MMA845x.h>
 #include <AnalogOut.h>
 #include "FuelConsumption.h"
+#include <OilPressureSensor.h>
 
 class ObcUI;
 
@@ -169,6 +170,7 @@ public:
 	float coolantTemperature; //coolant temperature in degrees celsius from KOMBI via diagnostic bus
 	float averageKmh;
 	float currentKm;
+	OilPressureSensor* oilPressure;
 	
 protected:
 	void sleep();
