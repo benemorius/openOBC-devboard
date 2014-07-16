@@ -61,7 +61,10 @@ public:
 private:
 	uint8_t readRegister(uint8_t reg);
 	void writeRegister(uint8_t reg, uint8_t data);
-	
+	float _getX();
+	float _getY();
+	float _getZ();
+
 	I2C& i2c;
 	uint8_t address;
 	uint32_t hz;

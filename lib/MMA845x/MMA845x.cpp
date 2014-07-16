@@ -75,7 +75,7 @@ MMA845x& MMA845x::disable()
 	writeRegister(MMA845X_REG_CTRL_REG1, 0x00); //disable sampling
 }
 
-float MMA845x::getX()
+float MMA845x::_getX()
 {
 	int16_t x = ((int16_t)readRegister(MMA845X_REG_OUT_X_MSB) << 8);
 	x /= (1<<4);
@@ -83,7 +83,7 @@ float MMA845x::getX()
 	return (float)x / 2048 * 2;
 }
 
-float MMA845x::getY()
+float MMA845x::_getY()
 {
 	int16_t y = ((int16_t)readRegister(MMA845X_REG_OUT_Y_MSB) << 8);
 	y /= (1<<4);
@@ -91,10 +91,25 @@ float MMA845x::getY()
 	return (float)y / 2048 * 2;
 }
 
-float MMA845x::getZ()
+float MMA845x::_getZ()
 {
 	int16_t z = ((int16_t)readRegister(MMA845X_REG_OUT_Z_MSB) << 8);
 	z /= (1<<4);
 	z += (int16_t)readRegister(MMA845X_REG_OUT_Z_LSB) >> 4;
 	return (float)z / 2048 * 2;
+}
+
+float MMA845x::getX()
+{
+	return _getX();
+}
+
+float MMA845x::getY()
+{
+	return _getZ();
+}
+
+float MMA845x::getZ()
+{
+	return - _getY();
 }
