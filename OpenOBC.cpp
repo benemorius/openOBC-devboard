@@ -239,15 +239,35 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	IO* lcdUnk0 = new IO(LCD_UNK0_PORT, LCD_UNK0_PIN, true);
 	IO* lcdUnk1 = new IO(LCD_UNK1_PORT, LCD_UNK1_PIN, false);
 	lcd = new ObcLcd(*spi1, *lcdSel, *lcdRefresh, *lcdUnk0, *lcdUnk1);
-	*lcdReset = true;
 	*lcdBiasEn = true;
-	
+	delay(4);
+	*lcdReset = true;
+// 	lcd->printf("zomgomgomgnomnom");
+// 	lcd->printfClock("----");
+// 	lcd->printf("zomgomgomgnomnom");
+// 	lcd->printfClock("----");
+// 	lcd->printf("zomgomgomgnomnom");
+// 	lcd->printfClock("----");
+// 	lcd->printf("zomgomgomgnomnom");
+// 	lcd->printfClock("----");
+// 	lcd->printf("zomgomgomgnomnom");
+// 	lcd->printfClock("----");
+// 	*lcdReset = false;
+// 	delay(4);
+// 	*lcdReset = true;
+//
+	delay(15);
+//
+// 	lcd->printf("");
+// 	lcd->printfClock("");
+
+
 	//backlight configuration
 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
 	auxLight = new IO(AUX_BACKLIGHT_PORT, AUX_BACKLIGHT_PIN, true);
 	keypadLight = new IO(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, true);
-// 	lcdBacklight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, .2);
+// 	lcdLight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, .1);
 // 	clockBacklight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN);
 
 	printf("openOBC firmware version: %s\r\n", GIT_VERSION);

@@ -40,10 +40,13 @@ public:
 	void printfClock(char* format, ...);
 	void clear();
 	void clearClock();
-	 
+
+	void setColon(bool enabled) {colonEnabled = enabled;}
+	void setDots(bool enabled) {dotsEnabled = enabled;}
 
 private:
 	void update();
+	void testSymbols();
 
 	SPI& spi;
 	IO& cs;
@@ -51,6 +54,8 @@ private:
 	IO& unk0;
 	IO& unk1;
 	uint32_t spiClockrate;
+	bool colonEnabled;
+	bool dotsEnabled;
 	
 	char lcdBuffer[LCD_MAX_CHARACTERS+1];
 	char clockBuffer[CLOCK_MAX_CHARACTERS+1];

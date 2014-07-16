@@ -62,14 +62,20 @@ void ObcClock::runTask()
 	if(state == Clock || state == ClockSet)
 	{
 		setDisplayClock("%02i%02i", obc.rtc->getHour(), obc.rtc->getMinute());
+		obc.lcd->setColon(true);
+		obc.lcd->setDots(false);
 	}
 	else if(state == Date || state == DateSet)
 	{
 		setDisplayClock("%02i%02i", obc.rtc->getMonth(), obc.rtc->getDay());
+		obc.lcd->setColon(false);
+		obc.lcd->setDots(true);
 	}
 	else if(state == YearSet)
 	{
 		setDisplayClock("%04u", obc.rtc->getYear());
+		obc.lcd->setColon(false);
+		obc.lcd->setDots(false);
 	}
 	
 	if(state == ClockSet)
