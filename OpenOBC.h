@@ -171,7 +171,9 @@ public:
 	float averageKmh;
 	float currentKm;
 	OilPressureSensor* oilPressure;
-	
+	float illuminationDutycycle;
+	float ambientLightDutycycle;
+
 protected:
 	void sleep();
 	void wake();
