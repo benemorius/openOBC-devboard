@@ -118,7 +118,7 @@ PWM::PWM(uint8_t port, uint8_t pin, float dutyCycle, float frequency)
 		this->channel = 2;
 		this->peripheral = LPC_PWM1;
 	}
-	else if(port == 2 && pin == 26)
+	else if(port == 3 && pin == 26)
 	{
 		PinCfg.Funcnum = 3;
 		this->channel = 3;

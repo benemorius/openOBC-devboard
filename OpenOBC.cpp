@@ -247,8 +247,8 @@ OpenOBC::OpenOBC() : displayMode(reinterpret_cast<volatile DisplayMode_Type&>(LP
 	//backlight configuration
 // 	lcdLight = new IO(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, true);
 // 	clockLight = new IO(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, true);
-	auxLight = new IO(AUX_BACKLIGHT_PORT, AUX_BACKLIGHT_PIN, true);
-	keypadLight = new IO(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, true);
+	auxLight = new PWM(AUX_BACKLIGHT_PORT, AUX_BACKLIGHT_PIN, 1.0);
+	keypadLight = new PWM(KEYPAD_BACKLIGHT_PORT, KEYPAD_BACKLIGHT_PIN, 1.0);
 	lcdLight = new PWM(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, 1.0);
 	clockLight = new PWM(CLOCK_BACKLIGHT_PORT, CLOCK_BACKLIGHT_PIN, 1.0);
 

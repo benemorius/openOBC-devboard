@@ -107,8 +107,8 @@ public:
 	SPI* spi1;
 	PWM* lcdLight;
 	PWM* clockLight;
-	IO* auxLight;
-	IO* keypadLight;
+	PWM* auxLight;
+	PWM* keypadLight;
 	IO* codeLed;
 	IO* limitLed;
 	IO* timerLed;
